@@ -4,6 +4,7 @@ Scope: one operator on one HTTPS origin, one server process, one persistent SQLi
 volume. This is not multi-user identity, RBAC, enterprise SSO or a hosted auth service.
 
 USER SETUP
+First-time/recovery entry: https://socharness-mandil.fly.dev/login?next=security
 Open https://socharness-mandil.fly.dev/security on your iPhone or Mac.
 Sign in with the existing operator token, then name and add a passkey within five
 minutes. Approve the Apple/browser device prompt yourself. Save to iCloud Keychain
@@ -12,6 +13,16 @@ laptop choose the nearby-device option, scan the QR code and approve on iPhone;
 Bluetooth/proximity and a supported browser/device are required.
 Physical iPhone/Mac enrollment and cross-device sign-in require user acceptance.
 Automated cryptographic tests are not a substitute for testing those devices.
+
+NO SAVED PASSKEYS
+The sign-in QR code looks for an existing passkey. It does not enroll the first
+credential. Use the recovery token first, then Add a passkey on the security page.
+On Windows, choose the nearby iPhone option in the CREATION prompt when supported,
+or enroll directly on a trusted Mac/iPhone after recovery-token login there.
+Windows Hello credentials do not automatically sync to Apple Passwords. Apple
+sync requires iCloud Passwords & Keychain and the same Apple Account on both devices.
+Use the exact socharness-mandil.fly.dev hostname, not localhost or another Fly app.
+See README.md for the step-by-step Windows-to-iPhone-to-Mac setup.
 
 RECOVERY
 The existing operator token remains a recovery method. The Windows operator-login.ps1

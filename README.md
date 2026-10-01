@@ -1,5 +1,52 @@
 # SoCHarness — Relay ISOC agent laboratory
 
+## Open on your Mac or iPhone — no installation needed
+
+- **[Open the application](https://socharness-mandil.fly.dev/)**
+- **[First-time setup / recovery login](https://socharness-mandil.fly.dev/login?next=security)**
+- **[Add or manage passkeys](https://socharness-mandil.fly.dev/security)**
+- **[Architecture atlas](https://socharness-mandil.fly.dev/architecture)** (requires login)
+
+Use this exact HTTPS hostname on every device. A localhost address is only for
+development; cloning this repository does not give access to the hosted account.
+
+### Phone says “no saved passkeys”?
+
+**Sign in with a passkey uses an existing credential; it does not create one.**
+First sign in with the operator recovery token, then explicitly **Add a passkey**.
+This is a private, single-operator pilot, not public signup.
+
+1. On the original Windows machine, in the original checkout containing
+   `work/fly-operator-token.clixml`, run `./operator-login.ps1 -CopyToken` in
+   PowerShell. This copies the existing token without printing it. A fresh clone
+   does not contain that private file. Do not run `-Initialize` to recover access.
+2. On that Windows machine, open [first-time setup](https://socharness-mandil.fly.dev/login?next=security),
+   expand **Use recovery token**, paste, and choose **Sign in securely**.
+   Clear the clipboard afterward with `Set-Clipboard -Value ''`; also remove any
+   saved clipboard-history entry. Never paste the token into chat, GitHub or a URL.
+3. Within five minutes, name the credential (for example, “iPhone / iCloud”) and
+   choose **Add a passkey**. In the browser's **creation** prompt, choose the
+   nearby iPhone/device option if offered, then scan that QR code and approve on
+   the phone. Keep both devices nearby with Bluetooth enabled. A QR code from
+   **Sign in with a passkey** is the wrong flow for creating your first credential.
+4. Save in Apple Passwords / iCloud Keychain. Enable **iCloud Passwords & Keychain**
+   on your iPhone and Mac, signed into the same Apple Account. Once synced, open
+   [Relay in Safari on your Mac](https://socharness-mandil.fly.dev/) and choose
+   **Sign in with a passkey**, approving Touch ID or the device prompt.
+5. Confirm a successful sign-in before discarding any recovery access. If the key
+   is saved only in Windows Hello, it will not automatically sync to your Mac.
+
+If nearby-device **creation** is unavailable, use the recovery token directly on
+your trusted Mac or iPhone and register there. The encrypted Windows token file
+cannot be decrypted on a Mac; do not copy it there expecting it to work. If you
+cannot access the original Windows user or a secure token copy, recovery requires
+the Fly app owner to rotate the token; there is no anonymous reset or email login.
+
+Apple's [Mac passkey guide](https://support.apple.com/en-gb/guide/passwords/mchl4af65d1a/mac)
+explains synced and nearby-device sign-in. See [security and recovery details](AUTH_SECURITY.txt).
+Device enrollment needs your own Face ID / Touch ID / device approval; an agent
+cannot create an Apple passkey for you in the background.
+
 ## Start here: guide and architecture
 
 The [protected Fly pilot](https://socharness-mandil.fly.dev/) includes **Quick start**:
@@ -152,7 +199,8 @@ Primary references: https://docs.langchain.com/oss/python/deepagents/overview an
 
 ## Code map
 
-- web/ — maintained HTML/CSS/JavaScript client; no build step or external assets.
+- frontend/ — React + TypeScript sources, shadcn/ui components, Vite build and frontend tests.
+- web/ — compiled frontend destination, HTML entry points and standalone architecture assets; legacy scripts are not loaded by the React app.
 - services/app.py — HTTP validation, streaming, static files, loopback boundary.
 - services/store.py — SQLite state, stable cohorts, checkpoint/branch storage.
 - services/engine.py — runtime orchestration, policy and exact-argument approvals.
