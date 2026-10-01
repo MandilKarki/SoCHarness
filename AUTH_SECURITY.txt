@@ -1,0 +1,61 @@
+RELAY PASSKEYS — 2026-10-01
+
+Scope: one operator on one HTTPS origin, one server process, one persistent SQLite
+volume. This is not multi-user identity, RBAC, enterprise SSO or a hosted auth service.
+
+USER SETUP
+Open https://socharness-mandil.fly.dev/security on your iPhone or Mac.
+Sign in with the existing operator token, then name and add a passkey within five
+minutes. Approve the Apple/browser device prompt yourself. Save to iCloud Keychain
+to sync among supported devices signed into the same Apple Account. On another
+laptop choose the nearby-device option, scan the QR code and approve on iPhone;
+Bluetooth/proximity and a supported browser/device are required.
+Physical iPhone/Mac enrollment and cross-device sign-in require user acceptance.
+Automated cryptographic tests are not a substitute for testing those devices.
+
+RECOVERY
+The existing operator token remains a recovery method. The Windows operator-login.ps1
+helper can copy its locally encrypted DPAPI copy; never paste it into chat or Git.
+Retain a secure copy separately. No email recovery or token display is provided.
+After token rotation, registered passkeys remain authorized unless explicitly removed.
+To revoke a device: Account & security -> Remove, after signing in within five minutes.
+Removal revokes every browser session and pending ceremony. The user must separately
+delete the obsolete credential from Apple Passwords or their other authenticator.
+Keep at least one usable passkey or the recovery token before removing credentials.
+
+SECURITY BOUNDARY
+- Maintained py_webauthn 3.0.1 verifies signatures, RP ID, exact HTTPS origin, challenge,
+  user presence/verification and supported signature counters. Embedded cross-origin
+  credentials are rejected. Registration requests discoverable credentials and no
+  identifying attestation; no private key or biometric data is stored by Relay.
+- 32-byte random challenges, 5-minute expiry, consumed once even on failed verification.
+  Registration bound to a recently authenticated session; sign-in bound to a Secure,
+  HttpOnly, SameSite=Strict __Host- browser-flow cookie. At most 64 pending ceremonies.
+- Discoverable sign-in does not return registered credential IDs publicly. The user
+  handle must match the persisted operator handle. Maximum eight credentials.
+- All writes require exact Origin/Host and application/json; protected management
+  endpoints also require an authenticated session. Strict same-origin CSP retained.
+- Successful sign-in issues a fresh Secure/HttpOnly/SameSite=Strict __Host- cookie;
+  sessions expire after eight hours or process restart. Up to 32 active sessions.
+- Recovery-token attempts and passkey-start requests share a global 10/minute limit.
+  Deliberate tradeoff: bounds a small pilot without trusting forwarded-IP headers,
+  but an attacker can temporarily exhaust this global budget (availability limitation).
+- Public keys, credential metadata, operator handle and auth audit events live in
+  SQLite. They survive restarts. Challenges and login sessions do not. Backups contain
+  credential metadata: handle the entire database as private. No external auth service.
+- Same-origin XSS or a stolen fresh session can compromise account management;
+  recent-auth checks are not a substitute for preventing script injection. User/source
+  strings render as text; no inline script permission or arbitrary execution is added.
+
+TESTS
+services/test_passkeys.py uses locally generated ES256 keys, CBOR attestation-none,
+and signed assertions through the real verification library. Covers registration,
+login, persistence, zero counters for synced credentials, replay, expiry, wrong origin,
+RP, challenge, signature, handle, credential IDs, missing presence/verification,
+cross-origin frames, fresh-auth enforcement, revocation, limits and HTTP guards.
+Fixtures never enroll production credentials. No real device ceremony is automated.
+
+REFERENCES
+https://duo-labs.github.io/py_webauthn/
+https://pypi.org/project/webauthn/
+https://support.apple.com/en-ie/guide/passwords/mchl4af65d1a/mac

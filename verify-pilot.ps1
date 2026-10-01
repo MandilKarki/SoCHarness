@@ -26,6 +26,13 @@ try {
     Expect (Request GET '/architecture') 303
     Expect (Request GET '/architecture.js') 401
     Expect (Request GET '/guide.js') 401
+    Expect (Request GET '/security') 303
+    Expect (Request GET '/api/passkeys') 401
+    Expect (Request GET '/experience.js') 401
+    Expect (Request GET '/passkeys.js') 200
+    Expect (Request GET '/identity.css') 200
+    Expect (Request POST '/api/passkeys/registration/options' @{}) 401
+    Expect (Request POST '/api/passkeys/authentication/options' @{} 'https://untrusted.invalid') 403
     Expect (Request POST '/api/login' @{token='invalid-test-token'}) 401
     $secure=Import-Clixml -LiteralPath (Join-Path $PSScriptRoot 'work/fly-operator-token.clixml')
     $pointer=[Runtime.InteropServices.Marshal]::SecureStringToBSTR($secure)
@@ -33,6 +40,9 @@ try {
     finally { [Runtime.InteropServices.Marshal]::ZeroFreeBSTR($pointer) }
     Expect $login 200
     if(!$login.csp){throw 'Missing security headers'}
+    foreach($asset in @('/security','/security.js','/experience.js','/experience.css')) { Expect (Request GET $asset) 200 }
+    $passkeys=Request GET '/api/passkeys';Expect $passkeys 200
+    if(!(($passkeys.text|ConvertFrom-Json).recent_auth)){throw 'Fresh authentication missing'}
     foreach($asset in @('/architecture','/architecture.js','/architecture.css','/guide.js','/guide.css')) { Expect (Request GET $asset) 200 }
     $atlas=Request GET '/architecture'
     if($atlas.text.Contains('<script>') -or $atlas.text.Contains('<style>') -or $atlas.text.Contains(' style=')){throw 'Architecture must use external CSP-compatible assets'}
@@ -46,5 +56,5 @@ try {
     Expect (Request POST '/api/logout' @{} 'https://untrusted.invalid') 403
     Expect (Request POST '/api/logout' @{}) 200
     Expect (Request GET '/api/incidents') 401
-    @{https=$true;login=$true;logout=$true;anonymous_denied=$true;cross_origin_denied=$true;metrics=$metrics}|ConvertTo-Json -Depth 4
+    @{https=$true;login=$true;logout=$true;anonymous_denied=$true;cross_origin_denied=$true;passkey_management=$true;device_enrollment='requires user';metrics=$metrics}|ConvertTo-Json -Depth 4
 } finally { $client.Dispose();$handler.Dispose() }

@@ -1,0 +1,33 @@
+RELAY WORKSPACE V2 — 2026-10-01
+
+Design references (not a highest-rated-sites ranking):
+Linear's March 2026 refresh: quiet navigation, consistent headers, content hierarchy.
+https://linear.app/now/behind-the-latest-design-refresh
+Vercel Geist: restrained components and predictable states.
+https://vercel.com/geist/introduction
+Cortex XSIAM: case-centered evidence, execution history and remaining actions.
+https://www.paloaltonetworks.com/resources/ebooks/cortex-xsiam
+IBM Carbon: dense, searchable, progressively disclosed data tables.
+https://www.carbondesignsystem.com/building-blocks/core/components/data-table/guidelines
+
+Implemented: three navigation groups (Investigate, Agent Lab, Operate), legible
+sidebar, contextual page titles, accessible off-canvas mobile navigation, a
+toggleable agent console, less redundant catalog chrome, light/dark design tokens,
+responsive tool/runtime grids, reduced-motion support, account/passkey pages,
+recovery sign-in and device setup instructions. Existing guide, evidence, session,
+tool, approval, matrix and runtime actions use the same backend contracts.
+
+Technology decision: this checkpoint rewrites the workspace shell/interactions
+using the existing HTML/JavaScript application, rather than migrating every SDK
+control during an authentication change. React/TypeScript + Vite with shadcn/ui was
+the recommended framework candidate, NOT a claim that this release migrated to it.
+React Aria remains an alternative for a future component migration. No new frontend
+runtime/CDN, paid template, analytics service or remote font is introduced here.
+https://ui.shadcn.com/docs/changelog/2026-02-blocks
+https://react-aria.adobe.com/quality
+https://vite.dev/guide/
+
+Theme preference and guide step numbers are browser-local. Credentials, telemetry,
+and chat content are not added to localStorage. Source strings use textContent.
+Benchmark cohorts are explicitly labeled: severity is a lab review priority, not
+a detection verdict. No new SDK features or live provider verification is claimed.

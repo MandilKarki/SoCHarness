@@ -1,1 +1,2 @@
 claude-agent-sdk==0.2.159
+webauthn==3.0.1

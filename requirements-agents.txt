@@ -4,3 +4,4 @@ deepagents==0.7.21
 langchain-anthropic==1.7.5
 langgraph-checkpoint-sqlite==3.1.1
 openai-agents==0.22.3
+webauthn==3.0.1

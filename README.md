@@ -12,9 +12,27 @@ signing in, or download [the standalone offline HTML](docs/architecture.html).
 It contains eight views, 60 component specifications, 13 SDK entries (11 implemented,
 Strands and Mastra proposed), 14 tools and explicit production gates.
 
-The current login still uses the operator token. **Passkeys are not implemented**;
-iPhone enrollment, server-side WebAuthn verification and credential recovery are a
-separate security change. No credential or recovery token is in this repository.
+## Workspace v2 and passkeys
+
+The redesigned workspace separates **Investigate**, **Agent Lab** and **Operate**,
+with light/dark appearances, mobile navigation and an on-demand agent console.
+Existing evidence, sessions, approvals, SDK controls and the guide remain connected
+to the real backend. This release uses the existing HTML/JavaScript frontend;
+the evaluated React/Vite/shadcn migration is not claimed as implemented.
+See [design decisions and references](DESIGN_NOTES.txt).
+
+**Passkey authentication is implemented** using server-verified WebAuthn. Open
+[Account & security](https://socharness-mandil.fly.dev/security), sign in with the
+existing operator token, then add a passkey within five minutes and approve your
+device prompt. iCloud Keychain can sync it to your Mac; nearby-device QR sign-in is
+available on supported devices. Physical iPhone/Mac acceptance remains a user step.
+The operator token stays as recovery; no secret is included in this repository.
+See [setup, recovery, tests and security limits](AUTH_SECURITY.txt).
+
+The 88-test backend suite passes on Windows and a network-disabled Linux container.
+Eleven WebAuthn test methods use real ES256 signatures, not mocked verification.
+Browser checks cover mobile layout, navigation, guide-to-replay and saved traces.
+These tests do not establish production security or full upstream SDK parity.
 
 ## Four additional native runtimes
 

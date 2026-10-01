@@ -5,6 +5,7 @@ anthropic==1.11.0
 anyio==4.15.1
 attrs==26.1.0
 bracex==3.0.1
+cbor2==6.1.4
 certifi==2026.7.22
 cffi==2.1.1
 charset-normalizer==3.5.2
@@ -52,6 +53,7 @@ ormsgpack==1.12.2
 packaging==26.3
 pyasn1==0.6.4
 pyasn1_modules==0.4.2
+pyOpenSSL==26.4.0
 pycparser==3.0
 pydantic==2.13.5
 pydantic-ai-slim==2.52.0
@@ -77,6 +79,7 @@ urllib3==2.8.0
 uuid_utils==0.17.1
 uvicorn==0.54.0
 wcmatch==11.0.1
+webauthn==3.0.1
 websockets==16.1.1
 xxhash==4.0.1
 zstandard==0.25.0

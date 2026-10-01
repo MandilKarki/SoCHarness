@@ -9,6 +9,7 @@ from store import Store, Problem, ROOT, DB
 from engine import Engine, ACTIVE, LOCK, cancel, capabilities
 from advanced import Advanced, otlp_export
 from access import Access, deployment_status
+from passkeys import Passkeys
 
 LOCAL_ACCESS = Access(mode='local')
 
@@ -18,6 +19,7 @@ class Server(ThreadingHTTPServer):
 
     def __init__(self, address, access):
         self.access = access
+        self.passkeys = Passkeys(access)
         self.slots = threading.BoundedSemaphore(32)
         self.run_slots = threading.BoundedSemaphore(int(os.getenv('RELAY_MAX_RUNS', '2')))
         super().__init__(address, Handler)
@@ -39,9 +41,11 @@ class Server(ThreadingHTTPServer):
 class Handler(BaseHTTPRequestHandler):
     def log_message(self,*args): pass
 
-    def send_json(self,data,status=200):
+    def send_json(self,data,status=200,cookie=None):
         body=json.dumps(data,ensure_ascii=False).encode()
-        self.send_response(status);self.headers_for('application/json; charset=utf-8',len(body));self.end_headers();self.wfile.write(body)
+        self.send_response(status)
+        if cookie:self.send_header('Set-Cookie',cookie)
+        self.headers_for('application/json; charset=utf-8',len(body));self.end_headers();self.wfile.write(body)
 
     def headers_for(self,kind,length=None):
         self.send_header('Content-Type',kind)
@@ -57,7 +61,7 @@ class Handler(BaseHTTPRequestHandler):
 
     def guard(self,write=False):
         path=urlparse(self.path).path
-        public=path in ('/api/health','/api/auth','/api/login','/login','/login.js','/style.css','/refinement.css')
+        public=path in ('/api/health','/api/auth','/api/login','/login','/login.js','/style.css','/refinement.css','/passkeys.js','/identity.css','/api/passkeys/authentication/options','/api/passkeys/authentication/verify')
         self.access.guard(self.headers,self.server.server_port,write,public)
 
     def cookie_response(self,cookie):
@@ -66,16 +70,18 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_GET(self):
         try:
-            if urlparse(self.path).path in ('/', '/architecture') and self.access.mode=='pilot' and not self.access.authenticated(self.headers):
+            if urlparse(self.path).path in ('/', '/architecture', '/security') and self.access.mode=='pilot' and not self.access.authenticated(self.headers):
                 self.access.guard(self.headers,self.server.server_port,public=True)
-                destination='/login?next=architecture' if urlparse(self.path).path=='/architecture' else '/login'
+                target=urlparse(self.path).path.strip('/')
+                destination='/login?next='+target if target in ('architecture','security') else '/login'
                 self.send_response(303);self.send_header('Location',destination);self.headers_for('text/plain',0);self.end_headers();return
             self.guard()
             parsed=urlparse(self.path);path=parsed.path;query=parse_qs(parsed.query)
             parts=path.strip('/').split('/')
-            if path=='/api/auth':return self.send_json({'mode':self.access.mode,'authenticated':self.access.mode=='local' or self.access.authenticated(self.headers)})
+            if path=='/api/auth':return self.send_json({'mode':self.access.mode,'authenticated':self.access.mode=='local' or self.access.authenticated(self.headers),'passkeys_available':self.access.mode=='pilot'})
             if path=='/api/health':return self.send_json({'ok':True})
             with Store() as store:
+                if path=='/api/passkeys':return self.send_json(self.server.passkeys.list(store,self.headers))
                 if path=='/api/inventory':
                     from inventory import inventory
                     return self.send_json(inventory(store))
@@ -105,6 +111,7 @@ class Handler(BaseHTTPRequestHandler):
                 if path.startswith('/api/'):raise Problem('Endpoint not found',404)
             files={'/':'index.html','/app.js':'app.js','/advanced.js':'advanced.js','/frameworks.js':'frameworks.js','/catalog.js':'catalog.js','/style.css':'style.css','/refinement.css':'refinement.css','/login':'login.html','/login.js':'login.js'}
             files.update({'/guide.js':'guide.js','/guide.css':'guide.css','/architecture':'architecture.html','/architecture.js':'architecture.js','/architecture.css':'architecture.css'})
+            files.update({'/passkeys.js':'passkeys.js','/security':'security.html','/security.js':'security.js','/identity.css':'identity.css','/experience.css':'experience.css','/experience.js':'experience.js'})
             if path not in files:raise Problem('Not found',404)
             file=ROOT/'web'/files[path];body=file.read_bytes()
             self.send_response(200);self.headers_for(mimetypes.guess_type(file)[0]+'; charset=utf-8',len(body));self.end_headers();self.wfile.write(body)
@@ -131,7 +138,14 @@ class Handler(BaseHTTPRequestHandler):
             path=urlparse(self.path).path;parts=path.strip('/').split('/')
             if path=='/api/login':return self.cookie_response(self.access.login(body.get('token')))
             if path=='/api/logout':return self.cookie_response(self.access.logout(self.headers))
+            if path=='/api/passkeys/authentication/options':
+                value,cookie=self.server.passkeys.authentication_options(self.headers)
+                return self.send_json(value,cookie=cookie)
             with Store() as store:
+                if path=='/api/passkeys/authentication/verify':return self.cookie_response(self.server.passkeys.authenticate(store,self.headers,body))
+                if path=='/api/passkeys/registration/options':return self.send_json(self.server.passkeys.registration_options(store,self.headers,body))
+                if path=='/api/passkeys/registration/verify':return self.send_json(self.server.passkeys.register(store,self.headers,body))
+                if path=='/api/passkeys/remove':return self.send_json(self.server.passkeys.remove(store,self.headers,body))
                 if path=='/api/adapters':
                     from adapters.registry import set_enabled
                     return self.send_json(set_enabled(store,body.get('id'),body.get('enabled')))

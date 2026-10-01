@@ -72,6 +72,14 @@ class Store:
         self.db.execute('CREATE INDEX IF NOT EXISTS relay_events_cohort ON events(event_id,host,occurred_at)')
         self.db.executescript('''
           CREATE TABLE IF NOT EXISTS relay_adapters(id TEXT PRIMARY KEY, enabled INTEGER NOT NULL);
+          CREATE TABLE IF NOT EXISTS relay_auth_meta(key TEXT PRIMARY KEY,value TEXT NOT NULL);
+          CREATE TABLE IF NOT EXISTS relay_passkeys(
+            id TEXT PRIMARY KEY,public_key BLOB NOT NULL,sign_count INTEGER NOT NULL,
+            label TEXT NOT NULL,created_at TEXT NOT NULL,last_used_at TEXT,
+            device_type TEXT NOT NULL,backed_up INTEGER NOT NULL);
+          CREATE TABLE IF NOT EXISTS relay_auth_audit(
+            id INTEGER PRIMARY KEY AUTOINCREMENT,kind TEXT NOT NULL,credential_id TEXT,
+            created_at TEXT NOT NULL);
           CREATE TABLE IF NOT EXISTS relay_native_state(
             session_id TEXT PRIMARY KEY REFERENCES relay_sessions(id), runtime TEXT NOT NULL,
             context_after INTEGER NOT NULL, payload TEXT NOT NULL, updated_at TEXT NOT NULL);

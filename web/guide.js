@@ -51,6 +51,7 @@
     if(!state.capabilities||!state.caseId)throw Error('Wait for the evidence workspace to connect, then try again.');
     const step=steps[position];root.close();tab(step.area);dock.hidden=false;clearHighlight();
     if(step.settings){
+      document.dispatchEvent(new CustomEvent('relay:agent'));
       const runtime=$('runtime');runtime.value='simulator';runtime.dispatchEvent(new Event('change'));
       $('permission').value='read_only';$('max-turns').value='8';$('budget').value='1';$('output-tokens').value='2048';$('thinking').value='off';$('structured').checked=false;$('budget-ack').checked=false;
       document.querySelectorAll('#advanced-settings input[type=checkbox]').forEach(el=>el.checked=false);

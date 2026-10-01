@@ -16,7 +16,8 @@ class Access:
         self.token = token if token is not None else os.getenv('RELAY_OPERATOR_TOKEN', '')
         self.sessions = {}
         self.attempts = []
-        self.lock = threading.Lock()
+        self.recent = {}
+        self.lock = threading.RLock()
         if self.mode not in ('local', 'pilot'):
             raise ValueError('RELAY_MODE must be local or pilot')
         if self.mode == 'pilot':
@@ -62,16 +63,39 @@ class Access:
             self.attempts.append(now)
             if not isinstance(value, str) or not hmac.compare_digest(value.encode(), self.token.encode()):
                 raise Problem('Invalid operator token', 401)
+            return self.issue_session()
+
+    def issue_session(self):
+        """Only call after a verified token or WebAuthn authentication."""
+        with self.lock:
+            now = time.monotonic()
             self.sessions = {k: v for k, v in self.sessions.items() if v > now}
+            self.recent = {k: v for k, v in self.recent.items() if k in self.sessions}
             if len(self.sessions) >= 32:
                 raise Problem('Session limit reached. Sign out another browser or restart.', 429)
             sid = secrets.token_urlsafe(32)
             self.sessions[sid] = now+8*3600
+            self.recent[sid] = now
         return '__Host-relay='+sid+'; Path=/; Secure; HttpOnly; SameSite=Strict; Max-Age=28800'
+
+    def require_recent(self, headers):
+        with self.lock:
+            sid = self.session_id(headers)
+            if not self.authenticated(headers) or time.monotonic()-self.recent.get(sid, -10**12)>300:
+                raise Problem('Sign in again before managing passkeys (five-minute limit).', 403)
+            return sid
+
+    def throttle_passkey(self):
+        with self.lock:
+            now=time.monotonic()
+            self.attempts=[t for t in self.attempts if t>now-60]
+            if len(self.attempts)>=10:raise Problem('Too many sign-in attempts. Wait one minute.',429)
+            self.attempts.append(now)
 
     def logout(self, headers):
         with self.lock:
             self.sessions.pop(self.session_id(headers), None)
+            self.recent.pop(self.session_id(headers), None)
         return '__Host-relay=; Path=/; Secure; HttpOnly; SameSite=Strict; Max-Age=0'
 
 
@@ -80,7 +104,7 @@ def deployment_status(access):
         'mode': access.mode, 'target': 'Fly.io · single-machine, single-operator pilot',
         'production_ready': False,
         'gates': [
-            {'name': 'Operator login', 'status': 'configured' if access.mode == 'pilot' else 'local only', 'detail': 'Pilot: random operator token, expiring HttpOnly cookie, origin checks, sign-out and sign-in throttle. No user accounts or MFA.'},
+            {'name': 'Operator login', 'status': 'configured' if access.mode == 'pilot' else 'local only', 'detail': 'Single operator: verified WebAuthn passkeys with required user verification, or recovery token. Eight-hour HttpOnly sessions, exact-origin checks and throttling. Enrollment/removal requires a login within five minutes. Device enrollment acceptance is separate from automated tests. No team accounts or RBAC.'},
             {'name': 'HTTPS edge', 'status': 'template', 'detail': 'Fly force_https enabled in template. Validate certificate and proxy boundary after deployment.'},
             {'name': 'Persistent state', 'status': 'implemented', 'detail': 'SQLite + native workspaces on /data. One machine only. Do not attach independent database copies to replicas.'},
             {'name': 'Resource bounds', 'status': 'implemented', 'detail': 'Bounded HTTP workers and concurrent agent runs. No distributed scheduling or per-user quotas.'},

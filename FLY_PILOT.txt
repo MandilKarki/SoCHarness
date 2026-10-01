@@ -13,6 +13,8 @@ No dedicated IPv4, database server, Redis, object store or additional replica cr
 Existing ledgerline-karki and mandilos-mandil apps were not changed.
 
 FINAL SOURCE-ONLY IMAGE
+registry.fly.io/socharness-mandil@sha256:9638eebd09bb4ad61faaec791e0580ce7005510ae7d448e856aa8c25e0f6c3c3
+Previous rollback image (token login, before passkeys/workspace v2):
 registry.fly.io/socharness-mandil@sha256:fa325351e26ebaf4bc014919abd5103f865a835901b1a7a6ee0610aad484d585
 Deploy future source-only images with fly deploy --ha=false.
 Do not scale this SQLite pilot beyond one machine.
@@ -28,8 +30,18 @@ requests redirect through login using a fixed, allowlisted return destination.
 An offline HTML copy is also included in the GitHub repository under docs/.
 77 backend tests passed on Windows and Linux for this update. Browser checks
 covered navigation, safe replay configuration, atlas layout and CSP errors.
-Passkeys remain unimplemented. iPhone enrollment and server-side WebAuthn
-verification are a separate security change; current token login is unchanged.
+PASSKEY / WORKSPACE V2 UPDATE - 2026-10-01
+WebAuthn passkeys are implemented with required user verification. Existing token
+login remains recovery. Open /security, sign in, then add a passkey within five
+minutes and approve the system device prompt yourself. See AUTH_SECURITY.txt.
+Public keys and operator handle persist in SQLite; private keys/biometrics never
+enter Relay. Removing a key revokes all sessions. No team accounts or RBAC added.
+The new workspace has Investigate / Agent Lab / Operate navigation, light/dark
+themes, mobile navigation and an on-demand agent console. See DESIGN_NOTES.txt.
+88 backend tests pass on Windows and Linux, including eleven real-crypto WebAuthn
+test methods. Browser checks cover a 390px mobile layout, guide setup and a local
+read-only replay run with persisted evidence citations. Physical iPhone/Mac
+enrollment and cross-device login require user acceptance, not simulated success.
 
 LOGIN
 From the original local agent-ops-studio directory:
@@ -39,7 +51,8 @@ The token is stored as a Fly secret; the local copy in work/fly-operator-token.c
 is protected by Windows DPAPI for the originating Windows user and computer.
 It is deliberately excluded from Git, archives and images. A fresh Git checkout
 does not contain it. Use deliberate Fly-secret rotation if this local copy is lost.
-Login is shared single-operator access, NOT multi-user identity, RBAC or MFA.
+Login is single-operator access, NOT multi-user identity or RBAC. Passkeys require
+device user verification; the recovery token remains a separate sign-in method.
 Sessions expire after eight hours OR on process restart/idle stop.
 No model provider keys were installed and no paid model calls were made.
 OpenCode is disabled. Hermes is not bundled in the cloud image.
