@@ -6,6 +6,29 @@
 - **[First-time setup / recovery login](https://socharness-mandil.fly.dev/login?next=security)**
 - **[Add or manage passkeys](https://socharness-mandil.fly.dev/security)**
 - **[Architecture atlas](https://socharness-mandil.fly.dev/architecture)** (requires login)
+- **[SDK learning lab](https://socharness-mandil.fly.dev/#sdk-lab)** (requires login)
+
+### Learn an SDK through an investigation
+
+Open **Agent lab → SDK learning lab**. Start with OpenAI's ten-step illustrated
+lesson: session → context → runner → guarded model request → streaming → tools →
+permissions → continuation → structured findings → audit. Play, pause, step and
+check your understanding without making a model call. Reduced-motion devices
+use manual steps. This is an authored illustration, not simulated live evidence.
+
+Switch to **Session evidence**, choose a case and matching SDK session, and follow
+the actual received events. Active runs stream into this view; old events replay
+without spending credit. Missing stages are not filled in. Consecutive text
+deltas are collapsed for readability; the full trace/export retains them.
+
+All eleven adapters have a selectable versioned capability atlas, source/test
+links and explicit native/shared/partial/gap labels. The deep introductory lesson
+is OpenAI-first; other SDKs share its architecture with their own inventory
+mappings. This is **not every upstream API**, and a mapped capability is not
+automatically live-tested. Native handoffs, voice, external MCP, provider tracing
+and other gaps remain visible, not silently enabled. Configure/Draft never sends
+a model request; review and choose **Send** yourself. Existing October budget,
+authentication and runtime restrictions are unchanged.
 
 Use this exact HTTPS hostname on every device. A localhost address is only for
 development; cloning this repository does not give access to the hosted account.

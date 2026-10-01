@@ -56,6 +56,7 @@ import {
 import { Settings } from "./components/Settings";
 import { Catalog } from "./components/Catalog";
 import { Lab } from "./components/Lab";
+import { SdkLab } from "./components/SdkLab";
 const nav: {
   group: string;
   items: { id: View; label: string; icon: typeof Activity }[];
@@ -72,6 +73,7 @@ const nav: {
   {
     group: "Agent lab",
     items: [
+      { id: "sdk-lab", label: "SDK learning lab", icon: Waypoints },
       { id: "lab", label: "Investigation lab", icon: FlaskConical },
       { id: "frameworks", label: "Agent runtimes", icon: Layers3 },
       { id: "matrix", label: "Capability matrix", icon: Grid2X2 },
@@ -84,6 +86,10 @@ const nav: {
   },
 ];
 const viewInfo: Record<View, [string, string]> = {
+  "sdk-lab": [
+    "SDK learning lab",
+    "Learn the architecture. Follow the execution. Inspect the evidence.",
+  ],
   evidence: [
     "Investigations",
     "Evidence first. Every agent action accountable.",
@@ -159,7 +165,13 @@ export function App() {
     >(null),
     [value, setValue] = useState("");
   const current = w.cases.find((c) => c.id === w.caseId),
-    global = ["frameworks", "matrix", "tools", "deployment"].includes(w.view),
+    global = [
+      "sdk-lab",
+      "frameworks",
+      "matrix",
+      "tools",
+      "deployment",
+    ].includes(w.view),
     pending =
       w.data?.approvals.filter((a) => a.status === "pending").length || 0;
   const navigate = (view: View) => {
@@ -523,7 +535,9 @@ export function App() {
                     </>
                   )}
                   <div className="view-content" key={global ? w.view : "case"}>
-                    {global ? (
+                    {w.view === "sdk-lab" ? (
+                      <SdkLab w={w} configure={setSettings} draft={draft} />
+                    ) : global ? (
                       <Catalog
                         key={w.view}
                         w={w}

@@ -32,7 +32,9 @@ export function useWorkspace() {
     [search, setSearch] = useState(""),
     [loading, setLoading] = useState(true),
     [evidenceLoading, setEvidenceLoading] = useState(false);
-  const [view, setView] = useState<View>("evidence"),
+  const [view, setView] = useState<View>(() =>
+      window.location.hash === "#sdk-lab" ? "sdk-lab" : "evidence",
+    ),
     [busy, setBusy] = useState(false),
     [notice, setNotice] = useState(""),
     [runStatus, setRunStatus] = useState(""),

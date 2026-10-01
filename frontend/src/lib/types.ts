@@ -190,6 +190,7 @@ export type View =
   | "approvals"
   | "sessions"
   | "lab"
+  | "sdk-lab"
   | "frameworks"
   | "matrix"
   | "tools"
