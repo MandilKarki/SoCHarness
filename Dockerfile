@@ -26,4 +26,4 @@ USER relay
 ENV PYTHONUNBUFFERED=1 PYTHONDONTWRITEBYTECODE=1 RELAY_MODE=pilot RELAY_BIND=0.0.0.0 RELAY_DATA_DIR=/data RELAY_MAX_RUNS=2 PORT=8787
 ENV RELAY_GOOGLE_ADK_PYTHON=/opt/relay-extended/bin/python RELAY_MICROSOFT_PYTHON=/opt/relay-extended/bin/python RELAY_OPENHANDS_PYTHON=/opt/relay-extended/bin/python
 EXPOSE 8787
-CMD ["python", "services/app.py"]
+CMD ["python", "services/bootstrap.py"]

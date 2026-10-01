@@ -1,0 +1,71 @@
+SOCHarness / RELAY — FLY PILOT — 2026-10-01
+
+URL: https://socharness-mandil.fly.dev/
+Organization: personal (Mandil Karki)
+App: socharness-mandil
+Machine: 807339f6475602
+Region: Toronto (yyz)
+Resources: exactly one shared-CPU machine, one vCPU, 2048 MB RAM;
+one encrypted 1 GB volume vol_vxm97d6y35lgm6j4.
+Auto-stop: stop when idle; HTTP auto-start enabled; minimum running machines 0.
+Daily volume snapshots enabled, five-day retention.
+No dedicated IPv4, database server, Redis, object store or additional replica created.
+Existing ledgerline-karki and mandilos-mandil apps were not changed.
+
+FINAL SOURCE-ONLY IMAGE
+registry.fly.io/socharness-mandil@sha256:e42b71da240333ee1da4772b6fb14341f27e0f34093819fd12b3c05ccb1776d7
+Deploy future source-only images with fly deploy --ha=false.
+Do not scale this SQLite pilot beyond one machine.
+
+LOGIN
+From the original local agent-ops-studio directory:
+  ./operator-login.ps1 -CopyToken
+Paste into the HTTPS login, then clear the clipboard. Do not paste in chat.
+The token is stored as a Fly secret; the local copy in work/fly-operator-token.clixml
+is protected by Windows DPAPI for the originating Windows user and computer.
+It is deliberately excluded from Git, archives and images. A fresh Git checkout
+does not contain it. Use deliberate Fly-secret rotation if this local copy is lost.
+Login is shared single-operator access, NOT multi-user identity, RBAC or MFA.
+Sessions expire after eight hours OR on process restart/idle stop.
+No model provider keys were installed and no paid model calls were made.
+OpenCode is disabled. Hermes is not bundled in the cloud image.
+
+EVIDENCE / INITIALIZATION
+155,350 benchmark records, 16 observed hosts, seven review cohorts, zero imported
+sessions/conversations. These are benchmark cohorts, not confirmed incidents.
+Ordered evidence SHA256:
+23ef514eeef71a8c00a6a015edee7676d36bc5cd263f5864f0f28dbfb068f3f8
+The exporter copied ONLY events to a fresh database and refused existing targets.
+The initializer verified every ordered row, count and SQLite integrity before
+publishing the new database. Runtime owner is UID 10001; database mode 0600.
+
+Private SSH timed out over both UDP and the user-approved WebSocket transport.
+Only this deployment's waiting CLI and its own verified lease were cleared.
+Provisioning instead used an app-private benchmark initialization image:
+registry.fly.io/socharness-mandil@sha256:a4b09fd521d5ebfd6618c60882c93747f5feb9a03ff30567248fbaf7bdeb5abf
+This image/tag remains in the private Fly registry; it contains approved benchmark
+data but no conversations or secrets. The active source-only image excludes it.
+No public upload endpoint was opened. Fly's authenticated HTTPS machine-management
+API was used for diagnostics. Local Fly CLI WebSocket tunneling remains enabled.
+
+VERIFIED
+77 backend tests passed on Windows and in a network-disabled Linux container.
+The previous SDK worker/Node acceptance remains documented in SDK_COVERAGE.md.
+New evidence-export test confirms no session tables copied and overwrite refusal.
+Live HTTPS health, redirect to login, invalid-token rejection, successful login,
+anonymous API denial, cross-origin POST rejection and logout revocation passed.
+Those checks passed both before and after replacement with the source-only image.
+The second acceptance confirmed unchanged records/cases and zero local sessions.
+A controlled stop followed by HTTP autostart passed the same authentication and
+evidence-count checks, confirming persistent data across a cold start.
+Fly reports one machine with its health check passing.
+Desktop 1440px and mobile 390px UI checks found no page-level horizontal overflow.
+Framework search was exercised against the real registry; no browser errors observed.
+
+LIMITS
+A protected pilot, not a production or multi-tenant service. Off-machine encrypted
+backup scheduling/restore drill, multi-user auth, distributed workers and live model
+acceptance remain outstanding. Fly volume snapshots are not a complete backup plan.
+All eleven SDK adapters are registered, not all upstream capabilities implemented.
+Autostop reduces compute use but does not eliminate volume/rootfs/snapshot/egress charges.
+Review usage at https://fly.io/dashboard/mandil-karki/billing/cost-explorer.

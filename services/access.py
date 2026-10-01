@@ -85,7 +85,7 @@ def deployment_status(access):
             {'name': 'Persistent state', 'status': 'implemented', 'detail': 'SQLite + native workspaces on /data. One machine only. Do not attach independent database copies to replicas.'},
             {'name': 'Resource bounds', 'status': 'implemented', 'detail': 'Bounded HTTP workers and concurrent agent runs. No distributed scheduling or per-user quotas.'},
             {'name': 'Backup / restore', 'status': 'partial', 'detail': 'SQLite online backup utility. Off-machine encrypted retention and restore drill required before pilot acceptance.'},
-            {'name': 'Cloud acceptance', 'status': 'pending', 'detail': 'This checkpoint built on Linux and passed 62 Python contract tests. Fly HTTPS, volume/restart persistence and live model acceptance remain unverified.'},
+            {'name': 'Cloud acceptance', 'status': 'pending', 'detail': 'Linux container and offline SDK contracts verified. Check the deployment checkpoint for HTTPS and volume/restart acceptance. Live model acceptance remains separate.'},
             {'name': 'Provider verification', 'status': 'pending', 'detail': 'Contract tests are not paid end-to-end model verification. Configure secrets and validate each enabled adapter.'},
             {'name': 'Supabase Auth + RBAC', 'status': 'planned', 'detail': 'Next phase: verified JWT issuer/audience/signature, membership roles, tenant-scoped records and RLS. Not implemented.'},
             {'name': 'Horizontal scaling', 'status': 'blocked', 'detail': 'Requires PostgreSQL migration, durable job queue, worker leases, shared artifacts and idempotent recovery. Do not scale this pilot beyond one machine.'},

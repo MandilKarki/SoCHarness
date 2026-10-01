@@ -1,10 +1,12 @@
 RELAY DEPLOYMENT CHECKPOINT — 2026-10-01
 
-Status: prepared single-operator pilot configuration, not a production deployment.
-No Fly application, paid resources, Supabase project, public URL or secrets were created.
+Status: protected single-operator Fly pilot deployed; NOT a production deployment.
+Current URL, resource IDs, image digest, login instructions, verified acceptance and
+remaining limits are in FLY_PILOT.txt. One approved billable machine and volume exist.
+No Supabase project, paid provider keys or extra services were created.
 
 VERIFIED LOCALLY
-Docker Linux image relay-isoc:extended-sdks built successfully. All 76 backend tests and
+Docker Linux images built successfully. All 77 backend tests and
 six Google/Microsoft/OpenHands SDK tests passed on Windows and inside a network-disabled
 Linux container. Eight Node SDK tests passed on both platforms (Linux test code mounted
 read-only). Two Hermes SDK tests passed on Windows; Linux Hermes acceptance is pending.
@@ -13,9 +15,9 @@ The image is configured for UID 10001 and includes the three extended Python 3.1
 in /opt/relay-extended. Hermes is NOT included: it requires a separately provisioned
 Python 3.14 interpreter and the pinned editable official source checkout. See
 workers/python-bridge/README.md. Eleven SDK adapters are registered, not full parity.
-Fly TOML syntax and local invariants parsed successfully; Fly CLI account validation is
-blocked by missing login. Cloud health, TLS, volume persistence and paid provider runs
-remain acceptance requirements. These are engineering checks, not a full security audit.
+Fly account, TLS, protected login, origin checks and volume persistence across redeploy
+were verified; see FLY_PILOT.txt. Live paid provider runs remain unverified.
+These are engineering checks, not a full security audit.
 
 1. PILOT ARCHITECTURE
 Fly HTTPS edge -> one non-root Relay container -> bounded local SDK subprocesses.
@@ -30,9 +32,10 @@ Global sign-in throttle: ten attempts/minute. Put additional abuse controls at t
 The HTTP listener must remain behind the TLS proxy; never expose port 8787 directly.
 
 2. BEFORE PROVISIONING (requires operator choices and approval)
-Choose a unique Fly app name, region, billing budget and permitted corpus. Replace all
-relay-isoc-replace-me values in fly.toml (app, origin, health Host). No accounts inferred.
-Create one app and one volume; do not run fly deploy against the placeholder config.
+For a DIFFERENT deployment, choose a unique app name, region, budget and permitted corpus.
+The checked-in fly.toml now targets the existing socharness-mandil pilot; do not reuse
+that name or origin for another operator. Do not accidentally overwrite the pilot.
+Create one app and one volume only for a new environment; do not create pilot duplicates.
 Configure RELAY_OPERATOR_TOKEN using Fly secrets (random 32+ characters). Never commit it
 or put it in a URL, Docker ARG or browser storage. Set only required provider secrets.
 Fly documentation: https://fly.io/docs/reference/configuration/

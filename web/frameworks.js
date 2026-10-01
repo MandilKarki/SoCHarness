@@ -25,6 +25,13 @@ const frameworkUI=(()=>{
     state.capabilities.runtimes=adapters;
     const root=$('framework-content');root.replaceChildren();
     root.append(text('p','Adapters are installed locally; credentials and live validation are separate steps. Shared memory, skills and reports use Relay tools—not identical native features in every SDK.','framework-intro'));
+    const toolbar=text('div','','framework-toolbar'),query=document.createElement('input'),filter=document.createElement('select'),count=text('span','','framework-result-count');
+    query.type='search';query.placeholder='Find an SDK or capability…';query.setAttribute('aria-label','Search agent frameworks');
+    filter.setAttribute('aria-label','Framework setup filter');
+    for(const [value,label] of [['all','All runtimes'],['ready','Ready to configure'],['setup','Setup needed'],['disabled','Disabled']]){const option=text('option',label);option.value=value;filter.append(option);}
+    toolbar.append(query,filter,count);root.append(toolbar);const entries=[];
+    function applyFilter(){let visible=0;for(const {adapter,card} of entries){const matches=(adapter.name+' '+adapter.features.join(' ')).toLowerCase().includes(query.value.toLowerCase().trim())&&(filter.value==='all'||filter.value==='ready'&&adapter.available||filter.value==='setup'&&adapter.enabled&&!adapter.available||filter.value==='disabled'&&!adapter.enabled);card.hidden=!matches;if(matches)visible++;}count.textContent=visible+' / '+entries.length+' runtimes';}
+    query.oninput=applyFilter;filter.onchange=applyFilter;
     for(const a of adapters){
       const card=text('section','','framework-card'),head=text('div','','framework-heading');
       const badge=text('span',a.available?'Ready to configure':a.enabled?'Setup needed':'Disabled','framework-status'+(a.available?' ready':''));
@@ -46,7 +53,9 @@ const frameworkUI=(()=>{
       }));
       const configure=button('Configure session →',async()=>{setupSettings();$('runtime').value=a.id;selection();await openSettings();},'primary');
       configure.disabled=!a.available;actions.append(configure);card.append(actions);root.append(card);
+      entries.push({adapter:a,card});
     }
+    applyFilter();
   }
   $('framework-refresh').onclick=()=>safe(async()=>{await refresh();setupSettings();toast('Dependency and configuration checks refreshed. No model call made.');});
   return {refresh,selection};

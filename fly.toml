@@ -1,6 +1,6 @@
-# TEMPLATE: choose your own unique app name and matching HTTPS origin before deploying.
-app = "relay-isoc-replace-me"
-primary_region = "sea"
+# Protected single-operator pilot. Never scale SQLite across independent Machines.
+app = "socharness-mandil"
+primary_region = "yyz"
 kill_signal = "SIGTERM"
 kill_timeout = "30s"
 
@@ -9,9 +9,10 @@ kill_timeout = "30s"
 
 [env]
   RELAY_MODE = "pilot"
-  RELAY_PUBLIC_ORIGIN = "https://relay-isoc-replace-me.fly.dev"
+  RELAY_PUBLIC_ORIGIN = "https://socharness-mandil.fly.dev"
   RELAY_DATA_DIR = "/data"
-  RELAY_MAX_RUNS = "2"
+  RELAY_MAX_RUNS = "1"
+  RELAY_BOOTSTRAP_WAIT = "0"
   PORT = "8787"
 
 [[mounts]]
@@ -21,9 +22,9 @@ kill_timeout = "30s"
 [http_service]
   internal_port = 8787
   force_https = true
-  auto_stop_machines = "off"
+  auto_stop_machines = "stop"
   auto_start_machines = true
-  min_machines_running = 1
+  min_machines_running = 0
 
   [http_service.concurrency]
     type = "requests"
@@ -37,9 +38,9 @@ kill_timeout = "30s"
     method = "GET"
     path = "/api/health"
     [http_service.checks.headers]
-      Host = "relay-isoc-replace-me.fly.dev"
+      Host = "socharness-mandil.fly.dev"
 
 [[vm]]
   cpu_kind = "shared"
-  cpus = 2
+  cpus = 1
   memory = "2gb"

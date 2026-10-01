@@ -42,7 +42,7 @@ From this directory, run:
 python services/app.py
 ```
 
-Open http://127.0.0.1:8787/. Existing imported telemetry remains in work/telemetry-lab.sqlite3. No database server is needed. This build deliberately binds to loopback and is not a production/multi-user server.
+Open http://127.0.0.1:8787/. Existing imported telemetry remains in work/telemetry-lab.sqlite3. No database server is needed. Local mode binds to loopback. The protected Fly pilot is at https://socharness-mandil.fly.dev/; see FLY_PILOT.txt for login and acceptance. Neither mode is a production/multi-user server.
 
 ## Claude
 
