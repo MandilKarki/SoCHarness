@@ -18,8 +18,10 @@ The existing operator token remains a recovery method. The Windows operator-logi
 helper can copy its locally encrypted DPAPI copy; never paste it into chat or Git.
 Retain a secure copy separately. No email recovery or token display is provided.
 After token rotation, registered passkeys remain authorized unless explicitly removed.
-To revoke a device: Account & security -> Remove, after signing in within five minutes.
-Removal revokes every browser session and pending ceremony. The user must separately
+To revoke a credential: Account & security -> Remove, after signing in within five minutes.
+A synced passkey may be shared by several devices; removal revokes that credential
+on all of them, not just one physical device. Removal also revokes every browser
+session and pending ceremony. The user must separately
 delete the obsolete credential from Apple Passwords or their other authenticator.
 Keep at least one usable passkey or the recovery token before removing credentials.
 

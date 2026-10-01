@@ -42,6 +42,11 @@ themes, mobile navigation and an on-demand agent console. See DESIGN_NOTES.txt.
 test methods. Browser checks cover a 390px mobile layout, guide setup and a local
 read-only replay run with persisted evidence citations. Physical iPhone/Mac
 enrollment and cross-device login require user acceptance, not simulated success.
+Live post-deploy acceptance passed: HTTPS health, token login/logout, protected
+passkey management, anonymous enrollment denial, cross-origin denial and all new
+UI assets. Evidence remains 155,350 records / seven cases / zero cloud sessions.
+The deployed login/recovery UI was checked at 390px with passkey support available
+and no browser console errors. No production passkey was registered by automation.
 
 LOGIN
 From the original local agent-ops-studio directory:

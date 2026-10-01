@@ -33,6 +33,9 @@ try {
     Expect (Request GET '/identity.css') 200
     Expect (Request POST '/api/passkeys/registration/options' @{}) 401
     Expect (Request POST '/api/passkeys/authentication/options' @{} 'https://untrusted.invalid') 403
+    $options=Request POST '/api/passkeys/authentication/options' @{};Expect $options 200
+    $publicKey=($options.text|ConvertFrom-Json).publicKey
+    if($publicKey.rpId -ne 'socharness-mandil.fly.dev' -or $publicKey.userVerification -ne 'required'){throw 'Unexpected passkey RP or verification policy'}
     Expect (Request POST '/api/login' @{token='invalid-test-token'}) 401
     $secure=Import-Clixml -LiteralPath (Join-Path $PSScriptRoot 'work/fly-operator-token.clixml')
     $pointer=[Runtime.InteropServices.Marshal]::SecureStringToBSTR($secure)
