@@ -1,0 +1,84 @@
+2026-10-01 — Native OpenAI SDK experiments, visualization first
+
+Scope: extend the existing Source > Agent > Loop > Result workbench. No new
+SDKs, no authentication change, no new services or machines. Python Agents SDK
+0.22.3; existing approved model and persistent October $5 ledger retained.
+
+Seven selectable experiments:
+- Core loop: one analyst, query tool, structured result.
+- Multiple tools: query_case_evidence then get_event.
+- Manager + specialist: native Agent.as_tool(on_stream=...), independent nested
+  input, specialist returns findings, manager owns the final answer.
+- Handoff: native handoff(), shared conversation, persisted last_agent ownership.
+- Guardrails: blocking native input guardrail and output citation-ID tripwire.
+- Human approval: needs_approval, interruptions, RunState.approve/reject and resume.
+- SDK session memory: Session protocol adapter stages SDK history and commits
+  successful continuation to Relay storage. Failed runs do not replace it.
+
+Graphs distinguish configured paths from observed receipts. Free replay follows
+recorded events; it does not regenerate model calls or expose private reasoning.
+Session overlay compares retained, model-request and committed item counts.
+These are not token counts or model context-window capacities. Manager child
+context is distinct from manager context; tool outputs convey findings back.
+Phone event lists are collapsed by default, with direct graph-to-receipt access.
+
+Safety: all experiments are read-only and case scoped. Every nested model call
+and approval resume shares one call cap (4 manager, 3 other experiments), the
+same persistent reserve/settle ledger, 1000 output tokens/call and zero automatic
+provider retries. Native approval waits expire after 90 seconds. No shell,
+sensor controls, external MCP or provider trace export was enabled.
+
+Verification:
+- 140 backend test executions passed, including imported native test cases.
+- 59 frontend tests passed; production TypeScript/Vite build published.
+- OpenAI-specific suite after the query-contract correction: 20 tests passed.
+- 18 native tests passed inside the corrected release image, network disabled;
+  baked application modules precede the read-only test-fixture mount on PYTHONPATH.
+- Browser 390x844: manager round trip; native approval pauses, exact arguments,
+  approve then complete; no horizontal overflow (document/client width 375).
+- Browser 1280x900: manager topology, session overlay, free replay and return to
+  latest state; no overflow (document/client width 1265).
+- Browser QA used the explicitly labeled fake-model/synthetic-data fixture with
+  the real SDK Runner; no API key or provider traffic. Screenshots remain in work/.
+- Authenticated deployed checks passed: anonymous and cross-origin rejection,
+  Firebase configuration, recovery login/logout, passkeys and existing budget.
+
+Live audit (not hidden or counted as an evidence-success test):
+Initial live manager run ses_481474b73fe3443c9d61bc7e0d17ab09 completed four model
+calls, one delegation and one return, but the specialist used search=case:IR-2841.
+That literal filter returned zero records. Acceptance correctly rejected the
+empty evidence result. Estimated settled cost: $0.000957. Saved receipts remain.
+The fix clarifies the literal search schema and specifies limit=3, search="" in
+the specialist instructions; the server already supplies the case boundary.
+
+Limits: not full SDK coverage. Sandbox agents/isolated compute, external MCP,
+provider trace export, voice/realtime, cross-worker durable approvals and hosted
+tools remain disabled. Input guardrail is a narrow word-rule demonstration;
+output guardrail verifies citation provenance, not truth. Output guards do not
+undo model charges or remove captured public response receipts. Keep a phone
+tab foregrounded during streaming; there is no durable background-job service.
+
+Build assets:
+JS  F69A5FFA716C129225441D2DF711DDF01608B5768F389A9D959F388BA0D85E71
+CSS 9E98030F07DD14173BDD2509A1C484AE9B1D1CF0C4CB76E620CF324512589B08
+Implementation commits: 1c5cf83; query-contract correction: 22bb904.
+Final corrected deployment and paid acceptance: PASSED.
+Image: registry.fly.io/socharness-mandil@sha256:b51a9d9799f82adb02b74f8338c59eabf818baba4278ebbaf67dfee53b6a4617
+Existing Fly machine 807339f6475602 updated successfully; no running investigation
+at the pre-deploy check. DNS, authenticated security checks and exact deployed
+JS/CSS hash comparisons passed after deployment. No identity or budget reset.
+
+Corrected live run: ses_e068389c0cd04d9a9742b2541050d0b3.
+Four real model requests/responses, four settled receipts, one delegation,
+one specialist return, one evidence query, record IDs 195/1862/2249,
+two carried tool outputs, one typed final result, no run failures.
+Run settled estimate $0.002470. Both live tests together $0.003427 (not an invoice).
+After verification: accounted $0.113465, spendable remaining $4.386535.
+The pre-existing unresolved $0.10 reservation remains; none was cleared/refunded.
+Expiry remains October 31, 2026 at 23:59:59 Pacific.
+
+Open https://socharness-mandil.fly.dev/ and use Session history to open the newest
+Manager + specialist run. Replay and inspection do not make new model calls.
+Select a different Experiment and Run investigation for a fresh bounded run.
+Source > Guardrails > Try a blocked request demonstrates the zero-call tripwire;
+the normal guardrail prompt demonstrates the input/output checks around a run.
