@@ -1,0 +1,316 @@
+.o-workbench {
+  padding: 18px;
+  background: #12181f;
+  border: 1px solid #38475c;
+  border-radius: 10px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.o-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+.o-header h3 {
+  font-size: 16px;
+}
+.o-header .h-secondary {
+  font-size: 11px !important;
+  white-space: nowrap;
+  padding: 8px 11px;
+  min-height: 38px;
+}
+.o-map {
+  width: 100%;
+  display: block;
+  overflow: visible;
+}
+.o-mobile {
+  display: none;
+}
+.o-edge {
+  fill: none;
+  stroke: #4b586b;
+  stroke-width: 1.5;
+}
+.o-return {
+  fill: none;
+  stroke: #56677d;
+  stroke-width: 1.5;
+  stroke-dasharray: 4 4;
+}
+.o-observed {
+  stroke: #aac6ff;
+  stroke-dasharray: none;
+}
+.o-arrow {
+  fill: #8095b3;
+}
+.o-edge-label {
+  text-anchor: middle;
+  fill: #93a7c2;
+  font-size: 12px;
+}
+.o-node {
+  cursor: pointer;
+  outline: none;
+}
+.o-node rect {
+  fill: #1b222c;
+  stroke: #425066;
+  stroke-width: 1.4;
+}
+.o-node[aria-disabled="true"] {
+  cursor: default;
+}
+.o-node.o-seen rect {
+  stroke: #6987b4;
+  fill: #1e2a3b;
+}
+.o-node.o-selected rect {
+  stroke: #c0d5ff;
+  stroke-width: 2.5;
+  fill: #2c4061;
+}
+.o-node.o-blocked rect {
+  stroke: #e3ab91;
+  fill: #3d2a29;
+}
+.o-node:focus-visible rect {
+  stroke: #fff;
+  stroke-width: 3;
+}
+.o-node text {
+  text-anchor: middle;
+  pointer-events: none;
+}
+.o-node-title {
+  fill: #e6edfa;
+  font-size: 14px;
+  font-weight: 500;
+}
+.o-node-detail {
+  fill: #a4b1c6;
+  font-size: 10px;
+}
+.o-node-state {
+  fill: #adc8f8;
+  font-size: 10px;
+}
+.o-api {
+  padding: 8px 10px;
+  background: #202a38;
+  border-radius: 5px;
+  font:
+    11px/1.7 ui-monospace,
+    monospace;
+  color: #bed2f5;
+  overflow-wrap: anywhere;
+}
+.o-session {
+  border: 1px dashed #576e8d;
+  background: #192536;
+  padding: 14px;
+  border-radius: 7px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+.o-session small {
+  display: block;
+  font-size: 10px;
+}
+.o-session strong {
+  font-size: 13px;
+  font-weight: 500;
+}
+.o-session p {
+  grid-column: 1/-1;
+  font-size: 11px;
+  overflow-wrap: anywhere;
+}
+.o-replay {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex-wrap: wrap;
+}
+.o-replay button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  min-height: 36px;
+  min-width: 36px;
+  background: #202a37;
+  border: 1px solid #38475e;
+  border-radius: 6px;
+  padding: 7px;
+  color: #c7d9f8;
+  font-size: 11px;
+}
+.o-replay span {
+  font-size: 11px;
+  color: #8fa3bf;
+  margin-left: auto;
+}
+.h-experiment {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 20px;
+  padding: 13px 16px;
+  border: 1px solid #343f50;
+  border-radius: 9px;
+  background: #171d25;
+}
+.h-experiment label {
+  white-space: normal;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  flex: 0 1 280px;
+  margin: 0;
+}
+.h-experiment select {
+  max-width: 310px;
+}
+.h-experiment .h-hint {
+  margin-left: auto;
+  max-width: 400px;
+}
+.h-approval {
+  border: 1px solid #ab8a58;
+  border-radius: 8px;
+  padding: 18px;
+  background: #2e281d;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.h-approval h3 {
+  color: #f1d3a2;
+}
+.h-approval .h-button-row > button {
+  flex: 1;
+}
+.h-guard-options {
+  display: flex;
+  gap: 9px;
+  flex-wrap: wrap;
+}
+.h-guard-options button {
+  min-height: 44px;
+}
+.h-guard-options button[aria-pressed="true"] {
+  border-color: #a9c6ff;
+  color: #bdd2f8;
+  background: #24344c;
+}
+@media (max-width: 650px) {
+  .o-desktop {
+    display: none;
+  }
+  .o-mobile {
+    display: block;
+    max-width: 360px;
+    align-self: center;
+  }
+  .o-workbench {
+    padding: 13px;
+  }
+  .o-header {
+    align-items: flex-start;
+  }
+  .o-header h3 {
+    font-size: 14px;
+  }
+  .o-header .h-secondary {
+    font-size: 10px !important;
+    padding: 6px;
+    white-space: normal;
+    min-height: 44px;
+  }
+  .o-session {
+    grid-template-columns: 1fr;
+  }
+  .o-session > span {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .o-replay button {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  .h-experiment {
+    display: block;
+    padding: 13px;
+  }
+  .h-experiment select {
+    max-width: none;
+    margin-top: 7px;
+  }
+  .h-experiment .h-hint {
+    margin-top: 8px;
+  }
+  .o-node-title {
+    font-size: 14px;
+  }
+}
+.o-current {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  text-align: left;
+  background: #1c2838;
+  border: 1px solid #455e80;
+  border-radius: 7px;
+  padding: 14px;
+  color: #dce8fc;
+}
+.o-current small {
+  color: #96afcf;
+  font-size: 10px;
+}
+.o-current strong {
+  font-size: 13px;
+  font-weight: 500;
+}
+.o-current span {
+  font-size: 12px;
+  line-height: 1.6;
+  color: #b6c5da;
+}
+.h-experiment p {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.7;
+}
+.h-experiment p small {
+  display: block;
+  color: #9aa9bf;
+  font-size: 10px;
+}
+.h-approval > div {
+  display: flex;
+  gap: 10px;
+}
+.h-guard-options small {
+  flex-basis: 100%;
+  font-size: 11px;
+}
+.h-event-list {
+  width: 100%;
+  min-width: 0;
+}
+.h-event-list > summary {
+  font-size: 12px;
+}
+.h-event-list .h-timeline {
+  margin-top: 12px;
+}

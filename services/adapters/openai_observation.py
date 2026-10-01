@@ -48,7 +48,7 @@ def snapshot(value):
     return result
 
 
-def observe_model(delegate, engine, model_name):
+def observe_model(delegate, engine, model_name, agent_name='Relay SOC analyst', counter=None):
     from agents import Model
     class ObservedModel(Model):
         def __init__(self): self.calls=0
@@ -56,18 +56,19 @@ def observe_model(delegate, engine, model_name):
             return await delegate.get_response(*args,**kwargs)
         async def stream_response(self,system_instructions,input,model_settings,tools,output_schema,handoffs,tracing,**kwargs):
             self.calls+=1
-            call=self.calls
-            engine.record('model.request', {'call':call,'model':model_name,
+            call=counter['calls'] if counter is not None else self.calls
+            engine.record('model.request', {'call':call,'model':model_name,'agent':agent_name,
                 'instructions':snapshot(system_instructions),'input':snapshot(input),
                 'input_items':len(input) if isinstance(input,list) else 1,
                 'tools':[{'name':t.name,'description':t.description,'schema':t.params_json_schema} for t in tools if hasattr(t,'params_json_schema')],
+                'handoffs':[{'name':h.tool_name,'description':h.tool_description,'schema':h.input_json_schema} for h in handoffs],
                 'settings':{'max_output_tokens':model_settings.max_tokens,'parallel_tool_calls':model_settings.parallel_tool_calls,'store':model_settings.store},
                 'capture':'Public context excerpt, up to 32 items / 24k characters; individual strings capped at 6k. Reasoning and transport excluded.'})
             async for event in delegate.stream_response(system_instructions=system_instructions,input=input,model_settings=model_settings,
                     tools=tools,output_schema=output_schema,handoffs=handoffs,tracing=tracing,**kwargs):
                 if event.type=='response.completed':
                     response=event.response;usage=response.usage
-                    engine.record('model.response',{'call':call,'response_id':response.id,
+                    engine.record('model.response',{'call':call,'response_id':response.id,'agent':agent_name,
                         'output':snapshot(response.output),'status':response.status,
                         'usage':{'input_tokens':getattr(usage,'input_tokens',None),'output_tokens':getattr(usage,'output_tokens',None)},
                         'capture':'Public output only; private reasoning omitted.'})

@@ -10,11 +10,107 @@ export function eventGuide(
 ): { title: string; owner: string; meaning: string; code: string } | null {
   const p = event.payload;
   const guides: Record<string, [string, string, string, string]> = {
+    "agent.started": [
+      String(p.agent) + " active",
+      "SDK",
+      "This agent is entering the runner. Agent activation does not itself prove a model call occurred.",
+      "RunHooks.on_agent_start(context, agent)",
+    ],
+    "agent.finished": [
+      String(p.agent) + " finished",
+      "SDK",
+      "This agent produced an output. A specialist output may return to a manager rather than to the user.",
+      "RunHooks.on_agent_end(context, agent, output)",
+    ],
+    "agent.delegated": [
+      "Manager delegates to specialist",
+      "SDK",
+      "The specialist runs as a tool with its own input. The manager keeps responsibility for the final answer.",
+      "specialist.as_tool(on_stream=..., max_turns=2)",
+    ],
+    "agent.returned": [
+      "Specialist returns to manager",
+      "SDK",
+      "The specialist's answer becomes a tool result in the manager's context. The manager can now synthesize its final answer.",
+      "agent-as-tool result → manager function_call_output",
+    ],
+    "agent.handoff": [
+      "Control transfers to specialist",
+      "SDK",
+      "Unlike delegation, this transfers the active agent. The specialist continues the conversation and owns the final answer.",
+      "handoff(specialist) → RunHooks.on_handoff(...)",
+    ],
+    "sdk.tool.started": [
+      String(p.agent) + " invokes " + String(p.tool),
+      "SDK",
+      "The SDK is invoking this agent's tool. Application permission and case checks still apply inside the callback.",
+      "RunHooks.on_tool_start(context, agent, tool)",
+    ],
+    "sdk.tool.finished": [
+      String(p.tool) + " returned",
+      "SDK",
+      "The registered tool completed. Its result can be included in the next model request.",
+      "RunHooks.on_tool_end(context, agent, tool, result)",
+    ],
+    "guardrail.checked": [
+      String(p.phase) + " guardrail · " + (p.passed ? "passed" : "blocked"),
+      "SDK guardrail",
+      "Inspect the exact deterministic rule below. The input rule is a narrow word policy; the output rule checks returned citation IDs, not whether every claim is true.",
+      "GuardrailFunctionOutput(tripwire_triggered=...)",
+    ],
+    "guardrail.blocked": [
+      "Guardrail tripwire stopped the run",
+      "SDK",
+      "No final findings were committed. An output guardrail runs after the model call, so it does not undo its cost or hide public response receipts.",
+      "InputGuardrailTripwireTriggered / OutputGuardrailTripwireTriggered",
+    ],
+    "approval.requested": [
+      "Waiting for your approval",
+      "You",
+      "The native SDK interrupted before executing the proposed query. Approve or deny the exact arguments shown above.",
+      "FunctionTool(needs_approval=True) → result.interruptions",
+    ],
+    "sdk.approval.resumed": [
+      "Approval decision · " + String(p.decision),
+      "SDK",
+      "The same native RunState is resumed. Approval permits execution; denial returns a rejection to the model without executing the tool.",
+      "RunState.approve / reject → Runner.run_streamed(input=state)",
+    ],
+    "session.context": [
+      "Session context before this run",
+      "Application",
+      "Compare retained conversation items with the actual model request. Local Python context is not automatically sent to the model.",
+      "session.get_items() or result.to_input_list()",
+    ],
+    "session.loaded": [
+      "SDK loads session items",
+      "SDK session",
+      "The native Session protocol loaded prior conversation items. This is history retrieval, not a new model call.",
+      "Session.get_items()",
+    ],
+    "session.staged": [
+      "SDK stages conversation items",
+      "SDK session",
+      "The SDK added items to this run's staged session. Relay only commits them for future continuation after a successful final result.",
+      "Session.add_items(items)",
+    ],
+    "session.committed": [
+      "Successful history saved",
+      "Application",
+      "These items and the last active agent are retained for the next follow-up. Failed runs do not replace the last successful continuation.",
+      "persist successful SDK input history + last_agent",
+    ],
+    "orchestration.limit": [
+      "Shared call limit reached",
+      "Application",
+      "All agents and approval resumes share one model-call counter and one monetary allowance.",
+      "shared counter → stop before another model request",
+    ],
     "message.user": [
       "Investigation requested",
       "You",
       "This is the user message for this run. It is not a tool result or a threat verdict.",
-      "Runner.run_streamed(agent, input=items, max_turns=3)",
+      "Runner.run_streamed(agent, input=items, max_turns=limit)",
     ],
     "harness.configured": [
       "Agent contract assembled",
@@ -107,7 +203,9 @@ export function evidenceIds(trace: Trace[]): number[] {
             ? result.items
                 .map((r) => Number(object(r).id))
                 .filter(Number.isFinite)
-            : [];
+            : Number.isFinite(Number(result.id))
+              ? [Number(result.id)]
+              : [];
         }),
     ),
   ];

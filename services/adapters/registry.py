@@ -45,7 +45,7 @@ DEFERRED = {
  'pi':['Interactive native branch navigation','Steering/follow-up queue','Native compaction','Third-party extensions','Native skills discovery','OAuth storage','External MCP'],
  'vercel':['useChat UI protocol','Native workflow persistence','Subagents','Native approval protocol','External MCP','Multimodal/embeddings'],
  'opencode':['Case-tool MCP bridge','Native permission UI','Native rewind','External plugins','File/shell tools'],
- 'openai':['Native handoffs and agent-as-tool delegation','External MCP/hosted tools','Native durable interruptions','Realtime/voice','Remote tracing export','Native spend limits'],
+ 'openai':['External MCP/hosted tools','Cross-process durable approval resumes','Sandbox agents / isolated compute','Realtime/voice','Remote tracing export','Native spend limits (Relay ledger enforced)'],
  'claude':['Arbitrary external MCP','Third-party executable plugins','Production hosting/RBAC'],
  'simulator':['Model reasoning'],
 }

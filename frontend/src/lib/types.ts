@@ -16,6 +16,7 @@ export interface Evidence {
   [key: string]: unknown;
 }
 export interface Config {
+  openai_experiment?: string;
   runtime: string;
   model: string;
   permission: string;

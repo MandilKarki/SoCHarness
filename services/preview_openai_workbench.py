@@ -7,6 +7,7 @@ import asyncio
 import json
 import os
 import tempfile
+from uuid import uuid4
 from pathlib import Path
 
 def main():
@@ -25,8 +26,18 @@ def main():
             async def get_response(self,*a,**kw):raise AssertionError('Streaming only')
             async def stream_response(self,system_instructions,input,model_settings,tools,output_schema,handoffs,tracing,**kwargs):
                 await asyncio.sleep(.35)
-                if not any(i.get('type')=='function_call_output' for i in input):
-                    output=[ResponseFunctionToolCall(type='function_call',id='fc1',call_id='q1',name='query_case_evidence',arguments='{"limit":3,"search":""}')]
+                names=[t.name for t in tools]
+                history=input if isinstance(input,list) else []
+                outputs=[i for i in history if i.get('type')=='function_call_output']
+                calls=[i.get('name') for i in history if i.get('type')=='function_call']
+                selected=None
+                if handoffs:selected=('transfer_to_evidence_specialist',{})
+                elif 'consult_evidence_specialist' in names and not outputs:selected=('consult_evidence_specialist',{'input':'Review three case records and return findings.'})
+                elif 'query_case_evidence' in names and not any(c=='query_case_evidence' for c in calls):selected=('query_case_evidence',{'limit':3,'search':''})
+                elif 'get_event' in names and 'get_event' not in calls:selected=('get_event',{'id':1})
+                if selected:
+                    unique=uuid4().hex
+                    output=[ResponseFunctionToolCall(type='function_call',id='fc'+unique,call_id='q'+unique,name=selected[0],arguments=json.dumps(selected[1]))]
                 else:
                     findings={'observations':['OFFLINE QA: three synthetic authentication records on FINANCE-07.'],
                         'evidence_ids':[1,2,3],'hypotheses':['A failed sign-in followed by success warrants review, not an automatic attack verdict.'],

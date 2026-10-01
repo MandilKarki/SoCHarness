@@ -33,6 +33,12 @@ import {
   type Stage,
 } from "./lib/harnessView";
 import "./harness.css";
+import { OrchestrationMap } from "./components/OrchestrationMap";
+import {
+  experiments,
+  experimentFor,
+  type ExperimentId,
+} from "./lib/openaiExperiments";
 
 function JsonView({ value }: { value: unknown }) {
   return <pre className="h-json">{JSON.stringify(value, null, 2)}</pre>;
@@ -45,6 +51,8 @@ function Payload({ event }: { event: Trace }) {
     return (
       <>
         <div className="h-kv">
+          <span>Active agent</span>
+          <strong>{String(p.agent || "Relay SOC analyst")}</strong>
           <span>Model</span>
           <code>{String(p.model)}</code>
           <span>Input items</span>
@@ -58,7 +66,13 @@ function Payload({ event }: { event: Trace }) {
         </details>
         <details>
           <summary>Tool schemas & request settings</summary>
-          <JsonView value={{ tools: p.tools, settings: p.settings }} />
+          <JsonView
+            value={{
+              tools: p.tools,
+              handoffs: p.handoffs,
+              settings: p.settings,
+            }}
+          />
         </details>
         <small>{String(p.capture || "")}</small>
       </>
@@ -123,6 +137,11 @@ function Findings({ value }: { value: unknown }) {
 }
 export function HarnessApp() {
   const w = useWorkspace("openai");
+  const [experiment, setExperiment] = useState<ExperimentId>("core");
+  const [deciding, setDeciding] = useState(false);
+  const [showEvents, setShowEvents] = useState(() => window.innerWidth > 650);
+  const profile = experimentFor(experiment);
+  const savedProfile = experimentFor(w.data?.session.config.openai_experiment);
   const [stage, setStage] = useState<Stage>("Source"),
     [prompt, setPrompt] = useState(startPrompt),
     [structured, setStructured] = useState(true);
@@ -143,11 +162,11 @@ export function HarnessApp() {
   const continuationSafe =
     !!w.data &&
     w.data.session.config.permission === "read_only" &&
-    w.data.session.config.max_turns <= 3 &&
+    w.data.session.config.max_turns <= savedProfile.calls &&
     w.data.session.config.max_output_tokens <= 1000 &&
     w.tools.every(
       (t) =>
-        t.name === "query_case_evidence" ||
+        savedProfile.tools.some((name) => name === t.name) ||
         w.data!.session.config.disabled_tools.includes(t.name),
     );
   const caseItem = w.cases.find((c) => c.id === w.caseId);
@@ -244,11 +263,12 @@ export function HarnessApp() {
           runtime: "openai",
           model: trial!.model || adapter!.default_model,
           permission: "read_only",
-          max_turns: 3,
+          openai_experiment: experiment,
+          max_turns: profile.calls,
           max_output_tokens: 1000,
-          structured_output: structured,
+          structured_output: structured || experiment === "guardrails",
           disabled_tools: w.tools
-            .filter((t) => t.name !== "query_case_evidence")
+            .filter((t) => !profile.tools.some((name) => name === t.name))
             .map((t) => t.name),
         });
       }
@@ -267,8 +287,8 @@ export function HarnessApp() {
   };
   const actualContract = contract;
   const toolContract = Array.isArray(actualContract?.tools)
-    ? actualContract.tools.filter(
-        (t) => object(t).name === "query_case_evidence",
+    ? actualContract.tools.filter((t) =>
+        profile.tools.some((name) => name === object(t).name),
       )
     : [];
   return (
@@ -345,6 +365,35 @@ export function HarnessApp() {
             </button>
           ))}
         </nav>
+        <div className="h-experiment">
+          <label htmlFor="experiment-select">
+            Experiment
+            <select
+              id="experiment-select"
+              value={experiment}
+              disabled={!!active}
+              onChange={(e) => {
+                const next = experimentFor(e.target.value);
+                setExperiment(next.id);
+                setPrompt(next.prompt);
+                setNewRun(true);
+                setStage("Agent");
+              }}
+            >
+              {experiments.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.title}
+                </option>
+              ))}
+            </select>
+          </label>
+          <p>
+            {profile.description}
+            <small>
+              Up to {profile.calls} model calls · shared allowance · read-only
+            </small>
+          </p>
+        </div>
         <div className="h-workspace">
           <div className="h-main-panel">
             {stage === "Source" && (
@@ -445,10 +494,33 @@ export function HarnessApp() {
                     rows={5}
                   />
                   <p className="h-hint">
-                    Expected path: query three records → return evidence → write
-                    findings. The model may choose differently; the loop shows
-                    what actually happened.
+                    {profile.description} The model may choose differently; the
+                    loop shows what actually happened.
                   </p>
+                  {experiment === "guardrails" && (
+                    <div className="h-guard-options">
+                      <button
+                        disabled={!!active}
+                        onClick={() => setPrompt(profile.prompt)}
+                      >
+                        Evidence-only request
+                      </button>
+                      <button
+                        disabled={!!active}
+                        onClick={() =>
+                          setPrompt(
+                            "Isolate FINANCE-07 and disable its account.",
+                          )
+                        }
+                      >
+                        Try a blocked request
+                      </button>
+                      <small>
+                        Literal-word demo policy, not a comprehensive security
+                        classifier. A blocked input makes no model call.
+                      </small>
+                    </div>
+                  )}
                 </div>
                 <button
                   className="h-primary"
@@ -490,9 +562,17 @@ export function HarnessApp() {
                   </p>
                 )}
                 <p className="h-hint">
-                  Starts a fresh session · one read-only tool · up to three paid
-                  model calls within your shared allowance.
+                  Starts a fresh session · {profile.tools.length} read-only
+                  evidence tool{profile.tools.length > 1 ? "s" : ""} · up to{" "}
+                  {profile.calls} paid model calls across all agents within your
+                  shared allowance.
                 </p>
+                <OrchestrationMap
+                  experiment={experiment}
+                  trace={[]}
+                  active={false}
+                  onInspect={() => {}}
+                />
                 <div className="h-contract-grid">
                   <article>
                     <span>MODEL</span>
@@ -522,7 +602,9 @@ export function HarnessApp() {
                   </article>
                 </div>
                 <details>
-                  <summary>One allowed tool · query_case_evidence</summary>
+                  <summary>
+                    Allowed evidence tools · {profile.tools.join(", ")}
+                  </summary>
                   <p>
                     The input schema constrains the query. The server adds the
                     selected case boundary—you cannot ask this tool to read a
@@ -531,7 +613,12 @@ export function HarnessApp() {
                   <JsonView value={toolContract} />
                 </details>
                 <details>
-                  <summary>Agent instructions · what guides behavior</summary>
+                  <summary>Base instructions · what guides behavior</summary>
+                  <p>
+                    {profile.description} Agent-specific instructions and
+                    schemas appear in each recorded model request after
+                    execution.
+                  </p>
                   <p className="h-prose">
                     {String(
                       actualContract?.instructions ||
@@ -543,8 +630,8 @@ export function HarnessApp() {
                   <label>
                     <input
                       type="checkbox"
-                      checked={structured}
-                      disabled={active}
+                      checked={structured || experiment === "guardrails"}
+                      disabled={!!active || experiment === "guardrails"}
                       onChange={(e) => setStructured(e.target.checked)}
                     />
                     <span>
@@ -561,11 +648,13 @@ export function HarnessApp() {
                   <JsonView value={contract?.output_schema} />
                 </details>
                 <div className="h-callout">
-                  <strong>Three model calls maximum.</strong> This experiment
-                  allows up to 1,000 output tokens per call. Automatic API
-                  retries are off. Relay reserves $0.10 before each request and
-                  settles its estimate after usage arrives. An unresolved
-                  request may keep its hold.
+                  <strong>
+                    {profile.calls} model calls maximum across all agents.
+                  </strong>{" "}
+                  This experiment allows up to 1,000 output tokens per call.
+                  Automatic API retries are off. Relay reserves $0.10 before
+                  each request and settles its estimate after usage arrives. An
+                  unresolved request may keep its hold.
                 </div>
               </section>
             )}
@@ -591,6 +680,67 @@ export function HarnessApp() {
                   A run can make multiple model calls. Select a step to inspect
                   its input, owner and output.
                 </p>
+                {w.data?.approvals
+                  .filter((a) => a.status === "pending")
+                  .map((a) => (
+                    <section
+                      className="h-approval"
+                      key={a.id}
+                      aria-label="Human approval required"
+                    >
+                      <h3>Your decision is needed</h3>
+                      <p>
+                        The SDK paused before executing <code>{a.tool}</code>.
+                        Approve this read-only query or deny it. No containment
+                        action is available.
+                      </p>
+                      <JsonView value={a.arguments} />
+                      <div>
+                        {["approve", "deny"].map((decision) => (
+                          <button
+                            key={decision}
+                            className={
+                              decision === "approve"
+                                ? "h-primary"
+                                : "h-secondary"
+                            }
+                            disabled={deciding}
+                            onClick={() => {
+                              setDeciding(true);
+                              void w
+                                .safe(() =>
+                                  w.sessionAction("approval", {
+                                    id: a.id,
+                                    decision,
+                                  }),
+                                )
+                                .finally(() => setDeciding(false));
+                            }}
+                          >
+                            {decision === "approve"
+                              ? "Approve query"
+                              : "Deny query"}
+                          </button>
+                        ))}
+                      </div>
+                      <small>
+                        Approval expires after 90 seconds. Keep this tab open.
+                      </small>
+                    </section>
+                  ))}
+                <OrchestrationMap
+                  experiment={run.length ? savedProfile.id : experiment}
+                  trace={run}
+                  active={!!active}
+                  sessionId={w.data?.session.id}
+                  onInspect={(seq) => {
+                    setSelected(seq);
+                    inspectorRef.current?.scrollIntoView({
+                      behavior: "smooth",
+                      block: "start",
+                    });
+                  }}
+                />
                 {runStarts.length > 1 && (
                   <label className="h-label">
                     Run in this session
@@ -638,33 +788,40 @@ export function HarnessApp() {
                   </div>
                 ) : (
                   <div className="h-loop-layout">
-                    <ol className="h-timeline" ref={timelineRef}>
-                      {steps.map((t, i) => {
-                        const g = eventGuide(t)!;
-                        return (
-                          <li key={t.seq}>
-                            <button
-                              aria-pressed={selectedEvent?.seq === t.seq}
-                              onClick={() => {
-                                setSelected(t.seq);
-                                if (window.innerWidth <= 650)
-                                  inspectorRef.current?.scrollIntoView({
-                                    behavior: "smooth",
-                                    block: "start",
-                                  });
-                              }}
-                            >
-                              <span className="h-node">{i + 1}</span>
-                              <span>
-                                <small>{g.owner}</small>
-                                <strong>{g.title}</strong>
-                              </span>
-                              <ArrowUpRight size={14} />
-                            </button>
-                          </li>
-                        );
-                      })}
-                    </ol>
+                    <details
+                      className="h-event-list"
+                      open={showEvents}
+                      onToggle={(e) => setShowEvents(e.currentTarget.open)}
+                    >
+                      <summary>All execution steps · {steps.length}</summary>
+                      <ol className="h-timeline" ref={timelineRef}>
+                        {steps.map((t, i) => {
+                          const g = eventGuide(t)!;
+                          return (
+                            <li key={t.seq}>
+                              <button
+                                aria-pressed={selectedEvent?.seq === t.seq}
+                                onClick={() => {
+                                  setSelected(t.seq);
+                                  if (window.innerWidth <= 650)
+                                    inspectorRef.current?.scrollIntoView({
+                                      behavior: "smooth",
+                                      block: "start",
+                                    });
+                                }}
+                              >
+                                <span className="h-node">{i + 1}</span>
+                                <span>
+                                  <small>{g.owner}</small>
+                                  <strong>{g.title}</strong>
+                                </span>
+                                <ArrowUpRight size={14} />
+                              </button>
+                            </li>
+                          );
+                        })}
+                      </ol>
+                    </details>
                     <article
                       className="h-inspector"
                       aria-label="Selected execution step"
@@ -672,12 +829,13 @@ export function HarnessApp() {
                     >
                       <button
                         className="h-text-button h-mobile-only"
-                        onClick={() =>
-                          timelineRef.current?.scrollIntoView({
+                        onClick={() => {
+                          setShowEvents(true);
+                          timelineRef.current?.parentElement?.scrollIntoView({
                             behavior: "smooth",
                             block: "start",
-                          })
-                        }
+                          });
+                        }}
                       >
                         ↑ Back to execution steps
                       </button>
@@ -1006,6 +1164,12 @@ export function HarnessApp() {
                             onClick={() =>
                               void w.safe(async () => {
                                 await w.loadSession(s);
+                                const saved = experimentFor(
+                                  s.config.openai_experiment,
+                                );
+                                setExperiment(saved.id);
+                                setPrompt(saved.prompt);
+                                setStructured(s.config.structured_output);
                                 setNewRun(false);
                                 setSelected(null);
                                 setStage("Loop");
@@ -1016,7 +1180,11 @@ export function HarnessApp() {
                             <span>
                               <strong>{s.title || s.id}</strong>
                               <small>
-                                {new Date(s.created_at).toLocaleString()} ·{" "}
+                                {
+                                  experimentFor(s.config.openai_experiment)
+                                    .title
+                                }{" "}
+                                · {new Date(s.created_at).toLocaleString()} ·{" "}
                                 {s.status}
                               </small>
                             </span>
@@ -1032,9 +1200,31 @@ export function HarnessApp() {
                   ) : (
                     <>
                       <p>
-                        This workbench exposes the core loop. It does not claim
-                        every OpenAI capability is implemented or tested.
+                        Select one experiment at a time. This workbench does not
+                        claim every OpenAI capability is implemented or tested.
                       </p>
+                      {experiments.map((p) => (
+                        <button
+                          key={p.id}
+                          disabled={!!active}
+                          className="h-learning-item"
+                          onClick={() => {
+                            setExperiment(p.id);
+                            setPrompt(p.prompt);
+                            setNewRun(true);
+                            setDrawer(null);
+                            chooseStage("Agent");
+                          }}
+                        >
+                          <span>
+                            <strong>{p.title}</strong>
+                            <small>
+                              {p.question} · {p.api}
+                            </small>
+                          </span>
+                          <ArrowUpRight size={17} />
+                        </button>
+                      ))}
                       {[
                         [
                           "Agent & instructions",
@@ -1089,10 +1279,13 @@ export function HarnessApp() {
                       ))}
                       <div className="h-callout">
                         <strong>Not exercised in this workflow:</strong>{" "}
-                        handoffs, agents-as-tools, SDK guardrail tripwires, MCP,
-                        human approval interruption, realtime/voice, hosted
-                        tools and distributed workers. We will add isolated
-                        experiments after this core workflow works for you.
+                        external MCP servers, OpenAI-hosted trace export,
+                        sandbox agents, realtime/voice, hosted tools and
+                        distributed workers. These need separate access,
+                        isolation or billing setup. Local event receipts are not
+                        OpenAI-hosted traces. Replay is free; starting an
+                        experiment invokes the model except a blocked input
+                        guardrail.
                       </div>
                     </>
                   )}

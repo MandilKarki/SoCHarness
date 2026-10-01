@@ -174,7 +174,7 @@ class Engine:
             # Inspection receipts duplicate the native transcript; they are not
             # conversation context and must not cause premature compaction.
             context=json.dumps([event for event in self.store.traces(self.sid,s['context_after'])
-                if event['kind'] not in ('model.request','model.response','harness.configured')])
+                if event['kind'] not in ('model.request','model.response','harness.configured','session.context','session.loaded','session.staged','session.committed')])
             if len(context)>s['config']['context_chars']:
                 self.store.compact(self.sid)
                 s=self.store.session(self.sid)

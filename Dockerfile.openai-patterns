@@ -1,0 +1,6 @@
+# Reuse the approved Python SDK, authentication and persistent ledger runtime.
+FROM registry.fly.io/socharness-mandil@sha256:9c1de9e1498aed7a34710dcee87b901c8d87ecad3de22ac77c80d5662e9df6e3
+COPY web/react-app.js web/react-app.css /app/web/
+COPY services/store.py services/engine.py /app/services/
+COPY services/adapters/openai_runtime.py services/adapters/openai_observation.py services/adapters/openai_patterns.py services/adapters/registry.py /app/services/adapters/
+RUN python -c "import ast; [ast.parse(open(p).read()) for p in ['/app/services/store.py','/app/services/engine.py','/app/services/adapters/openai_runtime.py','/app/services/adapters/openai_patterns.py']]"

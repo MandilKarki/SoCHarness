@@ -11,6 +11,7 @@ import "@testing-library/jest-dom/vitest";
 import { HarnessApp } from "./HarnessApp";
 import { defaultConfig, type Session, type Trace } from "./lib/types";
 import { publicSteps, evidenceIds } from "./lib/harnessView";
+import { OrchestrationMap } from "./components/OrchestrationMap";
 let sessions: Session[],
   trace: Trace[],
   calls: { path: string; body: Record<string, unknown> }[],
@@ -210,4 +211,74 @@ it("observes actual events only, without inventing calls or evidence", () => {
       },
     ]),
   ).toEqual([]);
+});
+it.each([
+  ["manager", 4],
+  ["handoff", 3],
+  ["guardrails", 3],
+  ["review", 3],
+  ["sessions", 3],
+  ["multi_tool", 3],
+])(
+  "starts the %s experiment with bounded read-only configuration",
+  async (id, limit) => {
+    render(<HarnessApp />);
+    await screen.findByText("FINANCE-07");
+    fireEvent.change(screen.getByLabelText("Experiment"), {
+      target: { value: id },
+    });
+    const start = screen.getByRole("button", { name: "Run investigation" });
+    await waitFor(() => expect(start).toBeEnabled());
+    fireEvent.click(start);
+    await screen.findByRole("button", { name: "Review findings & next step" });
+    const creation = calls.find(
+      (c) => c.path === "/api/sessions" && c.body.config,
+    )!;
+    expect(creation.body.config).toMatchObject({
+      openai_experiment: id,
+      max_turns: limit,
+      permission: "read_only",
+      structured_output: true,
+    });
+    const disabled = (creation.body.config as { disabled_tools: string[] })
+      .disabled_tools;
+    expect(disabled).toContain("save_case_note");
+    expect(disabled.includes("get_event")).toBe(id !== "multi_tool");
+  },
+);
+it("replays receipts without making requests and exposes session context", () => {
+  window.matchMedia = vi.fn().mockReturnValue({ matches: true });
+  const inspect = vi.fn();
+  const events: Trace[] = [
+    {
+      seq: 1,
+      kind: "session.context",
+      payload: { retained_items: 4, method: "SDK Session protocol" },
+      created_at: "",
+    },
+    {
+      seq: 2,
+      kind: "agent.handoff",
+      payload: { from: "Triage agent", to: "Evidence specialist" },
+      created_at: "",
+    },
+  ];
+  render(
+    <OrchestrationMap
+      experiment="handoff"
+      trace={events}
+      active={false}
+      onInspect={inspect}
+    />,
+  );
+  fireEvent.click(screen.getByRole("button", { name: "Session overlay" }));
+  expect(screen.getByText("4 items")).toBeVisible();
+  fireEvent.click(screen.getByRole("button", { name: "Replay" }));
+  expect(screen.getByText("1 / 2 · free replay")).toBeVisible();
+  fireEvent.click(screen.getByRole("button", { name: "Next recorded event" }));
+  fireEvent.click(
+    screen.getByRole("button", { name: /Control transfers to specialist/ }),
+  );
+  expect(inspect).toHaveBeenCalledWith(2);
+  expect(calls).toEqual([]);
 });

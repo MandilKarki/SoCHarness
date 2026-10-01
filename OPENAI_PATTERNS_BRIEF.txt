@@ -1,0 +1,21 @@
+Confirmed: the user likes the new Source > Agent > Loop > Result workbench.
+Expand it, do not replace it. OpenAI Python Agents SDK only; visualization first.
+Installed local SDK: openai-agents 0.22.3. Existing approved model/key and shared
+$5 October budget remain. Remote tracing stays disabled; no new credentials.
+
+Build focused experiments for manager/agent-as-tool, native handoff, deterministic
+input/output guardrails, native tool approval, SDK Session protocol, and multiple
+read tools. Visualize configured routes separately from observed SDK events.
+Add agent ownership, request identity, session context overlay and free replay.
+One shared per-run call counter must cover nested agents and approval resumes;
+the existing persistent monetary ledger covers every provider call as before.
+
+Interpretation: session overlay means a visual boundary showing retained history,
+this run, active agent, context items and persisted continuation. It must identify
+app persistence versus the SDK Session protocol explicitly.
+
+Boundary: no unapproved hosted sandbox compute, arbitrary shell, external MCP
+server, or provider trace export. Sandboxes need separate isolation/access/cost
+setup; show these as deferred, never as implemented merely because cards exist.
+Voice and realtime explicitly deferred per user. Test deterministic real-SDK
+paths first, then one bounded orchestration live check, deploy existing Fly app.

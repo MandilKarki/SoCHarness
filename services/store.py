@@ -33,7 +33,7 @@ DEFAULT_CONFIG = {'runtime': 'simulator', 'model': 'sonnet', 'permission': 'read
                   'max_turns': 8, 'budget_usd': 1.0, 'context_chars': 24000,
                   'disabled_tools': [], 'structured_output': False, 'specialists': False,
                   'skills': False, 'memory': False, 'artifacts': False, 'await_approvals': True, 'file_workspace': False,
-                  'max_output_tokens': 2048, 'accept_no_usd_cap': False, 'thinking': 'off'}
+                  'max_output_tokens': 2048, 'accept_no_usd_cap': False, 'thinking': 'off', 'openai_experiment':'core'}
 TOOLS = [
     {'name':'query_case_evidence','effect':'read','description':'Retrieve bounded records from the selected case.'},
     {'name':'get_event','effect':'read','description':'Inspect one raw record within this case.'},
@@ -169,6 +169,10 @@ class Store:
         if title is not None and not isinstance(title,str): raise Problem('Title must be text')
         if config and set(config)-set(DEFAULT_CONFIG): raise Problem('Unknown configuration fields')
         config = {**DEFAULT_CONFIG, **(config or {})}
+        if config['openai_experiment'] not in ('core','manager','handoff','guardrails','review','sessions','multi_tool'):
+            raise Problem('Unknown OpenAI experiment')
+        if config['openai_experiment']!='core' and (config['runtime']!='openai' or config['permission']!='read_only'):
+            raise Problem('OpenAI experiments require the read-only OpenAI runtime')
         from adapters.registry import validate
         validate(config)
         if config['permission'] not in ('read_only','ask_all','supervised'): raise Problem('Unknown permission policy')

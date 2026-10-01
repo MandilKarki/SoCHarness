@@ -17,7 +17,8 @@ dashboard or fictional quiz. Existing `#sdk-lab` links open the same workbench.
    edit the investigation request. These are not live sensors or confirmed incidents.
 2. **Agent:** inspect instructions, the bounded read-tool schema and output shape.
    **Run investigation** creates a new OpenAI session and sends that request.
-   Maximum: three model calls, 1,000 output tokens per call, one read-only tool.
+   Maximum: three model calls (four for manager + specialist), 1,000 output
+   tokens per call, case-scoped read-only tools. All agents share these limits.
 3. **Loop:** select actual persisted events: request context → model response →
    tool arguments → database result → next request → answer. Each step explains
    whether the model, SDK or application owns it. No invented steps or private
@@ -31,9 +32,32 @@ allowance and identity controls remain unchanged. Failed or interrupted calls ca
 retain budget holds; refresh saved state before retrying. Keep the mobile tab
 foregrounded during streaming; this is not a durable background-job service.
 
-**What am I learning?** maps the visible controls to core SDK concepts and names
-what is not exercised: handoffs, agents-as-tools, SDK guardrail tripwires, MCP,
-human approval interruption, realtime/voice and hosted tools. Backend adapters and
+**Experiment** selects one focused SDK exercise. **What am I learning?** opens
+the learning map. Target runtime: Python `openai-agents==0.22.3`.
+
+| Experiment | Native API | What the diagram makes inspectable |
+| --- | --- | --- |
+| Core loop | `Agent`, `Runner.run_streamed`, `FunctionTool` | Request → model → tool → evidence → answer |
+| Multiple tools | Two `FunctionTool` callbacks | Query three records, inspect one, report |
+| Manager + specialist | `Agent.as_tool(on_stream=...)` | Isolated specialist input, nested calls, return to manager |
+| Transfer ownership | `handoff`, `RunHooks.on_handoff` | Triage yields control; specialist answers and continues follow-ups |
+| Guardrails | Blocking `InputGuardrail`, `OutputGuardrail` | Deterministic input policy and citation-ID tripwires |
+| Human approval | `needs_approval`, `RunState.approve/reject` | Pause before execution; approve or deny exact query arguments |
+| SDK session memory | Native `Session` protocol | Load/stage history, then commit successful continuation |
+
+Graphs distinguish configured routes from observed events. Select a node for the
+public receipt; replay saved events free of charge. **Session overlay** shows item
+counts before a run, in the latest model request and after successful persistence.
+Items are not tokens or context-window capacity. Failed runs preserve the previous
+successful history. Local Python context is not automatically model-visible.
+
+The input guardrail is intentionally a narrow literal-word demonstration, not a
+complete security classifier. The output guardrail checks citation provenance,
+not factual correctness. It cannot undo model charges or erase observed output.
+Native approvals expire after 90 seconds and resume in the current process; they
+are not durable cross-worker jobs. Sandbox agents/isolated compute, external MCP,
+provider trace export, voice/realtime and hosted tools are **not enabled** here.
+Local receipts are not an OpenAI-hosted trace. Backend adapters and
 legacy reference views remain in the repository, but other SDKs are intentionally
 absent from this workflow. An inventory entry is not proof of full SDK coverage.
 
