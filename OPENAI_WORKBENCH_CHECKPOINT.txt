@@ -50,4 +50,27 @@ snapshots are capped excerpts and token usage is not the same as context capacit
 Budget settlements are estimates, not an invoice. A valid output shape or a
 returned citation ID does not prove a finding is true.
 
-Deployment and live model acceptance: pending release verification below.
+Release verified:
+- Source implementation pushed to main: 0e189d6.
+- Exact deployment image: 9c1de9e1498aed7a34710dcee87b901c8d87ecad3de22ac77c80d5662e9df6e3.
+- Nine native observation/runner tests passed inside this image with network off.
+- Existing Fly machine 807339f6475602 updated successfully; DNS verified.
+- Public deployed JS and CSS byte hashes match the tested local build:
+  JS  2277942F13E6249685873A6C618EC2A5DC92AB0F1D82D902C778A5FDB6E0868F
+  CSS 1B368D7AFB26068B208B5D775DAC8FB9ED3DA8440D3B04FB1363AC0872B15119
+- Authenticated pilot checks: login/logout, anonymous denial, cross-origin
+  denial, Firebase trial configuration and passkey management passed.
+- Records155350 / hosts16 / cases7 preserved; October31Pacific expiry unchanged.
+- One paid live acceptance run: ses_567cec26212149e6a0a1bdd8d2c962b3.
+  Completed; two actual requests and responses captured; one evidence query;
+  records195,1862,2249; second request carries function_call_output;
+  one validated typed result; two settled usage receipts; no run failures.
+- This live test's settled estimate: $0.001262 (not an invoice).
+  Total accounted after test: $0.106511; spendable remaining: $4.393489.
+  One pre-existing unresolved request hold remains; it was not cleared/refunded.
+- Phone/desktop visual QA used the explicit offline fixture; production API
+  behavior and deployed asset identity were verified separately.
+
+Open https://socharness-mandil.fly.dev/ and choose Loop in the default identity
+collection to inspect the latest completed live run without spending more.
+Choose Source -> Agent -> Run investigation for a fresh bounded experiment.
