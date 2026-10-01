@@ -67,7 +67,28 @@ UI assets. Evidence remains 155,350 records / seven cases / zero cloud sessions.
 The deployed login/recovery UI was checked at 390px with passkey support available
 and no browser console errors. No production passkey was registered by automation.
 
-FIREBASE GOOGLE LOGIN + BOUNDED TRIAL UPDATE - 2026-10-01
+OCTOBER EXTENSION / VERSIONED SDK AUDIT - 2026-10-01
+Owner-approved extension is deployed, superseding the original one-day deadline.
+Image:
+registry.fly.io/socharness-mandil@sha256:f7333005f535dbc263185840a9d4611941b0ff5d5ab93c43b2f4bdce67f43627
+Same machine 807339f6475602 and existing volume. No new services or provider keys.
+Live read-only acceptance confirmed expiry 2026-11-01T06:59:59Z, $5 total limit,
+$4.50 spendable, $0.50 buffer, accounted $0.100251, remaining $4.399749, two requests,
+one unresolved hold, and blocked=false. Neither costs nor holds were reset.
+All 462 cells (42 capabilities x 11 SDKs) have version and evidence metadata.
+Authentication, cross-origin denial, seven cases and 155,350 records still pass.
+No additional paid model requests were made for this audit/deployment.
+
+118 backend tests passed in the final Linux image in offline local-test mode;
+14 spending-guard tests also passed separately with pilot defaults. The initial
+full-suite container invocation omitted local-test mode and two unguarded OpenAI
+fixtures were correctly rejected; the corrected offline run passed all 118.
+Eight Node SDK contracts passed with network disabled, six extended Python and
+two Hermes contracts passed on Windows, and 31 frontend tests passed.
+See SDK_AUDIT.txt and reports/ for the versioned mapping, release differences,
+remaining unassessed APIs, credential boundaries and monthly read-only audit.
+
+FIREBASE GOOGLE LOGIN + BOUNDED TRIAL UPDATE - 2026-10-01 (EARLIER CHECKPOINT)
 This checkpoint supersedes earlier statements that no model key is installed.
 Deployed image:
 registry.fly.io/socharness-mandil@sha256:f05e96c9d3b4ece3fe90964cf80a6c8b975269fdaf66a9505c54bc46655866af
