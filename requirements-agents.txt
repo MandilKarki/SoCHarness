@@ -1,0 +1,4 @@
+claude-agent-sdk==0.2.159
+pydantic-ai-slim[anthropic]==2.52.0
+deepagents==0.7.21
+langchain-anthropic==1.7.5

@@ -1,0 +1,92 @@
+RELAY DEPLOYMENT CHECKPOINT — 2026-09-30
+
+Status: prepared single-operator pilot configuration, not a production deployment.
+No Fly application, paid resources, Supabase project, public URL or secrets were created.
+
+VERIFIED LOCALLY
+Docker Linux image built successfully. All 62 Python tests passed both on Windows and
+inside a network-disabled Linux container. Six Node SDK contract tests passed on both
+Windows and Linux (only the test-code directory was mounted read-only for the Node run).
+Image runs as UID 10001; bundled Claude CLI 2.1.281 starts with --version. No model called.
+Fly TOML syntax and local invariants parsed successfully; Fly CLI account validation is
+blocked by missing login. Cloud health, TLS, volume persistence and paid provider runs
+remain acceptance requirements. These are engineering checks, not a full security audit.
+
+1. PILOT ARCHITECTURE
+Fly HTTPS edge -> one non-root Relay container -> bounded local SDK subprocesses.
+One Fly volume stores SQLite, SDK session directories and text workspaces at /data.
+Use ONLY benchmark/sanitized records that you are authorized to host and send to model providers.
+Pilot login uses a high-entropy operator token, not an API key. This is single-operator
+access, NOT distinct users, tenant isolation, MFA, enterprise SSO, or role separation.
+Rotate the token via secrets and restart to revoke all browser sessions. Sessions are
+memory-only, expire after eight hours, and restart invalidates them. Sign-out revokes one.
+API writes require the exact HTTPS Origin; cookies are Secure, HttpOnly, SameSite=Strict.
+Global sign-in throttle: ten attempts/minute. Put additional abuse controls at the edge.
+The HTTP listener must remain behind the TLS proxy; never expose port 8787 directly.
+
+2. BEFORE PROVISIONING (requires operator choices and approval)
+Choose a unique Fly app name, region, billing budget and permitted corpus. Replace all
+relay-isoc-replace-me values in fly.toml (app, origin, health Host). No accounts inferred.
+Create one app and one volume; do not run fly deploy against the placeholder config.
+Configure RELAY_OPERATOR_TOKEN using Fly secrets (random 32+ characters). Never commit it
+or put it in a URL, Docker ARG or browser storage. Set only required provider secrets.
+Fly documentation: https://fly.io/docs/reference/configuration/
+Volume documentation: https://fly.io/docs/volumes/overview/
+
+3. BUILD / INITIALIZE
+Local build: docker build -t relay-isoc:pilot .
+Image excludes corpus, private configuration, virtual environments and transcripts.
+Python direct dependencies are pinned; Linux transitive resolutions are recorded inside
+the image at /opt/relay-python-resolved.txt. A reproducible Linux lock and vulnerability
+review remain release gates. Node uses the checked-in lock and disabled lifecycle scripts.
+Provision /data ownership for UID 10001 using a one-time volume initialization process;
+the application does not run as root and does not chmod an entire host filesystem.
+Initialize evidence BEFORE starting the normal server: either import approved sample.zip
+with services/import_corpus.py --database /data/telemetry-lab.sqlite3, or restore a verified
+backup to a NEW, empty volume. Do not overwrite a running database. The server fails closed
+when the evidence database is missing. No fake data is silently generated at startup.
+Fly first deployment must use one machine with HA disabled (fly deploy --ha=false).
+Stop active investigations before deploy/restart; interrupted runs are marked interrupted,
+not resumed automatically. Do not promise zero downtime with one machine and one volume.
+
+4. ACCEPTANCE BEFORE SHARING
+- Confirm Linux image builds and runs with current package pins.
+- Confirm HTTPS login, invalid credentials, logout, expiration and Origin rejection.
+- Confirm unauthenticated evidence/session/API requests return 401 and root redirects.
+- Verify volume owner, seven cohorts, raw-evidence integrity and restart persistence.
+- Exercise streaming, tool approval, cancellation and native Claude workspace on Linux.
+- Run one authorized paid test per enabled adapter; contract tests alone are insufficient.
+- Verify only required provider credentials reach each subprocess. Claude's inherited
+  environment is overridden to blank unrelated secrets, with a dedicated persistent
+  home at /data/claude-home. This still is not an isolated tenant worker. Never enable
+  arbitrary executable tools/plugins in this pilot.
+- Keep OpenCode disabled until a dedicated, deny-all server is provisioned and verified.
+- Configure off-machine encrypted backups, retention, monitoring and a restore drill.
+
+5. BACKUP / RESTORE
+python services/backup.py PATH_TO_NEW_BACKUP.sqlite3
+Uses SQLite online backup and integrity_check, including committed WAL data.
+Also back up native-workspaces, claude-sandbox, claude-home, adapter-sessions and SDK-owned session
+storage as applicable. A database backup alone does not preserve native SDK file state.
+The utility does not schedule/upload backups or encrypt them. Protect backup files.
+Restore onto an empty isolated volume, run integrity_check, verify cohort/session counts,
+and test retrieval before switching traffic. Fly volumes are local and not automatically
+replicated across Machines. Volume snapshots do not substitute for tested off-site backup.
+
+6. TEAM / SCALE TARGET (NOT IMPLEMENTED)
+Supabase Auth -> server-verified JWT -> organization membership -> role policy.
+Supabase/Postgres for sessions, events, approvals and jobs; object storage for raw evidence
+and reports. Add tenant_id to every scoped relation and test cross-tenant denial.
+Validate issuer, audience, signature, expiry; do not trust decoded JWTs or browser claims.
+RLS complements server authorization; service-role credentials can bypass RLS and must not
+reach clients. Do not just point RELAY_DB at a Postgres URL: current SQL is SQLite-specific.
+Durable job queue + worker leases + idempotent tool receipts + streamed event IDs replace
+process-local ACTIVE locks. Separate API and isolated per-run workers before scaling out.
+Do not add replicas to the current image expecting shared SQLite state or distributed locks.
+References: https://supabase.com/docs/guides/auth/jwts
+https://supabase.com/docs/guides/database/postgres/row-level-security
+
+7. COST / SECURITY BOUNDARIES
+No cost estimate is promised without region, volume, traffic and model workload choices.
+Container/tool allowlisting is not per-run OS isolation. No real containment is enabled.
+The current data model is a shared lab, not a multi-customer SaaS system.

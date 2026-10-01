@@ -1,0 +1,31 @@
+# Private evidence, runtime state, native sessions and generated backups
+work/
+data/
+*.sqlite
+*.sqlite3
+*.sqlite3-*
+*.db
+*.db-*
+*.jsonl
+*.log
+*.zip
+*.tar
+
+# Credentials and machine-specific configuration
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+config.local.*
+.openai/
+.aws/
+.claude/
+
+# Dependencies and generated code
+.venv/
+.venv-*/
+node_modules/
+__pycache__/
+*.pyc
+.pytest_cache/
