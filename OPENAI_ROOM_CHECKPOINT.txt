@@ -1,0 +1,59 @@
+OpenAI learning room — October 1, 2026
+
+Live: https://socharness-mandil.fly.dev/#sdk-lab
+Implementation commit: 7515ed0
+
+User path
+Read the Northstar Logistics briefing > Start exercise (no model call) >
+Read three records (paid, bounded) > inspect findings > optional under-the-hood
+receipts > knowledge check. Later lessons: Ask a follow-up; Write a handover.
+
+Minimal interface
+- One primary action; unrelated counters and navigation hidden in learning mode.
+- Company/team context, budget/setup, technical receipts and reference atlas use
+  progressive disclosure. The original full SOC workspace remains accessible.
+- Northstar, Maya and the team are fictional story context. Existing benchmark
+  evidence retains original contents and IDs. No live sensor/response connectors.
+- Core loop, tools, native continuation, structured output, streamed event
+  observation, validation, read-only policy and budget inspection are accessible.
+- Native handoffs, agent-as-tool orchestration, SDK guardrails, native approval
+  interrupts, external MCP and remote provider tracing are not claimed integrated.
+
+Failure fixed
+The user's OpenAI run started but its evidence query exceeded the supported
+limit (1–25). The function schema now declares the bounds. Known read-query input
+errors return a validation result for bounded correction; permission/scope errors
+remain fatal. No SDK/API retry setting, turn cap or budget allowance was loosened.
+General configuration errors now stay inside the dialog. Creating a session
+opens its prompt composer but never sends automatically.
+
+Verification
+- 120 backend tests passed, including deterministic real-Runner recovery tests.
+- 48 frontend tests passed and production build passed.
+- 11 native-state tests passed inside the deployment image, network disabled.
+- Browser preview checked at desktop and 390px phone width against an isolated
+  credential-free fixture. Start correctly remains disabled on that local fixture.
+- Hosted authentication, anonymous denial, cross-origin denial, Firebase setup,
+  passkey boundary and October $5 persistent spending guard checks passed.
+- Same Fly machine 807339f6475602, same volume and authentication; no new services.
+- Deployed image:
+  registry.fly.io/socharness-mandil@sha256:04ef0c2ede4a964562166aa3d1d6fb8ee4275669ad7a1c52baf703bc51e5cbea
+- Deployed asset hashes exactly match the tested build:
+  JS 073E2D470DBD7B3E1325AE864673803175D7F2D8A8D246EF73F7372C4111DA66
+  CSS 7190459CB0A3EB0BF6F324A9A0A9257893AD9B7813FAB7D6D2FC3ABF7838A266
+
+One live lesson acceptance run
+Session: ses_7a3fe73dee804b619f322be049275aa8
+Case: IR-2841; model: gpt-5.4-nano-2026-03-17
+One query returned record IDs 195, 1862, 2249; nonempty final answer; run completed.
+Two model requests, two settlements, no failed events, no whole-run retry.
+Settled run estimate: $0.001075 (not a provider invoice).
+Accounted total: $0.101589; spendable remaining: $4.398411; safety buffer: $0.50.
+One earlier $0.10 unresolved hold remains; it is not a confirmed charge.
+Allowance still expires October 31, Pacific. No additional model calls were made
+for this checkpoint. Lessons 2/3 were not live-provider-tested in this checkpoint.
+
+Next learning objective
+Explain who proposes the tool arguments, who reads the database, and what a
+tool.result proves. Then inspect the cited record IDs before trusting a finding.
+Successful execution is not detection accuracy, nor proof of mastery.
