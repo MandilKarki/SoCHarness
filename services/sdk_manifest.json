@@ -1,0 +1,270 @@
+{
+  "schema_version": 1,
+  "reviewed": "2026-10-01",
+  "scope": "Versioned Relay integration inventory. Not a claim of complete upstream API parity.",
+  "sdks": {
+    "claude": {
+      "package": "claude-agent-sdk",
+      "pinned_version": "0.2.159",
+      "registry": "pypi",
+      "repository": "anthropics/claude-agent-sdk-python",
+      "release_source": "https://github.com/anthropics/claude-agent-sdk-python/releases",
+      "implementation": "services/claude_runtime.py",
+      "contract_suite": "services/test_claude_contract.py",
+      "credential": "ANTHROPIC_API_KEY",
+      "apis": {
+        "loop": "ClaudeSDKClient.query / receive_response",
+        "tools": "tool / create_sdk_mcp_server",
+        "streaming": "include_partial_messages",
+        "native_resume": "ClaudeAgentOptions.resume",
+        "thinking": "ClaudeAgentOptions.thinking",
+        "hooks": "HookMatcher",
+        "subagents": "AgentDefinition",
+        "usd_budget": "max_budget_usd",
+        "structured_output": "output_format",
+        "mcp": "create_sdk_mcp_server",
+        "file_workspace": "enable_file_checkpointing / rewind_files",
+        "skills": "plugins: bundled skill-only plugin"
+      },
+      "docs_version_basis": "Rolling upstream documentation; exact release behavior requires pinned source/contracts.",
+      "live_evidence": null
+    },
+    "pydantic": {
+      "package": "pydantic-ai-slim",
+      "pinned_version": "2.52.0",
+      "registry": "pypi",
+      "repository": "pydantic/pydantic-ai",
+      "release_source": "https://github.com/pydantic/pydantic-ai/releases",
+      "implementation": "services/adapters/pydantic_runtime.py",
+      "contract_suite": "services/test_native_state.py",
+      "credential": "ANTHROPIC_API_KEY",
+      "apis": {
+        "loop": "Agent.run",
+        "tools": "Tool",
+        "streaming": "event_stream_handler",
+        "structured_output": "Agent.output_type",
+        "native_resume": "ModelMessagesTypeAdapter / message_history",
+        "limits": "UsageLimits"
+      },
+      "docs_version_basis": "Rolling upstream documentation; exact release behavior requires pinned source/contracts.",
+      "live_evidence": null
+    },
+    "deepagents": {
+      "package": "deepagents",
+      "pinned_version": "0.7.21",
+      "registry": "pypi",
+      "repository": "langchain-ai/deepagents",
+      "release_source": "https://github.com/langchain-ai/deepagents/releases",
+      "implementation": "services/adapters/deep_runtime.py",
+      "contract_suite": "services/test_native_state.py",
+      "credential": "ANTHROPIC_API_KEY",
+      "apis": {
+        "loop": "create_deep_agent / astream",
+        "tools": "StructuredTool",
+        "streaming": "astream messages / updates",
+        "native_resume": "AsyncSqliteSaver / checkpoint_id",
+        "planning": "TodoListMiddleware / write_todos",
+        "hooks": "AgentMiddleware",
+        "subagents": "subagents: two named specialists",
+        "structured_output": "response_format",
+        "limits": "shared model-call middleware"
+      },
+      "docs_version_basis": "Rolling upstream documentation; exact release behavior requires pinned source/contracts.",
+      "live_evidence": null,
+      "dependencies": {
+        "langchain-anthropic": "1.7.5",
+        "langgraph-checkpoint-sqlite": "3.1.1"
+      }
+    },
+    "pi": {
+      "package": "@earendil-works/pi-coding-agent",
+      "pinned_version": "0.99.2",
+      "registry": "npm",
+      "repository": "earendil-works/pi",
+      "release_source": "https://github.com/earendil-works/pi/releases",
+      "implementation": "workers/agent-bridge/pi.mjs",
+      "contract_suite": "workers/agent-bridge/test/adapters.test.mjs",
+      "credential": "ANTHROPIC_API_KEY",
+      "apis": {
+        "loop": "createAgentSession / session.prompt",
+        "tools": "customTools",
+        "streaming": "session.subscribe",
+        "native_resume": "SessionManager.forkFrom / JSONL",
+        "thinking": "thinkingLevel",
+        "limits": "streamFunction request counter"
+      },
+      "docs_version_basis": "Rolling upstream documentation; exact release behavior requires pinned source/contracts.",
+      "live_evidence": null,
+      "dependencies": {
+        "@earendil-works/pi-ai": "0.99.2"
+      }
+    },
+    "vercel": {
+      "package": "ai",
+      "pinned_version": "7.0.126",
+      "registry": "npm",
+      "repository": "vercel/ai",
+      "release_source": "https://github.com/vercel/ai/releases",
+      "implementation": "workers/agent-bridge/vercel.mjs",
+      "contract_suite": "workers/agent-bridge/test/adapters.test.mjs",
+      "credential": "AI_GATEWAY_API_KEY",
+      "apis": {
+        "loop": "ToolLoopAgent",
+        "tools": "tool / jsonSchema",
+        "streaming": "agent.stream",
+        "native_resume": "response.messages",
+        "structured_output": "Output.object",
+        "limits": "stepCountIs / maxOutputTokens"
+      },
+      "docs_version_basis": "Rolling upstream documentation; exact release behavior requires pinned source/contracts.",
+      "live_evidence": null
+    },
+    "opencode": {
+      "package": "@opencode-ai/sdk",
+      "pinned_version": "1.18.34",
+      "registry": "npm",
+      "repository": "anomalyco/opencode",
+      "release_source": "https://github.com/anomalyco/opencode/releases",
+      "implementation": "workers/agent-bridge/opencode.mjs",
+      "contract_suite": "workers/agent-bridge/test/adapters.test.mjs",
+      "credential": "RELAY_OPENCODE_URL (+ server provider credential)",
+      "apis": {
+        "loop": "client.session.prompt (snapshot only)",
+        "streaming": "client.event.subscribe (filtered SSE)",
+        "native_resume": "client.session.fork",
+        "structured_output": "format: json_schema",
+        "cancellation": "client.session.abort (best effort)"
+      },
+      "docs_version_basis": "Rolling upstream documentation; exact release behavior requires pinned source/contracts.",
+      "live_evidence": null
+    },
+    "openai": {
+      "package": "openai-agents",
+      "pinned_version": "0.22.3",
+      "registry": "pypi",
+      "repository": "openai/openai-agents-python",
+      "release_source": "https://github.com/openai/openai-agents-python/releases",
+      "implementation": "services/adapters/openai_runtime.py",
+      "contract_suite": "services/test_native_state.py",
+      "credential": "OPENAI_API_KEY",
+      "apis": {
+        "loop": "Runner.run_streamed",
+        "tools": "FunctionTool",
+        "streaming": "RunResultStreaming.stream_events",
+        "native_resume": "RunResult.to_input_list",
+        "structured_output": "Agent.output_type",
+        "limits": "max_turns / ModelSettings.max_tokens",
+        "usd_budget": "Relay TrialBudget / guarded_model (not SDK-native)",
+        "cancellation": "RunResultStreaming.cancel"
+      },
+      "docs_version_basis": "Rolling upstream documentation; exact release behavior requires pinned source/contracts.",
+      "live_evidence": {
+        "date": "2026-10-01",
+        "scope": [
+          "loop",
+          "streaming",
+          "usage",
+          "usd_budget"
+        ],
+        "session": "ses_73ef9127f3644bcf9baa9f7225cfffb8",
+        "result": "Tool-free connectivity and budget settlement passed. Tools, continuation and findings not live-verified."
+      },
+      "dependencies": {
+        "openai": "3.22.1"
+      }
+    },
+    "google_adk": {
+      "package": "google-adk",
+      "pinned_version": "2.10.0",
+      "registry": "pypi",
+      "repository": "google/adk-python",
+      "release_source": "https://github.com/google/adk-python/releases",
+      "implementation": "workers/python-bridge/google_runtime.py",
+      "contract_suite": "workers/python-bridge/test_contracts.py",
+      "credential": "GOOGLE_API_KEY",
+      "apis": {
+        "loop": "Runner.run_async / LlmAgent",
+        "tools": "BaseTool schema bridge",
+        "streaming": "StreamingMode.SSE",
+        "native_resume": "InMemorySessionService events serialized by Relay",
+        "structured_output": "LlmAgent.output_schema",
+        "limits": "RunConfig.max_llm_calls"
+      },
+      "docs_version_basis": "Rolling upstream documentation; exact release behavior requires pinned source/contracts.",
+      "live_evidence": null
+    },
+    "microsoft": {
+      "package": "agent-framework-core",
+      "pinned_version": "1.19.0",
+      "registry": "pypi",
+      "repository": "microsoft/agent-framework",
+      "release_source": "https://github.com/microsoft/agent-framework/releases",
+      "implementation": "workers/python-bridge/microsoft_runtime.py",
+      "contract_suite": "workers/python-bridge/test_contracts.py",
+      "credential": "OPENAI_API_KEY",
+      "apis": {
+        "loop": "Agent.run",
+        "tools": "FunctionTool",
+        "streaming": "stream=True / get_final_response",
+        "native_resume": "AgentSession.from_dict / to_dict",
+        "structured_output": "response_format",
+        "limits": "bounded provider client"
+      },
+      "docs_version_basis": "Rolling upstream documentation; exact release behavior requires pinned source/contracts.",
+      "live_evidence": null,
+      "dependencies": {
+        "agent-framework-openai": "1.14.4"
+      }
+    },
+    "openhands": {
+      "package": "openhands-sdk",
+      "pinned_version": "1.50.1",
+      "registry": "pypi",
+      "repository": "OpenHands/software-agent-sdk",
+      "release_source": "https://github.com/OpenHands/software-agent-sdk/releases",
+      "implementation": "workers/python-bridge/openhands_runtime.py",
+      "contract_suite": "workers/python-bridge/test_contracts.py",
+      "credential": "OPENAI_API_KEY",
+      "apis": {
+        "loop": "Conversation.run / Agent",
+        "tools": "ToolDefinition / RelayCaseTool / FinishTool",
+        "streaming": "lifecycle callbacks only; stream=False",
+        "native_resume": "serialized conversation events",
+        "limits": "max_iteration_per_run / max_output_tokens"
+      },
+      "docs_version_basis": "Rolling upstream documentation; exact release behavior requires pinned source/contracts.",
+      "live_evidence": null
+    },
+    "hermes": {
+      "package": "hermes-agent",
+      "pinned_version": "a4bd966aeee27d4e26316d69f2d2355dc5f32c21",
+      "registry": "github",
+      "repository": "NousResearch/hermes-agent",
+      "release_source": "https://github.com/NousResearch/hermes-agent/releases",
+      "implementation": "workers/python-bridge/hermes_runtime.py",
+      "contract_suite": "workers/python-bridge/test_hermes.py",
+      "credential": "OPENAI_API_KEY",
+      "apis": {
+        "loop": "AIAgent.run_conversation",
+        "tools": "private prefixed tool registry",
+        "streaming": "stream_delta_callback",
+        "native_resume": "native messages",
+        "limits": "max_iterations; extra final summary possible"
+      },
+      "docs_version_basis": "Rolling upstream documentation; exact release behavior requires pinned source/contracts.",
+      "live_evidence": null
+    }
+  },
+  "candidates": [
+    {
+      "id": "strands",
+      "status": "not integrated",
+      "docs": "https://strandsagents.com/docs/user-guide/sdk/multi-agent/multi-agent-patterns/"
+    },
+    {
+      "id": "mastra",
+      "status": "not integrated",
+      "docs": "https://mastra.ai/examples/agents/agentic-workflows"
+    }
+  ]
+}

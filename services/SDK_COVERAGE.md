@@ -2,8 +2,17 @@
 
 Updated 2026-10-01. Eleven executable SDK adapters plus deterministic replay.
 This is a **restricted SOC integration, not full parity with every upstream feature**.
-The UI covers 27 capability families. Native means the specific described integration
+The UI covers 42 capability families (462 versioned cells). Native means the specific described integration
 exists; it does not mean every API in that family is exposed or live-verified.
+
+The [versioned manifest](sdk_manifest.json), [audit checkpoint](../SDK_AUDIT.txt),
+and [exported one-cell-per-SDK mapping](../reports/sdk-capability-grid.json) track
+exact pins, code/test references, credential requirements and narrow live evidence.
+OpenAI nano connectivity and usage settlement passed on October 1. Other live
+features remain unverified. Only OpenAI nano is currently enabled under the shared
+$5 spending guard; all other paid runtime paths remain blocked while it is active.
+The owner-approved testing window ends October 31 at 11:59:59 PM Pacific, without
+resetting prior costs or holds. Monthly release audits do not renew that allowance.
 
 ## Implemented in this pass
 
@@ -111,7 +120,7 @@ plus optional RELAY_OPENCODE_PASSWORD for OpenCode. Do not paste secrets in chat
 Provider calls send selected evidence to that provider; authorize data handling
 before live use. No credentials are committed or returned to the browser.
 
-Claude has an SDK-estimated USD budget, not an invoice guarantee. Other adapters
+Claude has an SDK-estimated USD budget, not an invoice guarantee. Outside the guarded OpenAI trial, other adapters
 require the explicit no-hard-USD-cap acknowledgment. Requests/output/time are
 bounded; OpenCode token/cost limits are controlled by its server. OpenAI hosted
 tracing and LangSmith export are disabled. All runs have a 180-second deadline.

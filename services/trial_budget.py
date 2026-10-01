@@ -14,6 +14,7 @@ LIMIT = 5_000_000
 SPENDABLE = 4_500_000  # $0.50 stays unused as an additional billing buffer.
 RESERVATION = 100_000
 MAX_OUTPUT = 2048
+OCTOBER_EXTENSION = ('2026-10-02T06:59:59Z', '2026-11-01T06:59:59Z')
 
 
 def enabled():
@@ -35,7 +36,7 @@ def check_runtime(runtime, model=None):
         return
     if enabled():
         if datetime.now(timezone.utc).timestamp() >= deadline():
-            raise Problem('Today’s LLM trial has ended. No new paid requests are allowed.', 409)
+            raise Problem('The LLM testing allowance has expired. No new paid requests are allowed.', 409)
         if runtime != 'openai' or (model is not None and model != MODEL):
             raise Problem('The shared trial budget permits only OpenAI Agents with '+MODEL+'.', 409)
     elif os.getenv('RELAY_MODE') == 'pilot' and runtime == 'openai':
@@ -49,7 +50,18 @@ class TrialBudget:
     def configure(self):
         expires = deadline()
         with self.db:
+            self.db.execute('BEGIN IMMEDIATE')
+            self.db.execute('CREATE TABLE IF NOT EXISTS relay_trial_amendments(id TEXT PRIMARY KEY,old_expiry REAL,new_expiry REAL,approved_at TEXT)')
             self.db.execute('INSERT OR IGNORE INTO relay_trial(id,expires_at,halted) VALUES(1,?,0)', (expires,))
+            # Specific user-authorized migration, NOT a general environment override.
+            # Never touches charges, holds, the ceiling, or a halted ledger.
+            old, new = (datetime.fromisoformat(v.replace('Z','+00:00')).timestamp() for v in OCTOBER_EXTENSION)
+            row = self.db.execute('SELECT expires_at FROM relay_trial WHERE id=1').fetchone()
+            amended = self.db.execute("SELECT 1 FROM relay_trial_amendments WHERE id='october-2026-owner-extension'").fetchone()
+            if expires == new and row['expires_at'] == old and not amended:
+                self.db.execute('UPDATE relay_trial SET expires_at=? WHERE id=1', (new,))
+                self.db.execute('INSERT INTO relay_trial_amendments VALUES(?,?,?,?)',
+                                ('october-2026-owner-extension',old,new,now()))
             # Restarting or changing an environment value cannot extend this trial.
             self.db.execute('UPDATE relay_trial SET expires_at=min(expires_at,?) WHERE id=1', (expires,))
 

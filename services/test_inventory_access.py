@@ -18,7 +18,7 @@ from backup import backup
 class InventoryTest(LabFixture):
     def test_inventory_matches_registry_and_database(self):
         value=inventory(self.store)
-        self.assertEqual(len(value['rows']),27)
+        self.assertEqual(len(value['rows']),42)
         self.assertEqual(len(value['frameworks']),11)
         self.assertEqual(value['metrics']['records'],8)
         self.assertEqual(value['metrics']['tools'],len(TOOLS))

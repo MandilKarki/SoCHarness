@@ -94,7 +94,7 @@ def catalog(store=None):
             detail=('Disabled for this installation. ' if not enabled else '')+('Local evidence replay; no model or provider calls.' if id=='simulator' else ('; '.join(requirements) or 'Configured; live run not yet verified.')),
             default_model=MODEL if trial_enabled() and id=='openai' else spec['model'],features=spec['features'],deferred=DEFERRED[id],docs=spec['docs'],
             verification='local replay' if id=='simulator' else 'not live-verified',key=spec.get('key'),
-            budget='Shared $5 trial: $4.50 spendable, $0.50 buffer; today only; persistent pre-call reservations.' if trial_enabled() and id=='openai' else ('SDK USD cap' if id=='claude' else ('Timeout only; OpenCode server controls tokens/cost' if id=='opencode' else ('No USD cap; iteration limit plus native final-summary attempt; retries bounded by worker deadline' if id=='hermes' else 'No USD cap; bounded turns/output/time only'))),
+            budget='Shared $5 total allowance: $4.50 spendable, $0.50 buffer; explicit expiry; no automatic reset; persistent pre-call reservations.' if trial_enabled() and id=='openai' else ('SDK USD cap' if id=='claude' else ('Timeout only; OpenCode server controls tokens/cost' if id=='opencode' else ('No USD cap; iteration limit plus native final-summary attempt; retries bounded by worker deadline' if id=='hermes' else 'No USD cap; bounded turns/output/time only'))),
             trial_guard=trial_enabled() and id=='openai'))
     return items
 

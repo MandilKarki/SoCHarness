@@ -108,6 +108,13 @@ export interface Cell {
   upstream: string;
   note: string;
   source: string;
+  mapping_id?: string;
+  pinned_version?: string;
+  upstream_api?: string;
+  implementation?: string | null;
+  contract_suite?: string | null;
+  live_status?: string;
+  required_credential?: string;
 }
 export interface Inventory {
   reviewed: string;
@@ -119,6 +126,11 @@ export interface Inventory {
     integrated: boolean;
     version: string;
     verification: string;
+    pinned_version?: string;
+    package?: string;
+    version_state?: string;
+    credential?: string;
+    release_source?: string;
   }[];
   rows: {
     id: string;

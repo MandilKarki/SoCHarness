@@ -56,7 +56,7 @@ explains synced and nearby-device sign-in. See [security and recovery details](A
 Device enrollment needs your own Face ID / Touch ID / device approval; an agent
 cannot create an Apple passkey for you in the background.
 
-## One-time $5 LLM trial and Google authentication
+## October testing: one shared $5 allowance and Google authentication
 
 **Live checkpoint — October 1, 2026:** Google sign-in is configured and a browser
 sign-in reached the protected dashboard. Use **Continue with Google** with the
@@ -64,13 +64,11 @@ approved operator account on your phone or laptop. The OpenAI Default project
 also has a **$5 monthly hard limit** enabled, covering every key in that project.
 Provider enforcement can lag; it is not a guarantee of an exact final invoice.
 
-The first bounded live model test was rejected because the OpenAI account had
-**no API credits remaining**. No funds or automatic recharge were added. The app
-retains its $0.10 uncertainty reservation; this is not a confirmed provider charge.
-Live model acceptance is therefore **blocked on API billing**, not completed.
-Adding credits requires the account owner at
-[OpenAI billing](https://platform.openai.com/settings/organization/billing/).
-Free simulator/replay and Google login do not require those credits.
+After the owner added API credit, a bounded OpenAI nano connectivity test passed
+on October 1, with $0.000251 estimated token cost. This proves connectivity and
+budget settlement, not all tools or SOC accuracy. The earlier rejected request's
+$0.10 uncertainty hold remains; it is not a confirmed provider charge. Free replay
+and Google login require no API credit. No automatic recharge was configured.
 
 The trial allows only OpenAI Agents with `gpt-5.4-nano-2026-03-17`, local Relay
 function tools, at most 6 model turns per run and 2,048 output tokens per request.
@@ -82,8 +80,11 @@ errors, cancellation or missing usage. Atomic reservations across connections
 prevent concurrent overspending. The internal ceiling is **$4.50**, leaving a
 $0.50 buffer. This is one shared trial across sessions, not $5 per session/day.
 Restarting the app does not reset its balance or extend its deadline. The pilot
-configuration stops new paid calls after **October 1, 2026, 11:59:59 PM Pacific**;
+configuration stops new paid calls after **October 31, 2026, 11:59:59 PM Pacific**;
 already-dispatched requests remain covered by their reservations.
+The owner explicitly extended the original one-day deadline. A single audited
+migration preserves all usage, unresolved holds and any halted state. No monthly
+refill, automatic renewal or new $5 allowance is authorized by this extension.
 
 See **Operate → Deployment** for the accounted balance, outstanding holds and
 expiry. Accounted cost is an upper estimate, not an invoice. This guard covers
@@ -123,6 +124,47 @@ makes one small guarded LLM run with tools disabled and prints only status/cost
 metadata. Before rolling back to a pre-guard image, remove `OPENAI_API_KEY` from
 Fly; older builds do not enforce this ledger. Never reset or replace the live
 trial database to replenish the allowance.
+
+## Versioned SDK capability checker
+
+Open **Agent lab → Capability matrix** for 42 capability areas across 11 adapters
+(462 individually identified cells). Each cell includes a pinned version, native
+API or Relay mechanism where mapped, implementation file, contract-suite reference,
+credential requirement, live-test scope and explicit gap. Installed version drift
+is separate from upstream release drift. Some API-level mappings remain unassessed;
+this is **not full upstream parity** and a suite reference is not a passing test.
+
+- Machine-readable baseline: [SDK manifest](services/sdk_manifest.json).
+- Release check: [October registry results](reports/sdk-releases-2026-10-01.json).
+- Testing and upgrade policy: [audit checkpoint](SDK_AUDIT.txt).
+- Offline structural check: `python services/sdk_release_check.py --offline`.
+- Full offline suite runner on Windows: `./check-sdks.ps1 -Python <main-python> -ExtendedPython <worker-python> -HermesPython <hermes-python> -Node <node-24>` (missing dependencies/skipped tests fail as incomplete; no installs or paid calls).
+- Read-only release check: `python services/sdk_release_check.py --output reports/sdk-releases-latest.json`.
+
+A Codex monthly automation checks releases and feature changes on the **1st at
+9 AM America/Los_Angeles**, starting with the next scheduled occurrence. It reports
+actionable changes and failures; it never installs upgrades, deploys, renews the
+allowance or calls paid models. This is a local Codex automation, not a Fly cron;
+the Codex app/host must be available to execute it. Registry checks use no LLM API
+credit; the Codex follow-up uses your Codex account's normal usage allowance.
+
+### Credentials for the adapters as currently wired
+
+| Adapters | Required setup | Current guarded-pilot policy |
+| --- | --- | --- |
+| OpenAI Agents | Existing OpenAI key | Nano enabled; shared $5 total ledger |
+| Microsoft, OpenHands, Hermes | OpenAI key; Hermes also needs its isolated source runtime | Blocked until their model calls use the same shared guard |
+| Claude, PydanticAI, Deep Agents, Pi | Anthropic API key | Blocked; OpenAI credit does not fund this provider |
+| Vercel | AI Gateway key | Blocked; gateway billing is separate |
+| Google ADK | Google API key | Blocked; Google billing is separate |
+| OpenCode | Dedicated deny-all server and server-side provider credentials | Disabled; snapshot-only integration |
+| Strands, Mastra | No adapter exists yet | Candidates, not implemented |
+
+Most policy, state, tool routing, schema and cancellation tests run offline with
+fake model transports. Start there, then test one bounded feature at a time with
+synthetic/benchmark data, a few records, short outputs and no automatic retry.
+Do not buy more provider credits just to make the grid green. Keys cannot fix
+missing integration code, runtime isolation, native workflows or unimplemented APIs.
 
 ## Guide and architecture
 

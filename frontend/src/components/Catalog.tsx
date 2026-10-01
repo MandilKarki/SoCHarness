@@ -322,7 +322,12 @@ export function Catalog({
                   {v}
                 </Status>
               ))}
-              <small>Click any cell for its implementation boundary.</small>
+              <small>Click a cell for its version, code, test suite, credentials and live-test status.</small>
+            </div>
+            <div className="callout">
+              <h3>Versioned coverage, not blanket compatibility</h3>
+              <p>Every cell maps one SDK version to one capability. Native, Relay and Partial describe implementation—not live acceptance. Missing mappings stay explicit.</p>
+              <p>Budget-safe testing: offline contracts first. Only OpenAI nano currently has the shared spending guard; other provider paths remain blocked during this allowance.</p>
             </div>
             <div
               className="matrix-scroll"
@@ -337,10 +342,9 @@ export function Catalog({
                       <th key={f.id} scope="col">
                         {f.name}
                         <small>
-                          {f.integrated
-                            ? f.version || "Not installed"
-                            : "Not integrated"}
+                          Pinned {f.pinned_version || f.version || "Unspecified"}
                         </small>
+                        <small>{f.version_state || (f.version ? "Installed " + f.version : "Not installed")}</small>
                       </th>
                     ))}
                   </tr>
@@ -363,10 +367,14 @@ export function Catalog({
                                 setDetail({
                                   title: f.name + " · " + r.label,
                                   value: {
+                                    ...cell,
                                     coverage: labels[cell.status],
                                     boundary: cell.note,
                                     upstream: cell.upstream,
-                                    verification: f.verification,
+                                    installed_version: f.version,
+                                    version_state: f.version_state,
+                                    credential: f.credential,
+                                    release_source: f.release_source,
                                   },
                                   url: cell.source,
                                 })
@@ -374,6 +382,7 @@ export function Catalog({
                             >
                               {labels[cell.status]}
                               <small>{cell.upstream}</small>
+                              {cell.live_status === "connectivity smoke only" && <small>Live smoke ✓</small>}
                             </button>
                           </td>
                         );

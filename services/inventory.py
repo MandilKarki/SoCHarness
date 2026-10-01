@@ -1,6 +1,7 @@
 """Auditable integration inventory, not an exhaustive upstream feature promise."""
 from adapters.registry import ADAPTERS, catalog
 from store import TOOLS
+from sdk_audit import MANIFEST, framework_metadata, cell_metadata
 
 DOCS = {k: v['docs'] for k, v in ADAPTERS.items() if k != 'simulator'}
 DOCS.update(openai='https://developers.openai.com/api/docs/guides/agents/sdk', hermes='https://github.com/NousResearch/hermes-agent')
@@ -28,7 +29,7 @@ ROWS = [
  ('thinking','Reasoning controls','Execution',['claude','pydantic','pi','vercel','opencode','openai'],['pi','claude'],[],[],'Pi thinking level; Claude disabled or explicit 1024/2048/4096-token thinking budget. Model support must be verified live.'),
  ('cancellation','Cancellation','Execution',['claude','pydantic','pi','vercel','opencode','openai'],[r for r in FULL if r not in ('google_adk','microsoft','openhands','hermes')],['google_adk','microsoft','openhands','hermes'],['opencode'],'Python bridge cancellation terminates the worker process. OpenCode abort is best effort; provider charges and already-authorized effects cannot be undone.'),
  ('limits','Turn / output limits','Governance',['claude','pydantic','deepagents','pi','vercel','openai','google_adk','microsoft','openhands','hermes'],[r for r in FULL if r!='hermes'],[],['hermes'],'Shared timeout also applies. Hermes can make a native final-summary call beyond its iteration limit, and native retries are deadline-bounded. OpenCode server must enforce its own model budgets.'),
- ('usd_budget','USD run budget','Governance',['claude'],['claude'],[],[],'SDK estimate, not an invoice guarantee. Other adapters do not enforce a USD cap.'),
+ ('usd_budget','USD spending guard','Governance',['claude'],['claude'],['openai'],[],'Claude SDK estimate; OpenAI uses Relay persistent pre-call reservations for one shared $5 allowance, not an SDK-native budget. Other adapters are blocked during guarded testing.'),
  ('approvals','Human tool approvals','Governance',['claude','pydantic','deepagents','pi','vercel','opencode','openai','hermes'],[],FULL,[],'Relay exact-argument, one-shot approvals; not native approval protocol parity.'),
  ('hooks','Native hooks / middleware','Governance',['claude','pydantic','deepagents','pi','vercel','opencode'],['claude','deepagents'],[],[],'Claude hooks and Deep Agents denial middleware. Not every upstream lifecycle hook.'),
  ('trace','Auditable execution trace','Governance',['claude','pydantic','deepagents','pi','vercel','opencode','openai','hermes'],[],FULL,['opencode'],'Relay persists tool/run events. OpenCode has connector-level trace only.'),
@@ -47,6 +48,21 @@ ROWS = [
  ('multimodal','Multimodal input','Modalities',['claude','pydantic','pi','vercel','opencode','openai','hermes'],[],[],[],'Relay accepts text and case tool results only.'),
  ('realtime','Realtime / voice','Modalities',['openai'],[],[],[],'No Relay voice transport. Other ecosystem voice extensions have not been assessed.'),
  ('embeddings','Embeddings / vector retrieval','Modalities',['pydantic','vercel'],[],[],[],'No vector retrieval integration.'),
+ ('retry_policy','Configurable retry policy','Governance',[],[],[],['openai'],'OpenAI trial fixes API and SDK retries at zero. Other SDK retry behavior varies; no uniform operator retry control.'),
+ ('native_approvals','Native approval interrupts','Governance',['openai','vercel','pydantic'],[],[],[],'Shared Relay approvals are not SDK-native suspend/resume protocols.'),
+ ('model_routing','Provider/model routing','Execution',[],[],[],[],'Each adapter is wired to the provider listed in its credential column. Upstream multi-provider support does not make Relay provider-neutral.'),
+ ('external_mcp','External MCP servers','Tools',['claude','openai','pydantic','vercel','opencode','hermes'],[],[],[],'No arbitrary external MCP endpoints are accepted; Claude embedded Relay MCP is a separate mapped feature.'),
+ ('plugins','Executable extensions/plugins','Tools',['claude','pi','opencode','hermes'],[],[],[],'No third-party executable plugin loading. Bundled Claude skill-only content is a separate restricted integration.'),
+ ('shell','General shell execution','Tools',['claude','pi','opencode','openhands','hermes'],[],[],[],'Not exposed. A model key cannot provide safe OS isolation.'),
+ ('browser','Browser/computer actions','Tools',[],[],[],[],'Not exposed by Relay. Native or ecosystem availability needs version-specific review.'),
+ ('sandbox','Per-run OS sandbox','Operations',['openhands'],[],[],[],'Separate worker processes and SDK homes are not security sandboxes.'),
+ ('a2a','Agent-to-agent protocol','Collaboration',['google_adk','microsoft'],[],[],[],'No A2A ingress, egress or identity policy is implemented.'),
+ ('evals','Native evaluation services','Operations',['google_adk','openai'],[],[],[],'Offline contract tests are not native evaluation services or measured SOC detection accuracy.'),
+ ('oauth','Provider OAuth storage','Governance',['pi'],[],[],[],'App Google login is not provider OAuth credential integration.'),
+ ('native_memory','SDK-native memory services','State',['deepagents','google_adk','hermes'],[],[],[],'Relay cited notes do not expose upstream memory backends or learning loops.'),
+ ('crash_resume','Mid-tool crash recovery','State',[],[],[],[],'Persisted successful-turn transcripts cannot resume arbitrary interrupted tool effects.'),
+ ('native_branch','Native branch navigation UI','State',['claude','pi','opencode'],[],[],[],'Pi/OpenCode continuation forks are internal; no native branch tree UI is exposed.'),
+ ('provider_trace','Remote provider tracing','Operations',['openai'],[],[],[],'Hosted OpenAI tracing and LangSmith export are disabled. Relay audit remains local to the pilot.'),
 ]
 
 
@@ -63,7 +79,8 @@ def inventory(store):
                 support='extension pattern'
                 boundary+=' Pi documents these as extension patterns, not built-in plan mode, permission popups, MCP or subagents.'
             if id=='hermes' and key in ('mcp','cancellation'):support='documented'
-            cells[id] = {'status': status, 'upstream': support, 'note': boundary, 'source': DOCS[id]}
+            cells[id] = {'status': status, 'upstream': support, 'note': boundary, 'source': DOCS[id],
+                         **cell_metadata(id,key,status)}
         rows.append({'id': key, 'label': label, 'category': category, 'cells': cells})
     sessions = store.db.execute('SELECT count(*) FROM relay_sessions').fetchone()[0]
     events = store.db.execute('SELECT count(*) FROM events').fetchone()[0]
@@ -72,9 +89,11 @@ def inventory(store):
     counts = {r['kind']: r['n'] for r in traces}
     tools = [{**t, 'runtimes': ['claude'] if t['name']=='rewind_workspace' else ['simulator']+FULL,
               'boundary': 'Analyst-only; idle Claude native workspace' if t['name']=='rewind_workspace' else 'Case/session scope · gateway policy enforced'} for t in TOOLS]
-    return {'reviewed': '2026-10-01', 'scope': f'{len(ROWS)} capability families across {len(NAMES)} tracked frameworks. Not an exhaustive inventory of every upstream API. Source links are family-level references; support can vary by language and version.',
+    return {'reviewed': MANIFEST['reviewed'], 'scope': f'{len(ROWS)} explicitly mapped capability families across {len(NAMES)} tracked frameworks. Every cell has a versioned identity, implementation boundary and test reference or gap. Not exhaustive upstream API parity. Rolling docs are not pinned-version proof.',
             'legend': {'native':'SDK-native integration', 'shared':'Implemented by Relay', 'partial':'Restricted subset', 'gap':'Not integrated'},
-            'frameworks': [{'id':id,'name':name,'docs':DOCS[id],'integrated':id in adapters,'version':adapters.get(id,{}).get('version'),'verification':adapters.get(id,{}).get('verification','not integrated')} for id,name in NAMES.items()],
+            'frameworks': [{'id':id,'name':name,'docs':DOCS[id],'integrated':id in adapters,'version':adapters.get(id,{}).get('version'),'verification':adapters.get(id,{}).get('verification','not integrated'),
+                            **framework_metadata(id,adapters.get(id,{}).get('version'))} for id,name in NAMES.items()],
+            'candidates': MANIFEST['candidates'],
             'rows': rows, 'tools': tools, 'features': FEATURES,
             'metrics': {'records':events,'hosts':hosts,'cases':len(store.cases()),'sessions':sessions,'tools':len(TOOLS),'sdk_adapters':len(FULL)+1,
                         'completed_runs':counts.get('run.completed',0),'failed_runs':counts.get('run.failed',0),'cancelled_runs':counts.get('run.cancelled',0),

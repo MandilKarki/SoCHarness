@@ -1,4 +1,4 @@
-param([switch]$ExpectNoSessions,[switch]$ExpectFirebaseTrial,[string]$TokenFile=(Join-Path $PSScriptRoot 'work/fly-operator-token.clixml'))
+param([switch]$ExpectNoSessions,[switch]$ExpectFirebaseTrial,[string]$ExpectedTrialUntil,[string]$TokenFile=(Join-Path $PSScriptRoot 'work/fly-operator-token.clixml'))
 $ErrorActionPreference='Stop'
 Add-Type -AssemblyName System.Net.Http
 $origin='https://socharness-mandil.fly.dev'
@@ -73,10 +73,22 @@ try {
         $deployment=Request GET '/api/deployment';Expect $deployment 200
         $trial=($deployment.text|ConvertFrom-Json).trial
         if(!$trial.enabled -or $trial.limit_usd -ne 5 -or $trial.spendable_usd -ne 4.5 -or $trial.buffer_usd -ne 0.5){throw 'Trial guard missing'}
+        if($ExpectedTrialUntil) {
+            if([DateTimeOffset]::Parse($trial.expires_at) -ne [DateTimeOffset]::Parse($ExpectedTrialUntil)){throw 'Trial extension did not persist'}
+            if($trial.requests -lt 2 -or $trial.accounted_usd -lt 0.100251 -or $trial.unsettled_requests -lt 1){throw 'Existing usage or reservations were lost'}
+            $grid=$inventory.text|ConvertFrom-Json
+            if($grid.rows.Count -ne 42 -or $grid.frameworks.Count -ne 11){throw 'Versioned matrix is incomplete'}
+            foreach($row in $grid.rows) {
+                foreach($framework in $grid.frameworks) {
+                    $cell=$row.cells.($framework.id)
+                    if(!$cell.mapping_id -or !$cell.pinned_version -or !$cell.live_status){throw 'Matrix cell lacks version/evidence metadata'}
+                }
+            }
+        }
         if(($items|Where-Object { $_.id -notin @('simulator','openai') -and $_.available }).Count -gt 0){throw 'Another paid SDK bypasses trial policy'}
     }
     Expect (Request POST '/api/logout' @{} 'https://untrusted.invalid') 403
     Expect (Request POST '/api/logout' @{}) 200
     Expect (Request GET '/api/incidents') 401
-    @{https=$true;login=$true;logout=$true;anonymous_denied=$true;cross_origin_denied=$true;passkey_management=$true;device_enrollment='requires user';metrics=$metrics}|ConvertTo-Json -Depth 4
+    @{https=$true;login=$true;logout=$true;anonymous_denied=$true;cross_origin_denied=$true;passkey_management=$true;device_enrollment='requires user';metrics=$metrics;trial=$trial}|ConvertTo-Json -Depth 4
 } finally { $client.Dispose();$handler.Dispose() }

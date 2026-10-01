@@ -1,0 +1,131 @@
+{
+  "checked_at": "2026-10-01T19:41:32.896562+00:00",
+  "model_calls": 0,
+  "mode": "registry metadata",
+  "manifest_errors": [],
+  "releases": [
+    {
+      "runtime": "claude",
+      "pinned": "0.2.159",
+      "release_source": "https://github.com/anthropics/claude-agent-sdk-python/releases",
+      "metadata_source": "https://pypi.org/pypi/claude-agent-sdk/json",
+      "latest": "0.2.163",
+      "status": "review required",
+      "metadata_sha256": "6df74797a7077a4d74f18b7a52b98246aa9b917600c78e85e71e9d226ef5594d",
+      "feature_review": "Read official release notes and pinned-to-latest source diff; version metadata alone cannot establish feature changes."
+    },
+    {
+      "runtime": "pydantic",
+      "pinned": "2.52.0",
+      "release_source": "https://github.com/pydantic/pydantic-ai/releases",
+      "metadata_source": "https://pypi.org/pypi/pydantic-ai-slim/json",
+      "latest": "2.52.0",
+      "status": "matches pin",
+      "metadata_sha256": "ac980922b8d51c66b65153f1ecdd060ab9e843a465f7de5d5a2e6c22592adeb1",
+      "feature_review": "Read official release notes and pinned-to-latest source diff; version metadata alone cannot establish feature changes."
+    },
+    {
+      "runtime": "deepagents",
+      "pinned": "0.7.21",
+      "release_source": "https://github.com/langchain-ai/deepagents/releases",
+      "metadata_source": "https://pypi.org/pypi/deepagents/json",
+      "latest": "0.7.21",
+      "status": "matches pin",
+      "metadata_sha256": "a5ebec45c048f575cf73b2b024ef27e6c4a8f68033986413fe38cc5fd393c4c7",
+      "feature_review": "Read official release notes and pinned-to-latest source diff; version metadata alone cannot establish feature changes."
+    },
+    {
+      "runtime": "pi",
+      "pinned": "0.99.2",
+      "release_source": "https://github.com/earendil-works/pi/releases",
+      "metadata_source": "https://registry.npmjs.org/%40earendil-works%2Fpi-coding-agent/latest",
+      "latest": "1.0.0",
+      "status": "review required",
+      "metadata_sha256": "12c7df23690859750d04a64e6a2537264ae5969438122abc9d5f476853a8ad2d",
+      "feature_review": "Read official release notes and pinned-to-latest source diff; version metadata alone cannot establish feature changes."
+    },
+    {
+      "runtime": "vercel",
+      "pinned": "7.0.126",
+      "release_source": "https://github.com/vercel/ai/releases",
+      "metadata_source": "https://registry.npmjs.org/ai/latest",
+      "latest": "7.0.127",
+      "status": "review required",
+      "metadata_sha256": "321fd0e40618b108d7aee658eb4b4d9e1ec6b41e34fe5e98dfe85caf42bda34d",
+      "feature_review": "Read official release notes and pinned-to-latest source diff; version metadata alone cannot establish feature changes."
+    },
+    {
+      "runtime": "opencode",
+      "pinned": "1.18.34",
+      "release_source": "https://github.com/anomalyco/opencode/releases",
+      "metadata_source": "https://registry.npmjs.org/%40opencode-ai%2Fsdk/latest",
+      "latest": "1.18.34",
+      "status": "matches pin",
+      "metadata_sha256": "0e15f436708eb1ce173cb21c8565177865c6da02558ee2846f82abfdfa73aa01",
+      "feature_review": "Read official release notes and pinned-to-latest source diff; version metadata alone cannot establish feature changes."
+    },
+    {
+      "runtime": "openai",
+      "pinned": "0.22.3",
+      "release_source": "https://github.com/openai/openai-agents-python/releases",
+      "metadata_source": "https://pypi.org/pypi/openai-agents/json",
+      "latest": "0.22.3",
+      "status": "matches pin",
+      "metadata_sha256": "950aae789ce7584b34df49f98dee9386baa2a2ab6ff28642c59d8efa6852c826",
+      "feature_review": "Read official release notes and pinned-to-latest source diff; version metadata alone cannot establish feature changes."
+    },
+    {
+      "runtime": "google_adk",
+      "pinned": "2.10.0",
+      "release_source": "https://github.com/google/adk-python/releases",
+      "metadata_source": "https://pypi.org/pypi/google-adk/json",
+      "latest": "2.10.0",
+      "status": "matches pin",
+      "metadata_sha256": "85205b36cae2fff9d775503b140c34fd28a06b71cb00d5677c8ff52c16fc1144",
+      "feature_review": "Read official release notes and pinned-to-latest source diff; version metadata alone cannot establish feature changes."
+    },
+    {
+      "runtime": "microsoft",
+      "pinned": "1.19.0",
+      "release_source": "https://github.com/microsoft/agent-framework/releases",
+      "metadata_source": "https://pypi.org/pypi/agent-framework-core/json",
+      "latest": "1.19.0",
+      "status": "matches pin",
+      "metadata_sha256": "2cd903f28e936216a50f45be73798ebf97916d955d6078ccfa57857bd190843e",
+      "feature_review": "Read official release notes and pinned-to-latest source diff; version metadata alone cannot establish feature changes."
+    },
+    {
+      "runtime": "openhands",
+      "pinned": "1.50.1",
+      "release_source": "https://github.com/OpenHands/software-agent-sdk/releases",
+      "metadata_source": "https://pypi.org/pypi/openhands-sdk/json",
+      "latest": "1.50.1",
+      "status": "matches pin",
+      "metadata_sha256": "28db14b3180efb559e38258a00332a95de2a7754c72839505bd76f1825d837ab",
+      "feature_review": "Read official release notes and pinned-to-latest source diff; version metadata alone cannot establish feature changes."
+    },
+    {
+      "runtime": "hermes",
+      "pinned": "a4bd966aeee27d4e26316d69f2d2355dc5f32c21",
+      "release_source": "https://github.com/NousResearch/hermes-agent/releases",
+      "metadata_source": "https://api.github.com/repos/NousResearch/hermes-agent/commits/HEAD",
+      "latest": "5a8dea85fbb636ae09adafa2272d511ae1e227a3",
+      "status": "review required",
+      "metadata_sha256": "71b002641dfc6d1220ad01454352110851b1e284323fc0026051eb86a190e506",
+      "feature_review": "Read official release notes and pinned-to-latest source diff; version metadata alone cannot establish feature changes."
+    }
+  ],
+  "candidates": [
+    {
+      "id": "strands",
+      "status": "not integrated",
+      "docs": "https://strandsagents.com/docs/user-guide/sdk/multi-agent/multi-agent-patterns/"
+    },
+    {
+      "id": "mastra",
+      "status": "not integrated",
+      "docs": "https://mastra.ai/examples/agents/agentic-workflows"
+    }
+  ],
+  "scope": "All 11 registered adapters. Rolling documentation is not pinned-version proof. Companion dependency pins remain separately recorded in sdk_manifest.json."
+}

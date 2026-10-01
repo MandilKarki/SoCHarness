@@ -1,0 +1,87 @@
+SOC HARNESS SDK AUDIT - 2026-10-01
+
+Confirmed: 11 registered SDK adapters, 42 capability areas, 462 versioned cells.
+Inference explicitly avoided: an API key does not imply full integration, a passing
+offline contract does not imply live model correctness, and latest docs do not
+prove behavior in an older installed version. Unknown upstream APIs remain unknown.
+Strands and Mastra are candidates only; neither is installed or executable here.
+
+The capability matrix is generated from services/inventory.py and sdk_manifest.json.
+Each cell has a stable runtime@version:capability identity, boundary, implementation
+file or explicit gap, native API/Relay mechanism where mapped, assigned contract
+suite, required credential, and narrowly scoped live evidence. Test suite assignment
+is NOT individual-cell acceptance. This inventory still needs deeper upstream-symbol
+enumeration; it must not be represented as an exhaustive map of every SDK API.
+
+PINS AND CREDENTIALS
+Claude 0.2.159                       ANTHROPIC_API_KEY
+PydanticAI slim 2.52.0                ANTHROPIC_API_KEY
+Deep Agents 0.7.21                   ANTHROPIC_API_KEY
+Pi coding-agent / pi-ai 0.99.2        ANTHROPIC_API_KEY
+Vercel ai 7.0.126                    AI_GATEWAY_API_KEY
+OpenCode SDK 1.18.34                 dedicated server + its provider key
+OpenAI Agents 0.22.3                 OPENAI_API_KEY
+Google ADK 2.10.0                    GOOGLE_API_KEY
+Microsoft core 1.19.0/provider1.14.4  OPENAI_API_KEY
+OpenHands SDK 1.50.1                 OPENAI_API_KEY
+Hermes a4bd966aeee27d4e26316d69f2d2355dc5f32c21  OPENAI_API_KEY
+
+These are Relay's configured provider routes, not a statement that each upstream
+SDK only supports that provider. Only OpenAI nano currently has Relay's shared USD
+guard. The rest remain blocked while that guard is enabled. Hermes is not installed
+in the Fly image and requires its separate verified Python 3.14 source environment.
+
+RELEASE DISCOVERY
+Public registry checks found four differences from our pins:
+- Claude 0.2.163: bundled CLI updates; 0.2.160 fixed follow-up session closure
+  with background subagents/hooks/MCP. Retest resume, hooks and terminal results.
+  https://github.com/anthropics/claude-agent-sdk-python/releases
+- Pi 1.0.0: registry and official tag confirm a major release. The release page
+  supplies no detailed change notes; do not invent the feature diff. Review the
+  source changelog/compare before changing session or extension contracts.
+  https://github.com/earendil-works/pi/releases/tag/v1.0.0
+- Vercel ai 7.0.127: registry differs; release detail was unavailable in this audit.
+  Feature diff remains unknown, not no changes. Keep the existing pin.
+  https://github.com/vercel/ai/releases
+- Hermes source HEAD 5a8dea85fbb636ae09adafa2272d511ae1e227a3 differs from pinned
+  commit. HEAD is not necessarily a stable release; compare details were unavailable.
+  Keep the pinned source until the exact source delta and worker contracts are reviewed.
+  https://github.com/NousResearch/hermes-agent
+Seven other primary package pins matched registry latest at the timestamp in
+reports/sdk-releases-2026-10-01.json. Companion dependencies are separately pinned;
+primary-version equality is not a complete security or transitive dependency audit.
+Nothing was upgraded during this check.
+
+CREDIT-EFFICIENT TEST ORDER
+1. Structural manifest/pin/matrix checks, zero API calls.
+2. Existing real-SDK contracts with fake model transports, no provider spending.
+3. One guarded OpenAI nano connectivity test (already passed Oct 1).
+4. Next acceptance cases: one read-only evidence tool, typed findings, then two-turn
+   continuation. Use a few benchmark records, max_turns 2-3, max_output_tokens 512,
+   no retries or hosted tools. Inspect actual usage receipts before expanding.
+5. Additional SDKs need per-request reservation/usage accounting before live tests
+   share this $5 allowance. Do not disable the guard to bypass that engineering work.
+
+The lifetime allowance stays $5, of which $4.50 is spendable and $0.50 reserved.
+Existing accounted $0.100251 includes the earlier $0.10 unresolved hold, leaving
+$4.399749 for new guarded requests as last verified. No reset/renewal is implemented.
+Owner-approved deadline: Oct 31 2026 23:59:59 Pacific (Nov 1 06:59:59 UTC).
+Provider project $5 monthly hard limit remains separate and may enforce with delay.
+This audit itself makes no paid model calls. Cloud hosting charges are separate.
+
+MONTHLY AUDIT
+Codex heartbeat monthly-socharness-sdk-audit: first day, 09:00 Pacific. Read-only
+registry and release-feature review; notify on changes/failures. No auto-upgrades,
+paid calls, key creation, deployment, ledger resets or deadline extensions.
+
+OFFLINE EXECUTION CHECKPOINT
+118 backend tests passed on Windows, including one-time extension/cost preservation,
+42x11 mapping validation, auth, policy, native state and core SDK contracts.
+31 frontend tests and the production frontend build passed.
+Six extended Python contracts passed (Google ADK, Microsoft, OpenHands).
+Two real-source Hermes contracts passed on Windows. Linux Hermes remains untested.
+Eight Pi/Vercel/OpenCode contracts passed in a network-disabled Linux container.
+The first local Node test attempt had missing dependencies; it did not pass.
+The installed Linux environment was used for the successful Node suite instead.
+No paid API requests were made by these audits. Passing suites do not imply each
+of the 462 cells has a dedicated behavioral test or live acceptance.

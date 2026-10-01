@@ -57,6 +57,30 @@ class TrialTests(LabFixture):
             self.assertTrue(self.budget.snapshot()['blocked'])
         with self.assertRaises(Problem): self.budget.reserve(self.sid, MODEL)
 
+    def test_october_extension_preserves_costs_halt_and_is_one_time(self):
+        from trial_budget import OCTOBER_EXTENSION
+        from datetime import datetime
+        old, new = OCTOBER_EXTENSION
+        rid = self.budget.reserve(self.sid, MODEL)
+        self.budget.settle(rid,1001,7)
+        self.budget.reserve(self.sid, MODEL)
+        self.store.db.execute('UPDATE relay_trial SET expires_at=?,halted=1',
+                              (datetime.fromisoformat(old.replace('Z','+00:00')).timestamp(),))
+        self.store.db.commit()
+        with patch.dict(os.environ, {'RELAY_TRIAL_UNTIL':new}):
+            status=self.budget.snapshot()
+            self.assertEqual(status['expires_at'],new.replace('Z','+00:00'))
+            self.assertEqual(status['accounted_usd'],.100209)
+            self.assertEqual(status['requests'],2)
+            self.assertEqual(status['unsettled_requests'],1)
+            self.assertTrue(status['blocked'])
+            self.budget.configure()
+            self.assertEqual(self.store.db.execute('SELECT count(*) FROM relay_trial_amendments').fetchone()[0],1)
+        # Shortening after approval cannot replay the extension migration.
+        with patch.dict(os.environ, {'RELAY_TRIAL_UNTIL':old}): self.budget.configure()
+        with patch.dict(os.environ, {'RELAY_TRIAL_UNTIL':new}):
+            self.assertEqual(self.budget.snapshot()['expires_at'],old.replace('Z','+00:00'))
+
     def test_invalid_usage_locks_without_refund(self):
         rid = self.budget.reserve(self.sid, MODEL)
         for incoming, outgoing in ((-1,0),(0,2049),(400001,0),(False,1),(1.0,1),(0,None)):
