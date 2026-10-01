@@ -1,4 +1,4 @@
-param([Parameter(Mandatory=$true)][string]$TokenFile, [switch]$Workbench, [switch]$Manager)
+param([Parameter(Mandatory=$true)][string]$TokenFile, [switch]$Workbench, [switch]$Manager, [string]$InspectSession)
 # ONE paid, bounded read-only lesson. No automatic retry; secrets remain in memory.
 $ErrorActionPreference='Stop'
 Add-Type -AssemblyName System.Net.Http
@@ -26,6 +26,15 @@ try {
     $pointer=[Runtime.InteropServices.Marshal]::SecureStringToBSTR($secure)
     try {$null=Request POST '/api/login' @{token=[Runtime.InteropServices.Marshal]::PtrToStringBSTR($pointer)}}
     finally {[Runtime.InteropServices.Marshal]::ZeroFreeBSTR($pointer)}
+    if($InspectSession) {
+        if($InspectSession -notmatch '^ses_[a-f0-9]{32}$'){throw 'Invalid session ID'}
+        $saved=Request GET ('/api/sessions/'+$InspectSession)|ConvertFrom-Json
+        @($saved.trace|Where-Object {$_.kind -in @('tool.started','tool.result','sdk.result','run.failed')}|ForEach-Object {
+            if($_.kind -eq 'tool.result') {@{kind=$_.kind;tool=$_.payload.tool;total=$_.payload.result.total;record_ids=@($_.payload.result.items|ForEach-Object {$_.id});result_keys=@($_.payload.result.PSObject.Properties.Name)}}
+            else {@{kind=$_.kind;payload=$_.payload}}
+        })|ConvertTo-Json -Depth 8
+        return
+    }
     $budget=(Request GET '/api/deployment'|ConvertFrom-Json).trial
     if(!$budget.enabled -or $budget.blocked -or $budget.remaining_usd -lt $(if($Manager){0.4}else{0.3})){throw 'Guard unavailable; no model call made'}
     $inventory=Request GET '/api/inventory'|ConvertFrom-Json

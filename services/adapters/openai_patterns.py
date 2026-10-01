@@ -59,7 +59,7 @@ def build_agents(engine,prompt,tools,model_factory,settings,output_type,experime
         return Agent(name=name,instructions=SYSTEM+'\n'+instructions,tools=local_tools,
             model=model_factory(name),model_settings=settings,**kwargs)
     if experiment in ('manager','handoff'):
-        specialist=create('Evidence specialist','You are the evidence specialist. Query exactly three case records once, then return concise findings citing their IDs. No other action. If the input explicitly requests a follow-up without tools, use only supplied prior evidence.',tools,output_type=output_type)
+        specialist=create('Evidence specialist','You are the evidence specialist. For a fresh investigation call query_case_evidence exactly once with {"limit":3,"search":""}. The server already applies the case boundary. Never put the case ID or case: syntax in search; that field is only a literal text filter, not a case selector. Return concise findings citing the returned IDs. No other action. If the input explicitly requests a follow-up without tools, use only supplied prior evidence.',tools,output_type=output_type)
         if experiment=='manager':
             async def observe_nested(payload):
                 # on_stream selects the SDK's streamed nested runner. Model

@@ -14,11 +14,13 @@ from store import TOOLS,Problem
 
 FINDINGS={'observations':['Record #1 reviewed.'],'evidence_ids':[1],'hypotheses':[],'next_steps':['Verify account owner activity.'],'limitations':'Fixture model, not a verdict.'}
 class SequenceModel(Model):
-    def __init__(self,steps):self.steps=list(steps);self.inputs=[]
+    def __init__(self,steps):self.steps=list(steps);self.inputs=[];self.instructions=[];self.schemas=[]
     async def get_response(self,*args,**kwargs):raise AssertionError('Streaming required')
     async def stream_response(self,system_instructions,input,model_settings,tools,output_schema,handoffs,tracing,**kwargs):
         assert tracing.is_disabled()
         self.inputs.append(input)
+        self.instructions.append(system_instructions)
+        self.schemas.append({t.name:t.params_json_schema for t in tools})
         step=self.steps.pop(0)
         if isinstance(step,tuple):
             name,args=step
@@ -46,6 +48,8 @@ class PatternTest(LabFixture):
         self.assertTrue(any(t['kind']=='agent.returned' for t in trace))
         self.assertEqual([t['payload']['call'] for t in trace if t['kind']=='model.request'],[1,2,3,4])
         self.assertEqual(load(engine)['last_agent'],'Investigation manager')
+        self.assertIn('{"limit":3,"search":""}',models['Evidence specialist'].instructions[0])
+        self.assertIn('not a query language',models['Evidence specialist'].schemas[0]['query_case_evidence']['properties']['search']['description'])
     def test_native_handoff_persists_specialist_ownership(self):
         engine=self.make('handoff')
         models={'Triage agent':SequenceModel([('transfer_to_evidence_specialist',{})]),

@@ -1,4 +1,4 @@
-param([switch]$ExpectNoSessions,[switch]$ExpectFirebaseTrial,[string]$ExpectedTrialUntil,[string]$TokenFile=(Join-Path $PSScriptRoot 'work/fly-operator-token.clixml'))
+param([switch]$ExpectNoSessions,[switch]$ExpectFirebaseTrial,[switch]$RequireIdle,[switch]$ExpectLocalAssets,[string]$ExpectedTrialUntil,[string]$TokenFile=(Join-Path $PSScriptRoot 'work/fly-operator-token.clixml'))
 $ErrorActionPreference='Stop'
 Add-Type -AssemblyName System.Net.Http
 $origin='https://socharness-mandil.fly.dev'
@@ -51,6 +51,18 @@ try {
     try { $login=Request POST '/api/login' @{token=[Runtime.InteropServices.Marshal]::PtrToStringBSTR($pointer)} }
     finally { [Runtime.InteropServices.Marshal]::ZeroFreeBSTR($pointer) }
     Expect $login 200
+    if($RequireIdle) {
+        $sessions=Request GET '/api/sessions';Expect $sessions 200
+        if(@($sessions.text|ConvertFrom-Json|Where-Object status -eq 'running').Count){throw 'An investigation is running. Do not deploy until it completes.'}
+    }
+    if($ExpectLocalAssets) {
+        foreach($name in @('react-app.js','react-app.css')) {
+            $bytes=$client.GetByteArrayAsync($origin+'/'+$name).GetAwaiter().GetResult()
+            $sha=[Security.Cryptography.SHA256]::Create()
+            try {$remote=[BitConverter]::ToString($sha.ComputeHash($bytes)).Replace('-','')}finally{$sha.Dispose()}
+            if($remote -ne (Get-FileHash (Join-Path $PSScriptRoot ('web/'+$name)) -Algorithm SHA256).Hash){throw ('Deployed asset does not match tested build: '+$name)}
+        }
+    }
     if(!$login.csp){throw 'Missing security headers'}
     foreach($page in @('/','/security')) {
         $react=Request GET $page;Expect $react 200

@@ -9,6 +9,8 @@ def tool_specs(config):
     specs = definitions(config)
     for spec in specs:
         if spec['name'] == 'query_case_evidence':
+            spec['description'] += ' The server already scopes results to the selected case. For an initial sample use limit=3 and search=""; do not put a case ID in search.'
+            spec['schema']['properties']['search']['description']='Literal substring filter on event text, not a query language or case selector. Leave empty to sample the selected case; never use case:IR-... here.'
             spec['schema']['properties']['limit'].update(minimum=1, maximum=25,
                 description='Maximum evidence records to return, from 1 to 25. Start with 3.')
     return specs
