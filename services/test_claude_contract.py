@@ -26,7 +26,8 @@ class ClaudeContractTest(LabFixture):
                 yield sdk.SystemMessage(subtype='init',data={'session_id':'sdk-test-session'})
                 yield sdk.AssistantMessage(content=[sdk.TextBlock(text='Observed event 1. No verdict.')],model='test-model')
                 yield sdk.ResultMessage(subtype='success',duration_ms=1,duration_api_ms=1,is_error=False,num_turns=1,
-                    session_id='sdk-test-session',total_cost_usd=.01,usage={'input_tokens':10,'output_tokens':5},result='Reviewed')
+                    session_id='sdk-test-session',total_cost_usd=.01,usage={'input_tokens':10,'output_tokens':5},result='Reviewed',
+                    structured_output={'observations':['#1'],'evidence_ids':[1],'hypotheses':[],'next_steps':[],'limitations':'test'})
         with patch.object(sdk,'ClaudeSDKClient',Client):
             asyncio.run(run_claude(Engine(self.store,sid),'Review case'))
         options=seen['options']
@@ -54,7 +55,7 @@ class ClaudeContractTest(LabFixture):
             async def query(self,prompt):seen['prompt']=prompt
             async def interrupt(self):pass
             async def receive_response(self):
-                yield sdk.ResultMessage(subtype='success',duration_ms=1,duration_api_ms=1,is_error=False,num_turns=1,session_id='test')
+                yield sdk.ResultMessage(subtype='success',duration_ms=1,duration_api_ms=1,is_error=False,num_turns=1,session_id='test',result='Reviewed')
         with patch.object(sdk,'ClaudeSDKClient',Client):asyncio.run(run_claude(Engine(self.store,sid),'Review'))
         options=seen['options']
         self.assertEqual(options.tools,['Agent','Skill'])
@@ -70,6 +71,24 @@ class ClaudeContractTest(LabFixture):
             self.assertEqual(result['hookSpecificOutput']['permissionDecision'],'deny')
         allowed=asyncio.run(hook({'hook_event_name':'PreToolUse','tool_name':'Agent','tool_input':{'subagent_type':'evidence-reviewer'}},'test',{}))
         self.assertEqual(allowed,{})
+
+    def test_thinking_and_missing_terminal_fail_closed(self):
+        import claude_agent_sdk as sdk
+        from store import Problem
+        sid=self.session(runtime='claude',thinking='medium')
+        seen={}
+        class Client:
+            def __init__(self,options):seen['options']=options
+            async def __aenter__(self):return self
+            async def __aexit__(self,*args):pass
+            async def query(self,prompt):pass
+            async def interrupt(self):pass
+            async def receive_response(self):
+                yield sdk.AssistantMessage(content=[sdk.TextBlock(text='Partial answer')],model='test')
+        with patch.object(sdk,'ClaudeSDKClient',Client),self.assertRaises(Problem):
+            asyncio.run(run_claude(Engine(self.store,sid),'Review'))
+        self.assertEqual(seen['options'].thinking,{'type':'enabled','budget_tokens':2048})
+        self.assertFalse(any(t['kind']=='checkpoint' for t in self.store.traces(sid)))
 
     def test_native_file_permissions_and_checkpoint_capture(self):
         import claude_agent_sdk as sdk
@@ -94,7 +113,7 @@ class ClaudeContractTest(LabFixture):
             async def receive_response(self):
                 yield sdk.SystemMessage(subtype='init',data={'session_id':sdk_id})
                 yield sdk.UserMessage(content='Review',uuid=checkpoint)
-                yield sdk.ResultMessage(subtype='success',duration_ms=1,duration_api_ms=1,is_error=False,num_turns=1,session_id=sdk_id)
+                yield sdk.ResultMessage(subtype='success',duration_ms=1,duration_api_ms=1,is_error=False,num_turns=1,session_id=sdk_id,result='Reviewed')
         with patch('workspace.BASE',Path(self.temp.name)/'native'),patch.object(sdk,'ClaudeSDKClient',Client):
             asyncio.run(run_claude(engine,'Write a report'))
         options=seen['options']

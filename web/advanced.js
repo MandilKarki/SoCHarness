@@ -4,7 +4,7 @@ const advancedUI = (() => {
   let timer = null;
   let fingerprint = '';
   const labels = {
-    specialists: 'Named read-only specialists (Claude)', skills: 'SOC playbooks (Claude: bundled plugin)',
+    specialists: 'Named read-only specialists (Claude / Deep Agents)', skills: 'SOC playbooks (Claude: bundled plugin)',
     memory: 'Case-scoped memory', artifacts: 'Versioned report workspace',
     await_approvals: 'Pause active run for decisions', file_workspace: 'Native SDK text-file checkpoints'
   };

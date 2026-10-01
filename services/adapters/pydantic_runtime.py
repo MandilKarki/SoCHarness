@@ -1,10 +1,12 @@
 """PydanticAI native tool loop with explicit schemas and Relay tool execution."""
 from adapters.common import SYSTEM, definitions, dispatch, context, finish, cancellable
+from adapters.state import load, save, turn_prompt
 
 async def run_pydantic(engine,prompt,model_override=None):
     from pydantic_ai import Agent
     from pydantic_ai.tools import Tool
     from pydantic_ai.usage import UsageLimits
+    from pydantic_ai.messages import ModelMessagesTypeAdapter
     from pydantic import BaseModel
     config=engine.store.session(engine.sid)['config']
     tools=[]
@@ -29,8 +31,13 @@ async def run_pydantic(engine,prompt,model_override=None):
                 engine.record('message.delta',{'text':event.delta.content_delta})
             elif getattr(event,'event_kind',None) in ('function_tool_call','function_tool_result'):
                 engine.record('adapter.lifecycle',{'runtime':'pydantic','event':event.event_kind})
-    result=await cancellable(engine,agent.run(context(engine,prompt),event_stream_handler=events,
+    prior=load(engine)
+    history=ModelMessagesTypeAdapter.validate_python(prior['messages']) if prior else None
+    engine.record('adapter.lifecycle',{'runtime':'pydantic','event':'session.resumed' if prior else 'session.created'})
+    result=await cancellable(engine,agent.run(turn_prompt(engine,prompt,prior),message_history=history,event_stream_handler=events,
         usage_limits=UsageLimits(request_limit=config['max_turns'],tool_calls_limit=config['max_turns']*4)))
     usage=result.usage
     structured=result.output.model_dump() if config['structured_output'] else None
-    finish(engine,str(result.output),'pydantic',{'input_tokens':usage.input_tokens,'output_tokens':usage.output_tokens},structured)
+    import json
+    finish(engine,str(result.output),'pydantic',{'input_tokens':usage.input_tokens,'output_tokens':usage.output_tokens},structured,
+           native_state={'messages':json.loads(result.all_messages_json())})

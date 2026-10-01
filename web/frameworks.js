@@ -9,7 +9,8 @@ const frameworkUI=(()=>{
     $('output-tokens').disabled=adapter.id==='opencode';$('max-turns').disabled=adapter.id==='opencode';
     $('budget-ack-row').hidden=['claude','simulator'].includes(adapter.id);
     $('budget-ack').checked=false;
-    $('thinking').disabled=adapter.id!=='pi';$('thinking').value='off';
+    $('thinking').disabled=!adapter.features.includes('thinking');$('thinking').value='off';
+    for(const option of $('thinking').options)option.disabled=adapter.id==='claude'&&option.value==='minimal';
     for(const feature of ['specialists','file_workspace','memory','skills','artifacts']){
       const input=$('advanced-'+feature);
       input.disabled=!adapter.features.includes(feature);if(input.disabled)input.checked=false;

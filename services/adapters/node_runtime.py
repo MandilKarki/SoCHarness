@@ -5,10 +5,11 @@ import os
 from store import ROOT, DATA, Problem
 from adapters.registry import node_binary
 from adapters.common import SYSTEM,FINDINGS,definitions,dispatch,context,finish,cancellable
+from adapters.state import load,save,turn_prompt,directory
 
 async def run_node(engine,prompt):
     config=engine.store.session(engine.sid)['config'];runtime=config['runtime']
-    cwd=DATA/'adapter-sessions'/engine.sid;cwd.mkdir(parents=True,exist_ok=True)
+    cwd=directory(engine)
     # Child gets only its provider key, never all server environment secrets.
     names=['SystemRoot','WINDIR','PATH','TEMP','TMP','USERPROFILE','HOME','SSL_CERT_FILE','NODE_EXTRA_CA_CERTS']
     names+= {'pi':['ANTHROPIC_API_KEY'],'vercel':['AI_GATEWAY_API_KEY'],'opencode':['RELAY_OPENCODE_URL','RELAY_OPENCODE_PASSWORD']}[runtime]
@@ -16,8 +17,9 @@ async def run_node(engine,prompt):
     env.update({'NO_COLOR':'1','PI_CODING_AGENT_DIR':str(cwd),'DO_NOT_TRACK':'1'})
     async def send(value):
         proc.stdin.write((json.dumps(value,ensure_ascii=False)+'\n').encode());await proc.stdin.drain()
+    prior=load(engine)
     request={'runtime':runtime,'config':config,'sid':engine.sid,'cwd':str(cwd),'system':SYSTEM,
-             'prompt':context(engine,prompt),'tools':definitions(config),'output_schema':FINDINGS}
+             'prompt':turn_prompt(engine,prompt,prior),'native_state':prior,'tools':definitions(config),'output_schema':FINDINGS}
     if runtime=='opencode':
         # Snapshot-only: records fetched through the same permissions gateway before model dispatch.
         request['evidence']=await dispatch(engine,'query_case_evidence',{'limit':5,'search':''})
@@ -51,7 +53,7 @@ async def run_node(engine,prompt):
         if code or final is None:raise Problem('SDK worker stopped without a successful result',502)
     try:
         await cancellable(engine,receive())
-        finish(engine,final.get('text',''),runtime,final.get('usage'),final.get('structured'))
+        finish(engine,final.get('text',''),runtime,final.get('usage'),final.get('structured'),final.get('native_state'))
     finally:
         if proc.returncode is None:
             try:

@@ -53,17 +53,22 @@ def context(engine,prompt):
     if session['context_summary']:prefix+='\nCheckpoint: '+session['context_summary']
     return prefix+'\nCurrent analyst request:\n'+prompt
 
-def finish(engine,text,runtime,usage=None,structured=None):
+def finish(engine,text,runtime,usage=None,structured=None,native_state=None):
     engine.check()
     if not text and structured is None:raise Problem('Adapter returned no final answer',502)
-    usage=usage or {}
-    engine.store.db.execute('UPDATE relay_sessions SET input_tokens=input_tokens+?,output_tokens=output_tokens+? WHERE id=?',
-        (int(usage.get('input_tokens',0) or 0),int(usage.get('output_tokens',0) or 0),engine.sid))
-    engine.store.db.commit()
+    if engine.store.session(engine.sid)['config']['structured_output'] and structured is None:
+        raise Problem('Adapter did not return the requested structured output',502)
     if structured is not None:
         import jsonschema
         jsonschema.validate(structured,FINDINGS)
         text=json.dumps(structured,indent=2)
+    if native_state is not None:
+        from adapters.state import save
+        save(engine,native_state)
+    usage=usage or {}
+    engine.store.db.execute('UPDATE relay_sessions SET input_tokens=input_tokens+?,output_tokens=output_tokens+? WHERE id=?',
+        (int(usage.get('input_tokens',0) or 0),int(usage.get('output_tokens',0) or 0),engine.sid))
+    engine.store.db.commit()
     engine.record('sdk.result',{'runtime':runtime,'usage':usage,'cost_usd':None,'cost_status':'not_reported','structured_output':structured})
     engine.record('message.assistant',{'text':text,'runtime':runtime})
     engine.record('checkpoint',{'summary':text[:8000],'case_id':engine.store.session(engine.sid)['case_id'],'verdict':'model_generated_review_required'})

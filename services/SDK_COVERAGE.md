@@ -1,89 +1,147 @@
-# Plug-in runtime coverage
+# SDK coverage and acceptance
 
-Verified package snapshot: 2026-09-30. This is an integration inventory, **not a claim that every upstream SDK feature is implemented**. Official docs evolve; pinned package source, exported types and executable contract tests determine this build's actual behavior.
+Updated 2026-09-30. Seven executable SDK adapters and one documentation-only framework.
+This is a **restricted SOC integration, not full parity with every upstream feature**.
+The UI covers 27 capability families. Native means the specific described integration
+exists; it does not mean every API in that family is exposed or live-verified.
 
-The live SDK coverage view now exposes 27 capability families across eight tracked frameworks with native/shared/partial/gap labels. OpenAI Agents and Hermes are documentation-only entries, not registered adapters. The tool library contains all 14 registered tools plus seven platform features. `/api/inventory` supplies the same data for JSON/CSV checkpoint exports; this is a curated family-level matrix, not every upstream API.
+## Implemented in this pass
 
-Deployment update: an opt-in single-operator pilot access layer and Fly/container templates exist. Multi-user auth/RBAC, PostgreSQL/Supabase and distributed execution remain unimplemented. Read DEPLOYMENT.txt for acceptance gates.
+| SDK | Pinned version | New native integration |
+| --- | --- | --- |
+| Claude Agent SDK | 0.2.159 | Explicit thinking budgets (off, 1024, 2048, 4096); reject missing terminal result, empty success and missing/invalid requested structured findings |
+| PydanticAI slim | 2.52.0 | ModelMessagesTypeAdapter serialization and restoration, preserving tool calls/results across turns |
+| Deep Agents | 0.7.21 | SQLite graph checkpoints (langgraph-checkpoint-sqlite 3.1.1), persistent todos, typed findings, two named read-only specialists sharing the model-call budget |
+| Pi | 0.99.2 | Native JSONL persistence; fork the last successful session before each continuation; account only new-turn usage |
+| Vercel AI SDK | 7.0.126 | Serialize and restore native model messages, including tool receipts, through the Relay state store |
+| OpenCode SDK | 1.18.34 | Fork successful server sessions, reapply deny-all permissions, session/text-part-filtered SSE and schema output |
+| OpenAI Agents | 0.22.3 | New real Runner integration: streamed events, case-scoped function tools, typed findings, max turns/output, cancellation, usage and native input-item continuation |
 
-## Installed adapters
+Hermes remains documentation-only: no executable adapter is registered. It needs
+a separately reviewed runtime integration, tool boundary and dependency/isolation
+plan. It is not counted in the seven adapters.
 
-| Runtime | Version | Actual integration | Verification |
-| --- | --- | --- | --- |
-| Claude Agent SDK | 0.2.159 | Existing native client, scoped MCP, hooks, specialists, plugin skills, resume, checkpoints | Real SDK classes / fake transport; no paid run |
-| PydanticAI slim | 2.52.0 | Native Agent tool loop, explicit tool schemas, streamed events, typed findings, request limits | Real FunctionModel tool loop and structured-output test |
-| Deep Agents | 0.7.21 | Native graph, streamed messages, native scratch planning, Relay tools, deny middleware, model-call limits | Real graph with fake chat model; tool gateway and native write denial |
-| Pi coding agent | 0.99.2 | Native session, custom tools, event subscription, thinking selection, request/output bounds | Real two-turn session using fake stream; only Relay tools declared |
-| Vercel AI SDK | 7.0.126 | Native ToolLoopAgent, schemas, streaming, structured output, step limits | Real two-step loop with MockLanguageModelV4; truncated answers rejected |
-| OpenCode SDK | 1.18.34 | v2 client, dedicated server config check, deny-all session, bounded evidence snapshot, prompt and abort | Real client serialization with fake fetch; no server/model live test |
+## What verification means
 
-No provider credentials are configured. Installed is not the same as live-verified. Registry readiness checks package/runtime presence and environment configuration, not billing balance, model access or successful provider authentication.
+Python tests exercise real installed SDKs with fake model transports. Node tests
+exercise real Pi/Vercel loops and the OpenCode generated client with fake fetch.
+They do not use provider credentials, incur model charges, or prove live provider
+acceptance. The UI states this explicitly. Test locations:
 
-Dependency audit: Pi's published shrinkwrap included vulnerable brace-expansion 5.0.9. This build overrides it to 5.0.12 and uses npm 12.2.0 to resolve the override. npm audit reports zero known Node dependency vulnerabilities after the patch; this is not a full security audit of the application or its Python dependencies.
+- services/test_claude_contract.py: SDK options, hooks, permissions, structured results.
+- services/test_adapters.py: registry, switches, policy gateway and SDK loops.
+- services/test_native_state.py: restart/branch/compaction isolation, native receipts,
+  Deep Agents checkpoints/todos/specialists/structured output, OpenAI Runner.
+- workers/agent-bridge/test/adapters.test.mjs: tool loops, continuation, usage,
+  truncation failure and OpenCode session-filtered streaming.
+- Other services/test_*.py: case isolation, approvals, artifacts, access control and backups.
 
-## Shared versus native features
+Run Python with the installed project virtual environment:
+python -m unittest discover -s services -p test_*.py -v
+Run Node from workers/agent-bridge:
+node --test test/adapters.test.mjs
 
-All full-loop adapters use the same SQLite case evidence, approvals, optional evidence-linked memory, analyst questions, tasks, report versions and audit trace. Shared skill lookup is a Relay function tool; it is not automatic native skill/plugin loading. Claude alone currently loads the bundled native plugin.
+## Persistence and recovery contract
 
-New adapters receive bounded Relay conversation history and the last local checkpoint. They do not restore their native SDK transcript trees between runs. Switching frameworks means creating a new session; session configuration is immutable. Same-case memory can be explicitly queried across sessions. Transcript history, approvals and report state remain session-scoped.
+Relay messages, audit, approvals and native-state references persist in SQLite.
+Pydantic, Vercel and OpenAI native transcripts are JSON in relay_native_state.
+Pi JSONL and Deep Agents checkpoint databases live under
+<evidence-database-directory>/adapter-sessions/<Relay session ID>.
+OpenCode persists remotely on the configured dedicated server.
 
-OpenCode is deliberately different: it receives five selected evidence records, fetched through the gateway before dispatch, and no executable tools. It does not yet call Relay tools or pause for Relay tool approvals inside its own loop. It is not an autonomous SOC integration yet.
+For the six non-Claude adapters, only validated successful results publish a new
+continuation anchor. Claude retains its existing SDK session behavior, including
+partial transcripts after a failed turn; it does not roll back that conversation.
+Failed Pi
+and OpenCode attempts have separate forks. Deep Agents resumes the exact saved
+checkpoint, not arbitrary latest incomplete work. Cancelled runs may still have
+tool side effects already authorized; transcript rollback does not undo them.
 
-Native Deep Agents write_todos is run-local scratch planning. Durable analyst tasks still use set_task and approvals. Native filesystem, shell, task/delegation and other unregistered tools are blocked by middleware. No filesystem backend with host access is installed in its graph.
+State is isolated by session, runtime and compaction epoch. Relay branches start
+with the selected summary; they do not inherit another session's native calls.
+Compaction invalidates native history and preserves the raw audit. Native state
+larger than 4 MiB is rejected; compact before retrying. Back up native directories
+and the OpenCode server separately from the main database. Automatic crash-resume
+of tool execution is NOT implemented.
 
-Pi starts with an explicit tool allowlist, no discovered extensions, skills, context files, prompt templates or default file/shell tools. In-memory settings/session state keep it independent of the user's personal Pi configuration. Automatic native compaction and retries are disabled; local Relay compaction remains available.
+Deep Agents uses explicit TodoListMiddleware, independent of model profiles.
+Its two named specialists cannot delegate further or invoke write tools.
+The parent and children share max_turns model calls; at most two delegations run.
+Automatic native summarization is replaced with Relay's between-turn compaction
+so background summary requests do not bypass that call budget.
 
-## Capability controls
+## Shared versus native
 
-- Frameworks tab: installed version, credential requirement, enable/disable switch, supported capabilities, deferred coverage and official docs.
-- Switches persist in relay_adapters. An active runtime cannot be disabled until its run stops.
-- Session creation and run dispatch both check readiness; disabled adapters never fall back to replay.
-- Unsupported feature flags are rejected server-side, not silently ignored.
-- Credentials stay in server environment. Child workers get only their own provider key, not other provider/server secrets.
-- Node tools use a private stdin/stdout protocol; there is no additional HTTP tool-execution port.
-- Cancellation aborts the SDK task and cleans up its worker; unfinished results do not produce success checkpoints.
+Six full-loop adapters use the same Relay tool gateway for evidence, exact-argument
+approval, memory, tasks, vetted playbooks, analyst questions and report versions.
+Claude embeds that gateway as MCP. Other adapters bind native function tools.
+Shared playbooks are not SDK-native skill discovery; only Claude loads the bundled
+skill-only plugin. Pi's external resource discovery and automatic native retries/
+compaction remain disabled.
 
-## Limits and costs
+OpenCode remains snapshot-only: five selected records, no executable Relay tools.
+SSE and native continuation do not turn it into an autonomous SOC tool integration.
+It requires a dedicated loopback server with permission='deny', no plugins, MCP
+or inherited instructions. Existing personal OpenCode servers are not modified.
 
-Claude retains its SDK USD limit. The other adapters do not implement that same dollar limit, and the UI requires explicit acknowledgment. PydanticAI, Pi, Deep Agents and Vercel are bounded by configured model requests/steps and output tokens per call plus the shared 180-second timeout. Retries/output repair can still differ by provider; these limits are not dollar guarantees. Unreported costs are unknown, not zero.
+## Credentials and cost controls
 
-OpenCode's server controls token limits and cost; Relay enforces only its timeout and cancellation attempt. Its token/turn controls are disabled in the configuration UI. Operator configuration must address server budgets and hard process isolation separately.
+Set server-side ANTHROPIC_API_KEY for Claude/Pydantic/Deep Agents/Pi,
+AI_GATEWAY_API_KEY for Vercel, OPENAI_API_KEY for OpenAI, and RELAY_OPENCODE_URL
+plus optional RELAY_OPENCODE_PASSWORD for OpenCode. Do not paste secrets in chat.
+Provider calls send selected evidence to that provider; authorize data handling
+before live use. No credentials are committed or returned to the browser.
 
-## Setup
+Claude has an SDK-estimated USD budget, not an invoice guarantee. Other adapters
+require the explicit no-hard-USD-cap acknowledgment. Requests/output/time are
+bounded; OpenCode token/cost limits are controlled by its server. OpenAI hosted
+tracing and LangSmith export are disabled. All runs have a 180-second deadline.
 
-1. Use Python 3.11+ (verified here on 3.12) and Node 22.19+ (verified here on 24.19).
-2. Run install-agents.ps1 with optional -Python and -Node executable paths. This installs pinned dependencies locally, with npm lifecycle scripts disabled. The Python lock is the verified Windows environment; requirements-agents.txt is the direct-dependency list for other platforms.
-3. Set ANTHROPIC_API_KEY in the server environment for Claude/PydanticAI/Deep Agents/Pi. Vercel uses AI_GATEWAY_API_KEY. This build does not expose provider credentials in the browser or accept them in chat.
-4. For OpenCode, provision a dedicated loopback server yourself with permission set to "deny", and no plugin, mcp or instructions entries. Set RELAY_OPENCODE_URL. If authenticated, set RELAY_OPENCODE_PASSWORD; username is opencode. Relay does not install or start that server or change an existing personal server.
-5. Run start.ps1. It prefers .venv-agents and falls back to the existing .venv.
-6. Open Frameworks → Check setup. Configure a new session, confirm the adapter-specific model identifier and permission policy, then run an investigation.
+## Remaining integration work — not hidden or marked complete
 
-Model defaults are examples from the installed model catalog, not promises of access. Pi/PydanticAI/Deep Agents use Anthropic model IDs; Vercel uses gateway IDs; OpenCode uses provider/model. A provider rejection is surfaced as failure, never synthetic output.
-
-## Remaining native feature work
-
-| Runtime | Not yet integrated |
+| Runtime | Remaining features |
 | --- | --- |
-| PydanticAI | Durable execution providers, native capability/harness plugins, native serialized histories, multi-agent delegation, external MCP, multimodal/realtime, native spend limits |
-| Deep Agents | Persistent native graph checkpoints, native skills/memory paths, subagents/dynamic/async delegation, sandbox backends, remote deployment |
-| Pi | Native JSONL branch/resume/rewind, steering/follow-up queues, native compaction, external extensions/skills/MCP, OAuth storage |
-| Vercel | useChat protocol, durable workflow persistence, native subagent/approval APIs, external MCP, multimodal/embeddings |
-| OpenCode | Case-tool MCP bridge, SSE stream, permission UI, native file rewind, native structured output, plugins, shell/filesystem integration |
-| All | Production authentication/RBAC, remote deployment, live sensor ingestion, third-party executable plugins and blanket filesystem/network authority |
+| Claude | Arbitrary external MCP, third-party executable plugins, general shell/browser isolation, broader SDK controls |
+| PydanticAI | Native capability/harness plugins, delegation, durable workflow providers, external MCP, multimodal/realtime and spend limits |
+| Deep Agents | Native skills/memory backends, sandbox filesystem, dynamic/async agents, native interruption UI and crash recovery |
+| Pi | Interactive native branch navigation, steering/follow-up queues, native compaction UI, extensions, OAuth and external MCP |
+| Vercel | useChat protocol, workflow durability, native subagent/approval APIs, MCP, multimodal and embeddings |
+| OpenCode | Case-tool MCP bridge, permission UI, file rewind, plugins and sandboxed shell/filesystem |
+| OpenAI Agents | Handoffs/agent-as-tool delegation, native approval interruptions, external MCP/hosted tools, realtime, remote tracing |
+| Hermes | Runtime adapter, installation/isolation and all executable feature integration |
+| Platform | Multi-user auth/RBAC, tenant isolation, distributed workers, live sensor ingestion, Mem0/vector retrieval, accepted cloud deployment |
 
-OpenAI Agents, Google ADK, CrewAI and other frameworks are not adapters in this checkpoint. Add them deliberately through the same registry/entrypoint contract rather than implying universal compatibility.
+Credentials are a blocker only to live acceptance, not an excuse for the remaining
+integration code. Full upstream parity is unfinished engineering, not claimed here.
+Do not enable unbounded host tools just to turn the matrix green.
+
+## Additional frameworks worth evaluating
+
+- Google ADK: a useful next contrast for event/session services and multi-agent workflows.
+  https://adk.dev/
+- Strands Agents: graph, swarm and workflow orchestration patterns.
+  https://strandsagents.com/docs/user-guide/sdk/multi-agent/multi-agent-patterns/
+- Mastra: TypeScript agents and explicit workflow composition.
+  https://mastra.ai/examples/agents/agentic-workflows
+
+These are recommendations, not installed adapters. Avoid adding overlapping
+frameworks until the existing acceptance gaps are understood.
+
+## Official references
+
+Claude: https://code.claude.com/docs/en/agent-sdk/python
+Pydantic: https://ai.pydantic.dev/message-history/
+Deep Agents: https://docs.langchain.com/oss/python/deepagents/customization
+Pi: https://github.com/earendil-works/pi/blob/main/packages/coding-agent/docs/sdk.md
+Vercel: https://ai-sdk.dev/docs/agents/building-agents
+OpenCode: https://opencode.ai/docs/sdk/
+OpenAI: https://developers.openai.com/api/docs/guides/agents/sdk
+Hermes: https://github.com/NousResearch/hermes-agent
 
 ## Extension contract
 
-Add an allowlisted entry in adapters/registry.py with docs, supported and deferred features, dependency and credential checks. Add a lazy async run(engine,prompt) entrypoint and contract tests. Use adapters/common.py definitions/dispatch for every case-tool call. Streaming uses message.delta; verified final results use finish(). Never bypass policy by executing a tool directly in an SDK handler. Persist native state separately per Relay session if integrating native continuation later.
-
-## Primary documentation
-
-- Claude: https://code.claude.com/docs/en/agent-sdk/overview
-- PydanticAI: https://ai.pydantic.dev/agents/ and the installed Agent/Tool/UsageLimits APIs
-- Deep Agents: https://docs.langchain.com/oss/python/deepagents/customization and https://docs.langchain.com/oss/python/deepagents/backends
-- Pi: https://github.com/earendil-works/pi/tree/main/packages/coding-agent/docs and its SDK/full-control examples
-- Vercel: https://ai-sdk.dev/docs/agents/building-agents
-- OpenCode: https://opencode.ai/docs/sdk/ and installed v2 generated client declarations
-
-Several current APIs differ from older tutorials: PydanticAI result.usage is a property; Pi tool declarations are transcript system-message toolsAdded entries; Vercel uses isStepCount in v7; OpenCode v2 client uses flattened parameters and sessionID. Tests exercise these installed contracts.
+Add a fixed registry entry and lazy run(engine,prompt) entrypoint, dependency/key
+checks, supported/deferred features and real-SDK contract tests. Use common.dispatch
+for every case tool, finish for validated results, state.load/turn_prompt for
+continuation. Never execute arbitrary names from a request or silently fall back
+to replay. Registry switches persist and cannot disable a running adapter.

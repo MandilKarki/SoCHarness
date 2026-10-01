@@ -10,12 +10,13 @@ from store import ROOT, Problem
 COMMON = ['streaming','tools','approvals','human_input','sessions','memory','skills','artifacts','cancellation','usage']
 ADAPTERS = {
  'simulator':dict(name='Deterministic replay',module=None,key=None,model='replay',features=['tools','approvals','sessions','memory','skills','artifacts'],docs=''),
- 'claude':dict(name='Claude Agent SDK',module='claude-agent-sdk',key='ANTHROPIC_API_KEY',model='sonnet',features=COMMON+['structured_output','specialists','file_workspace','native_resume','usd_budget'],docs='https://code.claude.com/docs/en/agent-sdk/overview'),
- 'pydantic':dict(name='PydanticAI',module='pydantic-ai-slim',key='ANTHROPIC_API_KEY',model='claude-sonnet-4-5',features=COMMON+['structured_output'],docs='https://ai.pydantic.dev/agents/'),
- 'deepagents':dict(name='Deep Agents',module='deepagents',key='ANTHROPIC_API_KEY',model='claude-sonnet-4-5',features=COMMON+['planning'],docs='https://docs.langchain.com/oss/python/deepagents/overview'),
- 'pi':dict(name='Pi',package='@earendil-works/pi-coding-agent',key='ANTHROPIC_API_KEY',model='claude-sonnet-4-5',features=COMMON+['thinking'],docs='https://github.com/earendil-works/pi/tree/main/packages/coding-agent/docs'),
- 'vercel':dict(name='Vercel AI SDK',package='ai',key='AI_GATEWAY_API_KEY',model='anthropic/claude-sonnet-4.5',features=COMMON+['structured_output'],docs='https://ai-sdk.dev/docs/agents/building-agents'),
- 'opencode':dict(name='OpenCode',package='@opencode-ai/sdk',key='RELAY_OPENCODE_URL',model='anthropic/claude-sonnet-4-5',features=['sessions','cancellation','usage','evidence_snapshot'],docs='https://opencode.ai/docs/sdk/'),
+ 'claude':dict(name='Claude Agent SDK',module='claude-agent-sdk',key='ANTHROPIC_API_KEY',model='sonnet',features=COMMON+['structured_output','specialists','file_workspace','native_resume','usd_budget','thinking'],docs='https://code.claude.com/docs/en/agent-sdk/overview'),
+ 'pydantic':dict(name='PydanticAI',module='pydantic-ai-slim',key='ANTHROPIC_API_KEY',model='claude-sonnet-4-5',features=COMMON+['structured_output','native_resume'],docs='https://ai.pydantic.dev/agents/'),
+ 'deepagents':dict(name='Deep Agents',module='deepagents',key='ANTHROPIC_API_KEY',model='claude-sonnet-4-5',features=COMMON+['planning','native_resume','specialists','structured_output'],docs='https://docs.langchain.com/oss/python/deepagents/overview'),
+ 'pi':dict(name='Pi',package='@earendil-works/pi-coding-agent',key='ANTHROPIC_API_KEY',model='claude-sonnet-4-5',features=COMMON+['thinking','native_resume'],docs='https://github.com/earendil-works/pi/tree/main/packages/coding-agent/docs'),
+ 'vercel':dict(name='Vercel AI SDK',package='ai',key='AI_GATEWAY_API_KEY',model='anthropic/claude-sonnet-4.5',features=COMMON+['structured_output','native_resume'],docs='https://ai-sdk.dev/docs/agents/building-agents'),
+ 'opencode':dict(name='OpenCode',package='@opencode-ai/sdk',key='RELAY_OPENCODE_URL',model='anthropic/claude-sonnet-4-5',features=['sessions','native_resume','streaming','structured_output','cancellation','usage','evidence_snapshot'],docs='https://opencode.ai/docs/sdk/'),
+ 'openai':dict(name='OpenAI Agents',module='openai-agents',key='OPENAI_API_KEY',model='gpt-4.1-mini',features=COMMON+['structured_output','native_resume'],docs='https://developers.openai.com/api/docs/guides/agents/sdk'),
 }
 ENTRYPOINTS = {
  'claude':'claude_runtime:run_claude',
@@ -24,13 +25,15 @@ ENTRYPOINTS = {
  'pi':'adapters.node_runtime:run_node',
  'vercel':'adapters.node_runtime:run_node',
  'opencode':'adapters.node_runtime:run_node',
+ 'openai':'adapters.openai_runtime:run_openai',
 }
 DEFERRED = {
- 'pydantic':['Native durable execution backends','Native capabilities/harness plugins','Multi-agent delegation','Native message serialization','External MCP','Multimodal/realtime','Native spend limits'],
- 'deepagents':['Native graph checkpoint persistence','Subagent delegation','Native filesystem backends','Native skills discovery','Dynamic/async subagents','Remote deployment'],
- 'pi':['Native JSONL branching','Steering/follow-up queue','Native compaction','Third-party extensions','Native skills discovery','OAuth storage','External MCP'],
+ 'pydantic':['Native durable execution backends','Native capabilities/harness plugins','Multi-agent delegation','External MCP','Multimodal/realtime','Native spend limits'],
+ 'deepagents':['Native filesystem backends','Native skills discovery','Dynamic/async subagents','Automatic crash recovery','Remote deployment'],
+ 'pi':['Interactive native branch navigation','Steering/follow-up queue','Native compaction','Third-party extensions','Native skills discovery','OAuth storage','External MCP'],
  'vercel':['useChat UI protocol','Native workflow persistence','Subagents','Native approval protocol','External MCP','Multimodal/embeddings'],
- 'opencode':['Case-tool MCP bridge','SSE streaming','Native permission UI','Native rewind','External plugins','File/shell tools','Native structured output'],
+ 'opencode':['Case-tool MCP bridge','Native permission UI','Native rewind','External plugins','File/shell tools'],
+ 'openai':['Native handoffs and agent-as-tool delegation','External MCP/hosted tools','Native durable interruptions','Realtime/voice','Remote tracing export','Native spend limits'],
  'claude':['Arbitrary external MCP','Third-party executable plugins','Production hosting/RBAC'],
  'simulator':['Model reasoning'],
 }

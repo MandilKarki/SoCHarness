@@ -100,6 +100,7 @@ async def run_claude(engine,prompt):
             ('evidence-reviewer','Review specific case evidence and citations.','Inspect the cited records and report facts and gaps. Do not write or propose containment.'),
             ('hypothesis-checker','Independently challenge an investigation hypothesis.','Look for alternative explanations and contradicting records. Cite evidence IDs. Do not write.')]} if config['specialists'] else None
     options=ClaudeAgentOptions(tools=native_tools,allowed_tools=['mcp__relay__'+t.name for t in definitions]+[t for t in native_tools if t in ('Agent','Skill') or (t=='Read' and config['permission']!='ask_all')],
+        thinking={'type':'disabled'} if config['thinking']=='off' else {'type':'enabled','budget_tokens':{'low':1024,'medium':2048,'high':4096}[config['thinking']]},
         mcp_servers={'relay':server},strict_mcp_config=True,setting_sources=[],
         system_prompt=SYSTEM,model=config['model'],max_turns=config['max_turns'],
         max_budget_usd=config['budget_usd'],permission_mode='default',can_use_tool=deny_other,
@@ -116,7 +117,7 @@ async def run_claude(engine,prompt):
             'limitations':{'type':'string'}},
             'required':['observations','evidence_ids','hypotheses','next_steps','limitations'],
             'additionalProperties':False}} if config.get('structured_output') else None)
-    last_text=''
+    last_text='';got_result=False
     async with ClaudeSDKClient(options=options) as client:
         run_task=asyncio.current_task()
         async def monitor():
@@ -165,6 +166,7 @@ async def run_claude(engine,prompt):
                         elif type(block).__name__=='ToolUseBlock':
                             engine.record('sdk.tool_use',{'id':block.id,'tool':block.name,'arguments':block.input})
                 elif kind=='ResultMessage':
+                    got_result=True
                     usage=message.usage or {}
                     cost=message.total_cost_usd or 0
                     engine.store.db.execute('UPDATE relay_sessions SET cost_usd=cost_usd+?,input_tokens=input_tokens+?,output_tokens=output_tokens+? WHERE id=?',
@@ -172,10 +174,18 @@ async def run_claude(engine,prompt):
                     structured=getattr(message,'structured_output',None)
                     engine.record('sdk.result',{'subtype':message.subtype,'is_error':message.is_error,'cost_usd':cost,'usage':usage,'num_turns':message.num_turns,'structured_output':structured})
                     if message.is_error: raise Problem('SDK stopped: '+message.subtype)
+                    if config['structured_output']:
+                        from adapters.common import FINDINGS
+                        import jsonschema
+                        if structured is None:raise Problem('Claude returned no requested structured findings',502)
+                        jsonschema.validate(structured,FINDINGS)
+                    if not last_text and message.result:last_text=message.result
+                    if not last_text and structured is None:raise Problem('Claude returned no final answer',502)
                     if structured:
                         last_text=json.dumps(structured,indent=2)
                         engine.record('message.assistant',{'text':last_text,'runtime':'claude','structured':True})
                     engine.record('checkpoint',{'summary':last_text[:8000],'case_id':session['case_id'],'verdict':'model_generated_review_required'})
+            if not got_result:raise Problem('Claude stream ended without a terminal result',502)
         finally:
             for entries in native_pending.values():
                 for aid,_ in entries:

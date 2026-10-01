@@ -72,6 +72,9 @@ class Store:
         self.db.execute('CREATE INDEX IF NOT EXISTS relay_events_cohort ON events(event_id,host,occurred_at)')
         self.db.executescript('''
           CREATE TABLE IF NOT EXISTS relay_adapters(id TEXT PRIMARY KEY, enabled INTEGER NOT NULL);
+          CREATE TABLE IF NOT EXISTS relay_native_state(
+            session_id TEXT PRIMARY KEY REFERENCES relay_sessions(id), runtime TEXT NOT NULL,
+            context_after INTEGER NOT NULL, payload TEXT NOT NULL, updated_at TEXT NOT NULL);
           CREATE TABLE IF NOT EXISTS relay_sessions(
             id TEXT PRIMARY KEY, case_id TEXT NOT NULL, title TEXT NOT NULL,
             config TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'idle', created_at TEXT NOT NULL,
@@ -163,7 +166,8 @@ class Store:
         for key in ('specialists','skills','memory','artifacts','await_approvals','file_workspace','accept_no_usd_cap'):
             if type(config[key]) is not bool:raise Problem(key+' must be boolean')
         if config['thinking'] not in ('off','minimal','low','medium','high'):raise Problem('Invalid thinking level')
-        if config['thinking']!='off' and config['runtime']!='pi':raise Problem('Thinking level is currently a Pi-only setting')
+        if config['thinking']!='off' and config['runtime'] not in ('pi','claude'):raise Problem('Thinking control is only integrated for Pi and Claude')
+        if config['runtime']=='claude' and config['thinking']=='minimal':raise Problem('Claude supports low, medium or high thinking in Relay')
         if not isinstance(config['model'],str) or not 1<=len(config['model'])<=100: raise Problem('Invalid model')
         if not isinstance(config['disabled_tools'],list) or any(t not in [x['name'] for x in TOOLS] for t in config['disabled_tools']): raise Problem('Invalid disabled tools')
         sid=uid('ses')

@@ -1,20 +1,22 @@
-# SoCHarness
+# SoCHarness — Relay ISOC agent laboratory
 
-Relay ISOC: a defensive cybersecurity agent-SDK laboratory. This repository contains the maintained application source, tests, and deployment templates from the 2026-09-30 checkpoint, without the earlier Site history or hosting metadata.
+## Native SDK expansion
 
-**Coverage is partial, not complete.** Six SDK adapters are integrated at different depths; OpenAI Agents and Hermes are tracked only. The 27-family coverage matrix is not an exhaustive list of every upstream API. No live-provider run or public deployment has been verified. See [coverage and remaining work](services/SDK_COVERAGE.md) and [deployment gates](DEPLOYMENT.txt).
+Native continuation now preserves tool receipts for PydanticAI, Vercel and OpenAI; Pi forks persistent JSONL sessions, Deep Agents uses SQLite checkpoints, and OpenCode forks successful remote sessions. Deep Agents also has persistent planning, structured findings and two bounded read-only specialists. Claude adds explicit thinking budgets and strict terminal-result validation. OpenCode adds filtered SSE and structured output.
+
+This is not full upstream-feature parity. See [the tested scope and remaining work](services/SDK_COVERAGE.md). No provider call has been live-verified in this pass. Keys and evidence databases are intentionally excluded from GitHub.
 
 ## UI and deployment checkpoint
 
-The workspace now includes SDK coverage (27 capability families across eight tracked frameworks), a searchable library of 14 registered tools plus seven platform features, database-derived metrics, quick actions (Ctrl/Cmd+K), and deployment-readiness cards. OpenAI Agents and Hermes are tracked, not integrated. Native, Relay-shared, partial and missing coverage are distinguished; upstream support marked unassessed is not a claim of absence.
+The workspace now includes SDK coverage (27 capability families across eight tracked frameworks), a searchable library of 14 registered tools plus seven platform features, database-derived metrics, quick actions (Ctrl/Cmd+K), and deployment-readiness cards. Seven SDKs are integrated; Hermes remains documentation-only. Native, Relay-shared, partial and missing coverage are distinguished; upstream support marked unassessed is not a claim of absence.
 
 Read [deployment checklist](DEPLOYMENT.txt) before cloud use. Dockerfile and fly.toml prepare a single-machine, single-operator pilot with optional operator login, secure cookies, origin validation, bounded workers, persistent data paths and an online backup utility. Default startup remains loopback-only. This is not production SaaS: Supabase Auth, tenant/RBAC enforcement, PostgreSQL migration and distributed workers are planned, not implemented. No public deployment has been created.
 
-A working local analyst UI, SQLite evidence store, and framework-neutral tool boundary. The default runtime is deterministic replay, **not an LLM**. Optional adapters now include Claude, PydanticAI, Deep Agents, Pi, Vercel AI SDK and a restricted OpenCode snapshot connector.
+A working local analyst UI, SQLite evidence store, and framework-neutral tool boundary. The default runtime is deterministic replay, **not an LLM**. Optional adapters include Claude, PydanticAI, Deep Agents, Pi, Vercel AI SDK, OpenAI Agents and a restricted OpenCode snapshot connector.
 
 ## Multi-SDK checkpoint
 
-Open **Frameworks** to see installed versions, setup requirements, persistent enable switches, documentation and capability coverage. These are real SDK integrations tested with fake models/transports, not six labels pointing to the simulator. No live model calls have been verified without credentials.
+Open **Frameworks** to see installed versions, setup requirements, persistent enable switches, documentation and capability coverage. These are real SDK integrations tested with fake models/transports, not seven labels pointing to the simulator. No live model calls have been verified without credentials.
 
 Use `./start.ps1` for the installed multi-SDK environment. For a fresh Windows setup, use `./install-agents.ps1 -Python PATH_TO_PYTHON_3_11_OR_NEWER -Node PATH_TO_NODE_22_19_OR_NEWER`. Dependencies are pinned in requirements-agents.lock and workers/agent-bridge/package-lock.json.
 
@@ -100,8 +102,7 @@ Primary references: https://docs.langchain.com/oss/python/deepagents/overview an
 - plugins/relay-soc/ — fixed, reviewed skill-only Claude plugin; no executable hooks.
 - services/test_lab.py — isolated regression tests; does not modify the actual corpus.
 - services/telemetry_api.py — compatibility launcher for the new server.
-- workers/agent-bridge/ — maintained Node adapters for Pi, Vercel and OpenCode.
-
-Earlier Site frontend and Claude worker prototypes are not included in this clean source snapshot. The running local development checkout remains separate; changes there must be deliberately synchronized into this publication checkout before a future push.
+- workers/agent-bridge/ — maintained Pi, Vercel and OpenCode adapters.
+- Historical dist/ and workers/claude-agent/ in the original development checkout are not published.
 
 The existing DB and legacy harness tables are preserved. New state uses relay_* tables. This project does not push to GitHub or publish itself.

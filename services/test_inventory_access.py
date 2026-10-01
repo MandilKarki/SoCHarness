@@ -28,10 +28,10 @@ class InventoryTest(LabFixture):
     def test_not_integrated_frameworks_never_claim_coverage(self):
         value=inventory(self.store)
         for row in value['rows']:
-            for id in ('openai','hermes'):
+            for id in ('hermes',):
                 self.assertEqual(row['cells'][id]['status'],'gap')
         self.assertEqual(next(r for r in value['rows'] if r['id']=='tools')['cells']['opencode']['status'],'gap')
-        self.assertEqual(next(r for r in value['rows'] if r['id']=='native_resume')['cells']['pi']['status'],'gap')
+        self.assertEqual(next(r for r in value['rows'] if r['id']=='native_resume')['cells']['pi']['status'],'native')
 
     def test_backup_does_not_overwrite_and_includes_committed_wal(self):
         self.session()

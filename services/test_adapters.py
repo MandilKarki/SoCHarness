@@ -14,7 +14,7 @@ from adapters.registry import catalog, set_enabled, ensure_ready
 
 class RegistryTest(LabFixture):
     def test_all_requested_adapters_registered(self):
-        self.assertEqual({r['id'] for r in catalog(self.store)}, {'simulator','claude','pi','pydantic','vercel','opencode','deepagents'})
+        self.assertEqual({r['id'] for r in catalog(self.store)}, {'simulator','claude','pi','pydantic','vercel','opencode','deepagents','openai'})
     def test_enable_disable_persists_and_blocks_runs(self):
         set_enabled(self.store,'pydantic',False)
         with self.assertRaises(Problem):ensure_ready(self.store,'pydantic')
@@ -27,7 +27,7 @@ class RegistryTest(LabFixture):
         sid=self.session(runtime='pydantic',accept_no_usd_cap=True);self.store.begin(sid)
         with self.assertRaises(Problem):set_enabled(self.store,'pydantic',False)
     def test_features_cannot_silently_degrade(self):
-        for runtime,feature in [('pi','file_workspace'),('pydantic','specialists'),('deepagents','structured_output'),('opencode','memory')]:
+        for runtime,feature in [('pi','file_workspace'),('pydantic','specialists'),('deepagents','file_workspace'),('opencode','memory'),('openai','file_workspace')]:
             with self.assertRaises(Problem):self.session(runtime=runtime,accept_no_usd_cap=True,**{feature:True})
     def test_budget_ack_required(self):
         with self.assertRaises(Problem):self.session(runtime='vercel')
