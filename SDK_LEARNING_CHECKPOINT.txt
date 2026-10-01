@@ -1,0 +1,47 @@
+SDK learning lab — October 1, 2026
+
+Published application: https://socharness-mandil.fly.dev/#sdk-lab
+Navigation: Agent lab > SDK learning lab
+Implementation commit: 594ff96
+
+Delivered
+- Ten-step OpenAI-first architecture lesson, playback/scrubbing and knowledge checks.
+- All 11 adapters selectable; their 42 tracked capability families are read from
+  the existing versioned inventory, including source/test/docs links and gaps.
+- Separate recorded/session-follow mode consumes actual workspace trace events.
+  It never fills missing events with illustrative steps or another SDK's trace.
+- Configuration and prompt drafting require user actions; neither sends a prompt.
+- Reduced-motion/manual controls, phone layout, light and dark themes.
+
+Boundaries
+- This is not complete upstream API coverage or an advanced course for every SDK.
+- Non-OpenAI SDKs currently share the introductory architecture sequence, with
+  their own inventory mappings. Some API-level mappings remain explicitly unknown.
+- Animation is explanatory playback, not private model reasoning or evidence that
+  every capability was used. Not every internal SDK action is instrumented.
+- Provider wiring, authentication, database and paid-run controls were unchanged.
+
+Verification
+- Frontend production build passed; 39 frontend tests passed after final edits.
+- 118 backend tests passed; no live model calls were used for these checks.
+- Browser checked against an isolated, credential-free synthetic test database:
+  correct pins and 42 rows; SDK switching; empty matching-session state; light/dark;
+  390-pixel phone viewport with no horizontal overflow. Live browser re-login was
+  not completed in this checkpoint; authenticated hosted API checks passed below.
+- Fly machine 807339f6475602 updated successfully; no extra machine/volume/service.
+- Image: registry.fly.io/socharness-mandil@sha256:22de561528f265a1ac8254cb6a16040b382d6e2c54360d5fa9413d871362187a
+- Public deployed JS/CSS hashes exactly match the locally tested build:
+  JS: FD54D7294E93CECEE1CFB8E7D0F670C08EEB3A53B4CF6803BD4384F3907C02F7
+  CSS: D9C30BA006007F01735DBF2AA24558817BCDD477B00E363C5B274E921DDB38A4
+- verify-pilot.ps1 passed: anonymous denial, login/logout, cross-origin rejection,
+  passkey management boundary, Firebase configuration, inventory and October cap.
+- Paid request count remains 2. Accounted allowance remains $0.100251, including
+  the earlier $0.10 unresolved reservation (not a confirmed charge). Spendable
+  remainder $4.399749 plus separate $0.50 safety buffer; expires October 31 Pacific.
+
+Curriculum basis
+https://developers.openai.com/api/docs/guides/agents/sdk
+https://openai.github.io/openai-agents-python/running_agents/
+https://openai.github.io/openai-agents-python/streaming/
+Rolling documentation informs explanations; pinned adapter source and contracts
+determine what Relay implements. No SDK version was upgraded for this checkpoint.
