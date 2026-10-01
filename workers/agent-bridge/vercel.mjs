@@ -20,7 +20,8 @@ export async function runVercel(request,bridge,modelOverride){
   const reason=await result.finishReason;
   if(!['stop'].includes(reason))throw Error('Vercel stopped before a final answer: '+reason);
   const usage=await result.totalUsage;
-  const response=await result.response;
-  return {text:await result.text,native_state:{messages:[...messages,...response.messages]},usage:{input_tokens:usage.inputTokens,output_tokens:usage.outputTokens},
+  // v7 response is final-step metadata; responseMessages includes every tool step.
+  const responseMessages=await result.responseMessages;
+  return {text:await result.text,native_state:{messages:[...messages,...responseMessages]},usage:{input_tokens:usage.inputTokens,output_tokens:usage.outputTokens},
     ...(request.config.structured_output?{structured:await result.output}:{})};
 }
