@@ -1,4 +1,4 @@
-RELAY WORKSPACE V2 — 2026-10-01
+RELAY REACT WORKSPACE — 2026-10-01
 
 Design references (not a highest-rated-sites ranking):
 Linear's March 2026 refresh: quiet navigation, consistent headers, content hierarchy.
@@ -17,17 +17,19 @@ responsive tool/runtime grids, reduced-motion support, account/passkey pages,
 recovery sign-in and device setup instructions. Existing guide, evidence, session,
 tool, approval, matrix and runtime actions use the same backend contracts.
 
-Technology decision: this checkpoint rewrites the workspace shell/interactions
-using the existing HTML/JavaScript application, rather than migrating every SDK
-control during an authentication change. React/TypeScript + Vite with shadcn/ui was
-the recommended framework candidate, NOT a claim that this release migrated to it.
-React Aria remains an alternative for a future component migration. No new frontend
-runtime/CDN, paid template, analytics service or remote font is introduced here.
+Technology decision: the frontend is now React + TypeScript + Vite, using official
+shadcn/ui Radix components and Tailwind CSS. Component-owned state replaces legacy
+DOM-mutating scripts in the workspace, catalogs, lab, tour and authentication pages.
+The standalone architecture atlas remains HTML. Python and SQLite stay unchanged.
+React Aria was an alternative, not an additional dependency. No external asset CDN,
+paid template, analytics service or remote font is introduced here.
 https://ui.shadcn.com/docs/changelog/2026-02-blocks
 https://react-aria.adobe.com/quality
 https://vite.dev/guide/
 
 Theme preference and guide step numbers are browser-local. Credentials, telemetry,
-and chat content are not added to localStorage. Source strings use textContent.
+and chat content are not added to localStorage. Source strings render as React text,
+never raw HTML. NDJSON parsing preserves split UTF-8 and trailing records. Polling
+and streaming merge by sequence ID; success requires a recorded completion event.
 Benchmark cohorts are explicitly labeled: severity is a lab review priority, not
 a detection verdict. No new SDK features or live provider verification is claimed.

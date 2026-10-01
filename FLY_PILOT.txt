@@ -13,11 +13,30 @@ No dedicated IPv4, database server, Redis, object store or additional replica cr
 Existing ledgerline-karki and mandilos-mandil apps were not changed.
 
 FINAL SOURCE-ONLY IMAGE
+registry.fly.io/socharness-mandil@sha256:a674be10a4bb5815f875d767674e86ab4a1902d70b5a746b7249e7185dba18e4
+Previous rollback image (passkeys and plain-JavaScript workspace v2):
 registry.fly.io/socharness-mandil@sha256:9638eebd09bb4ad61faaec791e0580ce7005510ae7d448e856aa8c25e0f6c3c3
 Previous rollback image (token login, before passkeys/workspace v2):
 registry.fly.io/socharness-mandil@sha256:fa325351e26ebaf4bc014919abd5103f865a835901b1a7a6ee0610aad484d585
 Deploy future source-only images with fly deploy --ha=false.
 Do not scale this SQLite pilot beyond one machine.
+
+REACT FRONTEND UPDATE — 2026-10-01
+Replaced the workspace, runtime/catalog/lab controls, tour and auth screens with
+React/TypeScript/Vite and shadcn/ui Radix components. Python APIs, WebAuthn policy,
+SQLite schema and SDK adapters are unchanged. Only compiled static-asset serving
+and Docker frontend build integration changed on the backend side.
+91 backend tests and 27 frontend tests passed on Windows and network-disabled
+Linux containers. Local browser checks exercised real replay streaming, trace,
+session configuration, exact-argument task approval/execution, capability search,
+phone navigation, light/dark appearance and safe guide behavior.
+After deployment: HTTPS health, React entry/assets, login/logout, fresh passkey
+management, anonymous API denial and cross-origin rejection passed. The original
+155,350 records / 16 hosts / 7 cases / 0 sessions remain on the pilot. The machine
+reports its health check passing with the same 2 GB allocation and encrypted volume.
+Physical-device passkey enrollment remains an operator action. No provider calls,
+new keys, database migration, replicas or extra cloud services were introduced.
+See FRONTEND_MIGRATION.txt for source ownership and local build/test commands.
 
 GUIDE / ARCHITECTURE UPDATE - 2026-10-01
 The Start here guide walks through six steps without auto-running agents or

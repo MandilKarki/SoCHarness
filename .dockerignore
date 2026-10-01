@@ -1,5 +1,7 @@
 **
 !Dockerfile
+!frontend/
+!frontend/**
 !requirements-agents.txt
 !services/
 !services/**
@@ -18,3 +20,5 @@
 **/*.pyc
 **/.env*
 **/node_modules/
+frontend/dist/
+frontend/*.tsbuildinfo

@@ -2,7 +2,7 @@
 
 ## Start here: guide and architecture
 
-The [protected Fly pilot](https://socharness-mandil.fly.dev/) includes **Start here**:
+The [protected Fly pilot](https://socharness-mandil.fly.dev/) includes **Quick start**:
 a six-step interactive guide covering case selection, evidence inspection, safe
 replay setup, traces, approvals and SDK selection. Navigation never automatically
 runs an agent or approves an operation. Checklist progress is stored in this browser.
@@ -12,13 +12,16 @@ signing in, or download [the standalone offline HTML](docs/architecture.html).
 It contains eight views, 60 component specifications, 13 SDK entries (11 implemented,
 Strands and Mastra proposed), 14 tools and explicit production gates.
 
-## Workspace v2 and passkeys
+## React workspace and passkeys
 
 The redesigned workspace separates **Investigate**, **Agent Lab** and **Operate**,
 with light/dark appearances, mobile navigation and an on-demand agent console.
 Existing evidence, sessions, approvals, SDK controls and the guide remain connected
-to the real backend. This release uses the existing HTML/JavaScript frontend;
-the evaluated React/Vite/shadcn migration is not claimed as implemented.
+to the real backend. The frontend is now **React + TypeScript + Vite**, with
+official **shadcn/ui (Radix)** components and Tailwind CSS. React owns the workspace,
+lab, catalog, guide and authentication pages; no legacy page scripts are loaded.
+The Python backend, database, SDK contracts and WebAuthn security rules are retained.
+The architecture atlas remains a separate, deliberately standalone HTML artifact.
 See [design decisions and references](DESIGN_NOTES.txt).
 
 **Passkey authentication is implemented** using server-verified WebAuthn. Open
@@ -29,7 +32,8 @@ available on supported devices. Physical iPhone/Mac acceptance remains a user st
 The operator token stays as recovery; no secret is included in this repository.
 See [setup, recovery, tests and security limits](AUTH_SECURITY.txt).
 
-The 88-test backend suite passes on Windows and a network-disabled Linux container.
+The 91-test backend suite passes on Windows and a network-disabled Linux container.
+The React frontend has 27 component, transport and credential-serialization tests.
 Eleven WebAuthn test methods use real ES256 signatures, not mocked verification.
 Browser checks cover mobile layout, navigation, guide-to-replay and saved traces.
 These tests do not establish production security or full upstream SDK parity.
@@ -70,11 +74,21 @@ Read [SDK coverage](services/SDK_COVERAGE.md) for native versus shared features,
 
 ## Start
 
-From this directory, run:
+Use Node 24.15+ for the frontend. From this directory, build the static bundle,
+then start the existing Python server:
 
 ```powershell
+npm --prefix frontend ci
+npm --prefix frontend run build:publish
 python services/app.py
 ```
+
+Frontend sources are in `frontend/src`. Run `npm --prefix frontend test` for
+component/transport tests. Docker builds the same frontend from the lockfile;
+there is no Node frontend server in production and no external asset CDN.
+For local hot reload, start Python on port 8793 and run `npm --prefix frontend run dev`.
+Use the built same-origin app for authentication/CSP acceptance checks; the dev
+proxy does not bypass the backend's Host/Origin checks.
 
 Open http://127.0.0.1:8787/. Existing imported telemetry remains in work/telemetry-lab.sqlite3. No database server is needed. Local mode binds to loopback. The protected Fly pilot is at https://socharness-mandil.fly.dev/; see FLY_PILOT.txt for login and acceptance. Neither mode is a production/multi-user server.
 
@@ -122,7 +136,7 @@ The simulator validates orchestration; it does not reason about arbitrary prompt
 
 By default, the active SDK tool waits up to 90 seconds for approval or analyst input. The overall run timeout remains 180 seconds. Approvals are accepted while the run is waiting. Disabling the session's pause option preserves the earlier deferred-action behavior. Native file permission requests always wait. No real endpoint isolation or identity modification exists. Containment is explicitly a dry-run.
 
-Still outside this build: full native-feature parity across adapters, arbitrary third-party plugin installation, user-configurable external MCP connections, Mem0/vector retrieval, live sensor/OTLP ingestion, multi-user authentication/RBAC, verified remote deployment and production hardening. Optional pilot operator login is not multi-user identity. Do not describe these gaps as completed. Local compaction retains the last checkpoint, not a lossless or model-generated memory summary. Native filesystem rewind and SQLite artifact rollback are distinct operations; neither reverses sensor/control-plane actions.
+Still outside this build: full native-feature parity across adapters, arbitrary third-party plugin installation, user-configurable external MCP connections, Mem0/vector retrieval, live sensor/OTLP ingestion, multi-user authentication/RBAC and production hardening. The verified single-operator Fly pilot is not multi-user identity. Do not describe these gaps as completed. Local compaction retains the last checkpoint, not a lossless or model-generated memory summary. Native filesystem rewind and SQLite artifact rollback are distinct operations; neither reverses sensor/control-plane actions.
 
 ## Advanced demo
 

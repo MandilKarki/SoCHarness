@@ -1,4 +1,10 @@
 FROM node:24-bookworm-slim AS node
+FROM node AS frontend
+WORKDIR /frontend
+COPY frontend/package*.json ./
+RUN npm ci --ignore-scripts
+COPY frontend/ ./
+RUN npm run build
 FROM python:3.12-slim-bookworm
 COPY --from=node /usr/local/bin/node /usr/local/bin/node
 COPY --from=node /usr/local/lib/node_modules /usr/local/lib/node_modules
@@ -18,6 +24,10 @@ COPY workers/agent-bridge/package*.json workers/agent-bridge/
 RUN cd workers/agent-bridge && npm ci --ignore-scripts
 COPY services/ services/
 COPY web/ web/
+COPY --from=frontend /frontend/dist/react-app.js /frontend/dist/react-app.css web/
+COPY --from=frontend /frontend/dist/index.html web/index.html
+COPY --from=frontend /frontend/dist/index.html web/login.html
+COPY --from=frontend /frontend/dist/index.html web/security.html
 COPY plugins/ plugins/
 COPY workers/agent-bridge/*.mjs workers/agent-bridge/
 COPY workers/python-bridge/ workers/python-bridge/

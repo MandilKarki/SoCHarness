@@ -1,4 +1,4 @@
-param([switch]$ExpectNoSessions)
+param([switch]$ExpectNoSessions,[string]$TokenFile=(Join-Path $PSScriptRoot 'work/fly-operator-token.clixml'))
 $ErrorActionPreference='Stop'
 Add-Type -AssemblyName System.Net.Http
 $origin='https://socharness-mandil.fly.dev'
@@ -31,18 +31,25 @@ try {
     Expect (Request GET '/experience.js') 401
     Expect (Request GET '/passkeys.js') 200
     Expect (Request GET '/identity.css') 200
+    foreach($asset in @('/react-app.js','/react-app.css')) { Expect (Request GET $asset) 200 }
+    $entry=Request GET '/login'
+    if(!$entry.text.Contains('/react-app.js') -or $entry.text.Contains('src="/login.js"')){throw 'React login entry was not deployed'}
     Expect (Request POST '/api/passkeys/registration/options' @{}) 401
     Expect (Request POST '/api/passkeys/authentication/options' @{} 'https://untrusted.invalid') 403
     $options=Request POST '/api/passkeys/authentication/options' @{};Expect $options 200
     $publicKey=($options.text|ConvertFrom-Json).publicKey
     if($publicKey.rpId -ne 'socharness-mandil.fly.dev' -or $publicKey.userVerification -ne 'required'){throw 'Unexpected passkey RP or verification policy'}
     Expect (Request POST '/api/login' @{token='invalid-test-token'}) 401
-    $secure=Import-Clixml -LiteralPath (Join-Path $PSScriptRoot 'work/fly-operator-token.clixml')
+    $secure=Import-Clixml -LiteralPath $TokenFile
     $pointer=[Runtime.InteropServices.Marshal]::SecureStringToBSTR($secure)
     try { $login=Request POST '/api/login' @{token=[Runtime.InteropServices.Marshal]::PtrToStringBSTR($pointer)} }
     finally { [Runtime.InteropServices.Marshal]::ZeroFreeBSTR($pointer) }
     Expect $login 200
     if(!$login.csp){throw 'Missing security headers'}
+    foreach($page in @('/','/security')) {
+        $react=Request GET $page;Expect $react 200
+        if(!$react.text.Contains('/react-app.js') -or $react.text.Contains('src="/app.js"')){throw 'React workspace entry was not deployed'}
+    }
     foreach($asset in @('/security','/security.js','/experience.js','/experience.css')) { Expect (Request GET $asset) 200 }
     $passkeys=Request GET '/api/passkeys';Expect $passkeys 200
     if(!(($passkeys.text|ConvertFrom-Json).recent_auth)){throw 'Fresh authentication missing'}

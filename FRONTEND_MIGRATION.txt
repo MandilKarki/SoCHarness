@@ -1,0 +1,38 @@
+REACT FRONTEND MIGRATION — 2026-10-01
+
+Scope: frontend implementation and static-build integration only. Agent adapters,
+evidence, database schema, permission gateway, authentication semantics, Fly machine
+size/region/count, and persistent volume are unchanged.
+
+Actual foundation: React 19, TypeScript 7, Vite 8, Tailwind CSS 4, official shadcn/ui
+Radix components, Lucide icons. Exact resolved packages are in frontend/package-lock.json.
+React Aria is an alternative, not an additional installed component framework.
+Linear, Geist, Cortex and Carbon are design references, not bundled products.
+
+Component ownership:
+- App.tsx: navigation, case evidence, trace, approvals, sessions, agent drawer, guide.
+- useWorkspace.ts: typed API state, bounded evidence pages, streaming/polling merge.
+- components/Settings.tsx: immutable session configuration and adapter feature gating.
+- components/Catalog.tsx: runtimes, enable switches, 27-family matrix, tools/readiness.
+- components/Lab.tsx: plans, case memory, human input, skills, reports, native checkpoints.
+- components/Auth.tsx: passkey/recovery sign-in and credential management screens.
+- lib/passkeys.ts: WebAuthn public credential serialization. No private key handling.
+- components/ui: components fetched from the official shadcn registry.
+
+No legacy DOM-mutating page scripts are loaded by /, /login or /security. Old assets
+remain unreferenced for compatibility and rollback; the standalone architecture
+atlas retains its own script. The migration does not claim new SDK capabilities.
+
+Build: npm --prefix frontend ci; npm --prefix frontend run build:publish.
+Tests: npm --prefix frontend test; python -m unittest discover -s services -p test_*.py.
+Node 24.15+ is required. The generated JS/CSS bundles are ignored in Git and built
+inside Docker. publish.mjs stages the same build for a local Python server.
+
+Security: only static JS/CSS became public so the React login entry can load.
+All data APIs keep the existing guards. Strict CSP remains; no unsafe-inline/eval,
+remote fonts, tracking scripts, external asset CDN, or new paid services. Browser
+storage contains theme/tour preferences only, not prompts, telemetry or credentials.
+Passkey enrollment on a physical device remains a user-controlled secure prompt.
+
+QA uses an isolated local copy of immutable benchmark events, never the live pilot
+database. Local test sessions and proposals are not uploaded to Fly or GitHub.

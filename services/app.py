@@ -61,7 +61,7 @@ class Handler(BaseHTTPRequestHandler):
 
     def guard(self,write=False):
         path=urlparse(self.path).path
-        public=path in ('/api/health','/api/auth','/api/login','/login','/login.js','/style.css','/refinement.css','/passkeys.js','/identity.css','/api/passkeys/authentication/options','/api/passkeys/authentication/verify')
+        public=path in ('/api/health','/api/auth','/api/login','/login','/login.js','/style.css','/refinement.css','/passkeys.js','/identity.css','/react-app.js','/react-app.css','/api/passkeys/authentication/options','/api/passkeys/authentication/verify')
         self.access.guard(self.headers,self.server.server_port,write,public)
 
     def cookie_response(self,cookie):
@@ -112,6 +112,8 @@ class Handler(BaseHTTPRequestHandler):
             files={'/':'index.html','/app.js':'app.js','/advanced.js':'advanced.js','/frameworks.js':'frameworks.js','/catalog.js':'catalog.js','/style.css':'style.css','/refinement.css':'refinement.css','/login':'login.html','/login.js':'login.js'}
             files.update({'/guide.js':'guide.js','/guide.css':'guide.css','/architecture':'architecture.html','/architecture.js':'architecture.js','/architecture.css':'architecture.css'})
             files.update({'/passkeys.js':'passkeys.js','/security':'security.html','/security.js':'security.js','/identity.css':'identity.css','/experience.css':'experience.css','/experience.js':'experience.js'})
+            # Public executable assets contain no data or credentials. APIs keep their existing guards.
+            files.update({'/react-app.js':'react-app.js','/react-app.css':'react-app.css'})
             if path not in files:raise Problem('Not found',404)
             file=ROOT/'web'/files[path];body=file.read_bytes()
             self.send_response(200);self.headers_for(mimetypes.guess_type(file)[0]+'; charset=utf-8',len(body));self.end_headers();self.wfile.write(body)
