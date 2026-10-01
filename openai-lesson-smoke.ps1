@@ -1,4 +1,4 @@
-param([Parameter(Mandatory=$true)][string]$TokenFile)
+param([Parameter(Mandatory=$true)][string]$TokenFile, [switch]$Workbench)
 # ONE paid, bounded read-only lesson. No automatic retry; secrets remain in memory.
 $ErrorActionPreference='Stop'
 Add-Type -AssemblyName System.Net.Http
@@ -32,8 +32,8 @@ try {
     $disabled=@($inventory.tools|Where-Object name -ne 'query_case_evidence'|ForEach-Object {$_.name})
     if($disabled.Count -lt 6){throw 'Tool inventory incomplete; no model call made'}
     $session=Request POST '/api/sessions' @{case_id='IR-2841';config=@{
-        runtime='openai';model=$budget.model;permission='read_only';max_turns=3;max_output_tokens=700;
-        structured_output=$false;memory=$false;skills=$false;artifacts=$false;specialists=$false;file_workspace=$false;disabled_tools=$disabled
+        runtime='openai';model=$budget.model;permission='read_only';max_turns=3;max_output_tokens=$(if($Workbench){1000}else{700});
+        structured_output=[bool]$Workbench;memory=$false;skills=$false;artifacts=$false;specialists=$false;file_workspace=$false;disabled_tools=$disabled
     }}|ConvertFrom-Json
     $lines=Request POST ('/api/sessions/'+$session.id+'/messages') @{message='Call query_case_evidence exactly once with {"limit":3,"search":""}. Then summarize only the returned records in at most 150 words. Cite their record IDs, separate observations from hypotheses, and state one limitation. Do not request more evidence or perform writes.'}
     $events=@($lines -split "`n"|Where-Object {$_.Trim()}|ForEach-Object {$_|ConvertFrom-Json})
@@ -42,13 +42,19 @@ try {
     $answer=@($events|Where-Object {$_.kind -eq 'message.assistant' -and ([string]$_.payload.text).Trim().Length -gt 0}).Count -eq 1
     $recordIds=@($results|ForEach-Object {$_.payload.result.items}|ForEach-Object {$_.id})
     $settled=@($events|Where-Object kind -eq 'budget.settled')
+    $captured=@($events|Where-Object kind -eq 'model.request')
+    $returned=@($events|Where-Object kind -eq 'model.response')
+    $carried=@($captured|Where-Object {$_.payload.call -gt 1}|ForEach-Object {$_.payload.input}|Where-Object type -eq 'function_call_output').Count
+    $typed=@($events|Where-Object {$_.kind -eq 'sdk.result' -and $_.payload.structured_output}).Count
     $after=(Request GET '/api/deployment'|ConvertFrom-Json).trial
     @{completed=$completed;session_id=$session.id;evidence_queries=$results.Count;record_ids=$recordIds;answer_present=$answer;
       model_requests=$after.requests-$budget.requests;settled_receipts=$settled.Count;
+      captured_requests=$captured.Count;captured_responses=$returned.Count;carried_tool_outputs=$carried;typed_results=$typed;
       run_cost_usd=($settled|ForEach-Object {$_.payload.cost_usd}|Measure-Object -Sum).Sum;
       accounted_usd=$after.accounted_usd;remaining_usd=$after.remaining_usd;unsettled_requests=$after.unsettled_requests;
       failures=@($events|Where-Object kind -eq 'run.failed'|ForEach-Object {$_.payload.message})}|ConvertTo-Json -Depth 4
     if(!$completed -or $results.Count -ne 1 -or $recordIds.Count -ne 3 -or !$answer -or $settled.Count -lt 2){throw 'Lesson acceptance failed; inspect saved trace before any retry'}
+    if($Workbench -and ($captured.Count -lt 2 -or $returned.Count -ne $captured.Count -or $carried -lt 1 -or $typed -ne 1)){throw 'Workbench observation acceptance failed; no automatic retry'}
 } finally {
     try {$null=Request POST '/api/logout' @{}} catch {}
     $client.Dispose();$handler.Dispose()

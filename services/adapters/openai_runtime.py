@@ -7,6 +7,7 @@ import json
 import os
 from adapters.common import SYSTEM, definitions, dispatch, finish, cancellable
 from adapters.state import load, turn_prompt
+from adapters.openai_observation import tool_specs, observe_model, contract
 
 
 async def run_openai(engine, prompt, model_override=None):
@@ -19,12 +20,7 @@ async def run_openai(engine, prompt, model_override=None):
     check_runtime('openai', config['model'])
     trial = enabled()
     tools = []
-    for spec in definitions(config):
-        if spec['name'] == 'query_case_evidence':
-            # Mirror the executable contract; an unconstrained integer invited
-            # invalid requests (for example limit=100) in the live pilot.
-            spec['schema']['properties']['limit'].update(minimum=1, maximum=25,
-                description='Maximum evidence records to return, from 1 to 25. Start with 3.')
+    for spec in tool_specs(config):
         def handler(name):
             async def call(_ctx, arguments):
                 try:
@@ -56,6 +52,7 @@ async def run_openai(engine, prompt, model_override=None):
         # Explicit base URL: do not silently forward telemetry to an inherited proxy endpoint.
         client = AsyncOpenAI(api_key=os.environ['OPENAI_API_KEY'], base_url='https://api.openai.com/v1', max_retries=0, timeout=120)
     model = model_override or OpenAIResponsesModel(model=config['model'], openai_client=client)
+    model = observe_model(model, engine, config['model'])
     if trial:
         model = guarded_model(model, engine)
     agent = Agent(name='Relay SOC analyst', instructions=SYSTEM, model=model, tools=tools,
@@ -67,6 +64,9 @@ async def run_openai(engine, prompt, model_override=None):
     prior = load(engine)
     items = list(prior['messages']) if prior else []
     items.append({'role':'user', 'content':turn_prompt(engine, prompt, prior)})
+    engine.record('harness.configured', {**contract(config), 'model':config['model'],
+        'permission':config['permission'], 'max_turns':config['max_turns'],
+        'structured_output':config['structured_output'], 'continued':bool(prior)})
     engine.record('adapter.lifecycle', {'runtime':'openai', 'event':'session.resumed' if prior else 'session.created'})
     result = Runner.run_streamed(agent, input=items, max_turns=min(config['max_turns'], 6) if trial else config['max_turns'],
                                 run_config=RunConfig(tracing_disabled=True))

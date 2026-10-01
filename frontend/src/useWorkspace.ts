@@ -16,7 +16,7 @@ import {
   type Trace,
   type View,
 } from "./lib/types";
-export function useWorkspace() {
+export function useWorkspace(runtime?: string) {
   const [cases, setCases] = useState<Incident[]>([]),
     [caseId, setCaseId] = useState(""),
     [sessions, setSessions] = useState<Session[]>([]);
@@ -144,7 +144,10 @@ export function useWorkspace() {
         const all = await api<Session[]>("/api/sessions");
         if (!alive) return;
         setSessions(all);
-        const latest = all.find((s) => s.case_id === caseId);
+        const latest = all.find(
+          (s) =>
+            s.case_id === caseId && (!runtime || s.config.runtime === runtime),
+        );
         if (latest && !sessionRef.current && !lock.current) {
           sessionRef.current = latest;
           await sync(latest.id);
@@ -156,9 +159,10 @@ export function useWorkspace() {
     return () => {
       alive = false;
     };
-  }, [caseId, sync]);
+  }, [caseId, sync, runtime]);
   useEffect(() => {
-    if (!busy || !data?.session.id) return;
+    if ((!busy && data?.session.status !== "running") || !data?.session.id)
+      return;
     let pending = false;
     const id = data.session.id;
     const timer = setInterval(() => {
@@ -171,7 +175,7 @@ export function useWorkspace() {
         });
     }, 2000);
     return () => clearInterval(timer);
-  }, [busy, data?.session.id, sync]);
+  }, [busy, data?.session.id, data?.session.status, sync]);
   const idle = () => {
     if (lock.current)
       throw Error(

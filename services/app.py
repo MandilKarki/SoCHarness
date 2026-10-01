@@ -96,6 +96,11 @@ class Handler(BaseHTTPRequestHandler):
                 if path=='/api/inventory':
                     from inventory import inventory
                     return self.send_json(inventory(store))
+                if path=='/api/openai-contract':
+                    from adapters.openai_observation import contract
+                    from store import DEFAULT_CONFIG, TOOLS
+                    config={**DEFAULT_CONFIG,'permission':'read_only','disabled_tools':[t['name'] for t in TOOLS if t['name'] not in ('query_case_evidence','get_event')]}
+                    return self.send_json(contract(config))
                 if path=='/api/deployment':
                     from trial_budget import TrialBudget
                     return self.send_json({**deployment_status(self.access),'trial':TrialBudget(store).snapshot()})

@@ -1,0 +1,21 @@
+Confirmed: authenticated / renders the old multi-framework dashboard; the last
+rewrite only changed a nested route. The current guided room hides input and
+execution detail, and allows only a tightly scripted evidence query. Data is
+an imported benchmark, not live sensors. The existing SDK, database, identity
+and shared $5 October spending guard work and must be preserved.
+
+Newest direction: OpenAI only, phone-first, coherent source > context/agent >
+model/tool loop > findings > next action. Engineering inspection, not characters
+or a quiz. Expose capabilities where they act, with honest gaps.
+
+Implementation: replace default signed-in home with an OpenAI workbench; one
+explicit start action creates and sends a bounded investigation. Show evidence
+provenance and visible request/response snapshots with per-call token usage.
+Keep secrets, hidden reasoning and other SDKs out of the new experience.
+
+Inference to verify: phone login returning to / explains why the previous change
+could appear absent. Test from / at 390px, not only a desktop deep link. Add real
+SDK contract tests and click through an isolated fixture before bounded live QA.
+
+No new key, provider, hosting service, database or dependency framework required.
+Existing React/TypeScript/shadcn base stays; the application composition changes.

@@ -171,7 +171,10 @@ class Engine:
         self.record('run.started',{'runtime':self.store.session(self.sid)['config']['runtime']})
         try:
             s=self.store.session(self.sid)
-            context=json.dumps(self.store.traces(self.sid,s['context_after']))
+            # Inspection receipts duplicate the native transcript; they are not
+            # conversation context and must not cause premature compaction.
+            context=json.dumps([event for event in self.store.traces(self.sid,s['context_after'])
+                if event['kind'] not in ('model.request','model.response','harness.configured')])
             if len(context)>s['config']['context_chars']:
                 self.store.compact(self.sid)
                 s=self.store.session(self.sid)

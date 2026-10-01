@@ -1,0 +1,6 @@
+# Incremental release: retains approved runtime, identity and persistent ledger.
+FROM registry.fly.io/socharness-mandil@sha256:04ef0c2ede4a964562166aa3d1d6fb8ee4275669ad7a1c52baf703bc51e5cbea
+COPY web/react-app.js web/react-app.css /app/web/
+COPY services/app.py services/engine.py /app/services/
+COPY services/adapters/openai_runtime.py services/adapters/openai_observation.py /app/services/adapters/
+RUN python -c "import ast; [ast.parse(open(p).read()) for p in ['/app/services/app.py','/app/services/engine.py','/app/services/adapters/openai_runtime.py','/app/services/adapters/openai_observation.py']]"

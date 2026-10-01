@@ -1,6 +1,6 @@
 import { Component, type ErrorInfo, type ReactNode } from "react";
 import { createRoot } from "react-dom/client";
-import { App } from "./App";
+import { HarnessApp } from "./HarnessApp";
 import { Auth } from "./components/Auth";
 import "./index.css";
 class ErrorBoundary extends Component<
@@ -33,7 +33,7 @@ createRoot(document.getElementById("root")!).render(
     ) : location.pathname === "/security" ? (
       <Auth security />
     ) : (
-      <App />
+      <HarnessApp />
     )}
   </ErrorBoundary>,
 );

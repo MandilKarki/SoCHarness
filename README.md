@@ -8,50 +8,39 @@
 - **[Architecture atlas](https://socharness-mandil.fly.dev/architecture)** (requires login)
 - **[SDK learning lab](https://socharness-mandil.fly.dev/#sdk-lab)** (requires login)
 
-### Learn an SDK through an investigation
+### OpenAI workbench — the default signed-in homepage
 
-Open **Agent lab → SDK learning lab**, with **OpenAI** selected. Start at the new
-guided workshop at the top, not the reference atlas:
+The phone and desktop homepage now use one workflow, not the older multi-SDK
+dashboard or fictional quiz. Existing `#sdk-lab` links open the same workbench.
 
-1. Read the fictional Northstar Logistics briefing and **Start exercise** (no model request).
-2. Choose **Read three records** (uses the shared
-   October allowance, read-only, one enabled tool, at most 3 model turns).
-3. Expand **What happened under the hood?** to inspect **Tool arguments**, **Returned evidence**, **Final findings** and
-   **Usage & cost**. The receipts are actual session events, not an illustration.
-4. Answer the knowledge check. Select **Ask a follow-up** for lesson 2;
-   select **Write a handover** and start a fresh typed-output session for lesson 3.
+1. **Source:** select a real imported benchmark collection, inspect records and
+   edit the investigation request. These are not live sensors or confirmed incidents.
+2. **Agent:** inspect instructions, the bounded read-tool schema and output shape.
+   **Run investigation** creates a new OpenAI session and sends that request.
+   Maximum: three model calls, 1,000 output tokens per call, one read-only tool.
+3. **Loop:** select actual persisted events: request context → model response →
+   tool arguments → database result → next request → answer. Each step explains
+   whether the model, SDK or application owns it. No invented steps or private
+   chain-of-thought. Context snapshots are bounded excerpts, not the full wire request.
+4. **Result:** read structured findings, compare citations with returned records,
+   inspect usage and send a follow-up in the same session. Its next model request
+   exposes the carried conversation. A new investigation starts fresh.
 
-The learning room hides fleet counters, raw configuration and cross-SDK grids by
-default. **Budget & setup** contains the editable prompt and evidence selector;
-**Advanced reference** retains the detailed diagrams and versioned mappings.
-Northstar and its staff are fictional teaching context, not connected sensors
-or agents. The original benchmark record contents and IDs are unchanged.
+Browsing, history and export make no model calls. The existing shared $5 October
+allowance and identity controls remain unchanged. Failed or interrupted calls can
+retain budget holds; refresh saved state before retrying. Keep the mobile tab
+foregrounded during streaming; this is not a durable background-job service.
 
-Existing failed sessions remain inspectable. A read-query input error such as
-`limit must be 1–25` now returns a validation result to the model for bounded
-correction; permission and scope errors still stop execution. Session creation
-errors appear inside the configuration dialog, and successful creation opens
-the prompt composer. Creating a session alone never sends a prompt.
+**What am I learning?** maps the visible controls to core SDK concepts and names
+what is not exercised: handoffs, agents-as-tools, SDK guardrail tripwires, MCP,
+human approval interruption, realtime/voice and hosted tools. Backend adapters and
+legacy reference views remain in the repository, but other SDKs are intentionally
+absent from this workflow. An inventory entry is not proof of full SDK coverage.
 
-Below the workshop, OpenAI's ten-step illustrated
-lesson: session → context → runner → guarded model request → streaming → tools →
-permissions → continuation → structured findings → audit. Play, pause, step and
-check your understanding without making a model call. Reduced-motion devices
-use manual steps. This is an authored illustration, not simulated live evidence.
-
-Switch to **Session evidence**, choose a case and matching SDK session, and follow
-the actual received events. Active runs stream into this view; old events replay
-without spending credit. Missing stages are not filled in. Consecutive text
-deltas are collapsed for readability; the full trace/export retains them.
-
-All eleven adapters have a selectable versioned capability atlas, source/test
-links and explicit native/shared/partial/gap labels. The deep introductory lesson
-is OpenAI-first; other SDKs share its architecture with their own inventory
-mappings. This is **not every upstream API**, and a mapped capability is not
-automatically live-tested. Native handoffs, voice, external MCP, provider tracing
-and other gaps remain visible, not silently enabled. Configure/Draft never sends
-a model request; review and choose **Send** yourself. Existing October budget,
-authentication and runtime restrictions are unchanged.
+For reproducible, no-cost browser QA, run
+`python services/preview_openai_workbench.py` and open `http://127.0.0.1:8794/`.
+It runs the real SDK loop with a fake model and temporary synthetic database,
+clears the API key in that process, and is explicitly labeled **OFFLINE QA**.
 
 Use this exact HTTPS hostname on every device. A localhost address is only for
 development; cloning this repository does not give access to the hosted account.

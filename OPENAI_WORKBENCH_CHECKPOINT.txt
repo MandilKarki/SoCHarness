@@ -1,0 +1,53 @@
+2026-10-01 — OpenAI-only default workbench
+
+Problem addressed:
+The previous rewrite lived inside a nested learning view. Login still returned
+to the old multi-framework dashboard. This release replaces the default app.
+
+Experience:
+Source -> Agent -> Loop -> Result. Actual imported benchmark provenance, editable
+request, one bounded read tool, typed findings by default, and a same-session
+follow-up. No fictional staff, quiz gates, fleet metrics or other SDK navigation.
+Each actual event identifies the owner (user/model/SDK/application/database),
+the meaning, an implementation expression, and its public input/output receipt.
+Earlier runs remain selectable after a follow-up. History/export are read-only.
+
+Implementation:
+frontend/src/HarnessApp.tsx and harness.css: new root experience, 390px layout,
+Radix focus-managed learning/history dialogs, narrow-screen inspector navigation.
+useWorkspace: OpenAI-only automatic history selection; poll running sessions
+after reload. A synchronous start lock prevents duplicate launch clicks.
+services/adapters/openai_observation.py: actual public request/response receipts,
+bounded/redacted excerpts, no hidden reasoning or transport credentials.
+services/engine.py: observation copies do not inflate compaction accounting.
+
+Verified before release:
+- 52 frontend tests pass, including single-click session+message creation,
+  duplicate-click protection, same-session follow-up and fail-closed guard state.
+- 129 discovered backend tests pass (includes imported native-runner test cases).
+- Browser 390x844: real SDK Runner + explicit fake model, temporary synthetic DB,
+  no API key/provider traffic; two calls, one query, three records, typed result.
+- Follow-up: same session, one call, prior tool result in public input, no new query.
+- Reload restores saved session; earlier run can be selected without a paid call.
+- Mobile inspector and results visually reviewed; document width 375 <= viewport390.
+- 1280x900 desktop layout and focus-managed learning dialog visually checked.
+- Fixture exception was displayed as a failed run, not invented success; fixture
+  usage schema was corrected before the successful acceptance run.
+
+Spending/security:
+Existing approved server credential, single-operator auth, $5 October ledger,
+reserved-call accounting and Fly machine/volume are preserved. New runs allow
+three model calls maximum, 1,000 output tokens/call, no automatic provider retry,
+only query_case_evidence and read_only permission. Older sessions with broader
+limits/tools can be inspected but not continued through this workbench.
+
+Limits:
+This is the core loop, NOT full SDK coverage. Handoffs, agents-as-tools, native
+guardrail tripwires, MCP, HITL interruption, voice and hosted tools are not
+exercised here. No live sensors, distributed jobs or durable background runs.
+Mobile backgrounding can interrupt a run; refresh before retrying. Context
+snapshots are capped excerpts and token usage is not the same as context capacity.
+Budget settlements are estimates, not an invoice. A valid output shape or a
+returned citation ID does not prove a finding is true.
+
+Deployment and live model acceptance: pending release verification below.
