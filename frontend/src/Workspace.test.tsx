@@ -310,7 +310,6 @@ describe("React workspace", () => {
         screen.queryByRole("heading", { name: "Configure an investigation" }),
       ).not.toBeInTheDocument(),
     );
-    fireEvent.click(screen.getByRole("button", { name: "Open agent" }));
     fireEvent.change(
       screen.getByRole("textbox", { name: "Message the investigation agent" }),
       { target: { value: "Review the evidence." } },

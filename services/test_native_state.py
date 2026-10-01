@@ -111,7 +111,7 @@ class DeepPersistenceTest(LabFixture):
 
 
 class OpenAITest(LabFixture):
-    def model(self,tool_first=False,text='Reviewed #1.'):
+    def model(self,tool_first=False,text='Reviewed #1.',limits=None):
         from agents import Model
         from openai.types.responses import Response, ResponseCompletedEvent, ResponseOutputMessage, ResponseOutputText, ResponseFunctionToolCall
         owner=self
@@ -123,12 +123,43 @@ class OpenAITest(LabFixture):
                 owner.assertTrue(tracing.is_disabled())
                 owner.assertFalse(model_settings.parallel_tool_calls)
                 owner.assertFalse(model_settings.store)
-                if tool_first and len(self.inputs)==1:
-                    output=[ResponseFunctionToolCall(type='function_call',id='fc1',call_id='q1',name='query_case_evidence',arguments='{"limit":1,"search":""}')]
+                if (tool_first and len(self.inputs)==1) or (limits and len(self.inputs)<=len(limits)):
+                    limit=limits[len(self.inputs)-1] if limits else 1
+                    n=str(len(self.inputs))
+                    output=[ResponseFunctionToolCall(type='function_call',id='fc'+n,call_id='q'+n,name='query_case_evidence',arguments=json.dumps({'limit':limit,'search':''}))]
                 else:output=[ResponseOutputMessage(type='message',id='msg1',role='assistant',status='completed',content=[ResponseOutputText(type='output_text',text=text,annotations=[])])]
                 response=Response.model_construct(id='response1',output=output,status='completed',usage=None)
                 yield ResponseCompletedEvent(type='response.completed',sequence_number=1,response=response)
         return Fake()
+
+    def test_invalid_read_limit_can_be_corrected_inside_real_runner(self):
+        from adapters.openai_runtime import run_openai
+        sid=self.session(runtime='openai',accept_no_usd_cap=True,max_turns=3)
+        model=self.model(limits=[100,1])
+        asyncio.run(run_openai(Engine(self.store,sid),'Review',model))
+        self.assertEqual(len(model.inputs),3)
+        errors=[i for i in model.inputs[1] if i.get('type')=='function_call_output']
+        self.assertEqual(json.loads(errors[-1]['output'])['error'],'invalid_tool_arguments')
+        trace=self.store.traces(sid)
+        self.assertEqual(sum(t['kind']=='tool.validation_error' for t in trace),1)
+        self.assertEqual(sum(t['kind']=='tool.result' for t in trace),1)
+        self.assertTrue(any(t['kind']=='message.assistant' for t in trace))
+
+    def test_invalid_read_recovery_is_bounded_and_policy_errors_stay_fatal(self):
+        from adapters.openai_runtime import run_openai
+        from agents import MaxTurnsExceeded
+        from unittest.mock import patch
+        sid=self.session(runtime='openai',accept_no_usd_cap=True,max_turns=2)
+        model=self.model(limits=[100,100,100])
+        with self.assertRaises(MaxTurnsExceeded):asyncio.run(run_openai(Engine(self.store,sid),'Review',model))
+        self.assertEqual(len(model.inputs),2)
+        self.assertIsNone(load(Engine(self.store,sid)))
+        sid=self.session(runtime='openai',accept_no_usd_cap=True)
+        model=self.model(tool_first=True)
+        with patch('adapters.openai_runtime.dispatch',side_effect=Problem('Read denied',403)):
+            with self.assertRaises(Exception):asyncio.run(run_openai(Engine(self.store,sid),'Review',model))
+        self.assertEqual(len(model.inputs),1)
+        self.assertFalse(any(t['kind']=='tool.validation_error' for t in self.store.traces(sid)))
 
     def test_real_runner_tool_loop_and_native_continuation(self):
         from adapters.openai_runtime import run_openai

@@ -10,7 +10,30 @@
 
 ### Learn an SDK through an investigation
 
-Open **Agent lab → SDK learning lab**. Start with OpenAI's ten-step illustrated
+Open **Agent lab → SDK learning lab**, with **OpenAI** selected. Start at the new
+guided workshop at the top, not the reference atlas:
+
+1. Read the fictional Northstar Logistics briefing and **Start exercise** (no model request).
+2. Choose **Read three records** (uses the shared
+   October allowance, read-only, one enabled tool, at most 3 model turns).
+3. Expand **What happened under the hood?** to inspect **Tool arguments**, **Returned evidence**, **Final findings** and
+   **Usage & cost**. The receipts are actual session events, not an illustration.
+4. Answer the knowledge check. Select **Ask a follow-up** for lesson 2;
+   select **Write a handover** and start a fresh typed-output session for lesson 3.
+
+The learning room hides fleet counters, raw configuration and cross-SDK grids by
+default. **Budget & setup** contains the editable prompt and evidence selector;
+**Advanced reference** retains the detailed diagrams and versioned mappings.
+Northstar and its staff are fictional teaching context, not connected sensors
+or agents. The original benchmark record contents and IDs are unchanged.
+
+Existing failed sessions remain inspectable. A read-query input error such as
+`limit must be 1–25` now returns a validation result to the model for bounded
+correction; permission and scope errors still stop execution. Session creation
+errors appear inside the configuration dialog, and successful creation opens
+the prompt composer. Creating a session alone never sends a prompt.
+
+Below the workshop, OpenAI's ten-step illustrated
 lesson: session → context → runner → guarded model request → streaming → tools →
 permissions → continuation → structured findings → audit. Play, pause, step and
 check your understanding without making a model call. Reduced-motion devices

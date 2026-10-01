@@ -1,0 +1,5 @@
+# Build/publish and test frontend first. Preserve the deployed runtime and ledger.
+FROM registry.fly.io/socharness-mandil@sha256:22de561528f265a1ac8254cb6a16040b382d6e2c54360d5fa9413d871362187a
+COPY web/react-app.js web/react-app.css /app/web/
+COPY services/adapters/openai_runtime.py /app/services/adapters/openai_runtime.py
+RUN python -c "import ast; ast.parse(open('/app/services/adapters/openai_runtime.py').read())"

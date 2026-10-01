@@ -86,10 +86,7 @@ const nav: {
   },
 ];
 const viewInfo: Record<View, [string, string]> = {
-  "sdk-lab": [
-    "SDK learning lab",
-    "Learn the architecture. Follow the execution. Inspect the evidence.",
-  ],
+  "sdk-lab": ["Learning room", "One scenario. One SDK. One step at a time."],
   evidence: [
     "Investigations",
     "Evidence first. Every agent action accountable.",
@@ -211,7 +208,26 @@ export function App() {
         <kbd>⌘ K</kbd>
       </button>
       <div className="nav-groups">
-        {nav.map((group) => (
+        {(w.view === "sdk-lab"
+          ? [
+              {
+                group: "Learn",
+                items: [
+                  {
+                    id: "sdk-lab" as View,
+                    label: "Learning room",
+                    icon: Waypoints,
+                  },
+                  {
+                    id: "evidence" as View,
+                    label: "Full SOC workspace",
+                    icon: FolderOpen,
+                  },
+                ],
+              },
+            ]
+          : nav
+        ).map((group) => (
           <div className="nav-group" key={group.group}>
             <p>{group.group}</p>
             {group.items.map(({ id, label, icon: Icon }) => (
@@ -351,19 +367,23 @@ export function App() {
               </h1>
               <p>{viewInfo[w.view][1]}</p>
             </div>
-            <div className="page-actions">
-              <Button variant="outline" onClick={() => setGuide(true)}>
-                <BookOpen />
-                Quick start
-              </Button>
-              <Button
-                disabled={w.busy || !current}
-                onClick={() => setSettings("simulator")}
-              >
-                <Plus />
-                New session
-              </Button>
-            </div>
+            {w.view !== "sdk-lab" && (
+              <div className="page-actions">
+                <Button variant="outline" onClick={() => setGuide(true)}>
+                  <BookOpen />
+                  Quick start
+                </Button>
+                <Button
+                  disabled={w.busy || !current}
+                  onClick={() =>
+                    setSettings(w.view === "sdk-lab" ? "openai" : "simulator")
+                  }
+                >
+                  <Plus />
+                  New session
+                </Button>
+              </div>
+            )}
           </div>
           {w.loading ? (
             <Empty title="Connecting to Relay">
@@ -371,31 +391,35 @@ export function App() {
             </Empty>
           ) : (
             <>
-              <div className="metric-strip">
-                {[
-                  ["records", "Evidence records"],
-                  ["hosts", "Observed hosts"],
-                  ["sdk_adapters", "SDK adapters"],
-                  ["tools", "Controlled tools"],
-                ].map(([key, label]) => (
-                  <div key={key}>
-                    <span>{label}</span>
-                    <strong>
-                      {w.inventory
-                        ? Number(w.inventory.metrics[key] || 0).toLocaleString()
-                        : "—"}
-                    </strong>
+              {w.view !== "sdk-lab" && (
+                <div className="metric-strip">
+                  {[
+                    ["records", "Evidence records"],
+                    ["hosts", "Observed hosts"],
+                    ["sdk_adapters", "SDK adapters"],
+                    ["tools", "Controlled tools"],
+                  ].map(([key, label]) => (
+                    <div key={key}>
+                      <span>{label}</span>
+                      <strong>
+                        {w.inventory
+                          ? Number(
+                              w.inventory.metrics[key] || 0,
+                            ).toLocaleString()
+                          : "—"}
+                      </strong>
+                    </div>
+                  ))}
+                  <div className="metric-note">
+                    <ShieldCheck size={18} />
+                    <span>
+                      Benchmark evidence
+                      <br />
+                      <small>Review cohorts, not detection verdicts</small>
+                    </span>
                   </div>
-                ))}
-                <div className="metric-note">
-                  <ShieldCheck size={18} />
-                  <span>
-                    Benchmark evidence
-                    <br />
-                    <small>Review cohorts, not detection verdicts</small>
-                  </span>
                 </div>
-              </div>
+              )}
               <div className={"work-area " + (global ? "global-area" : "")}>
                 {!global && (
                   <aside className="case-rail" aria-label="Open cases">
@@ -727,6 +751,7 @@ export function App() {
           w={w}
           initialRuntime={settings}
           onClose={() => setSettings(null)}
+          onCreated={() => setChat(true)}
         />
       )}
       <Modal

@@ -4,6 +4,7 @@ import { defaultConfig, type Config } from "../lib/types";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Field, Modal, Status } from "./shared";
+import { errorText } from "../lib/api";
 const flags = [
   "specialists",
   "skills",
@@ -17,11 +18,14 @@ export function Settings({
   w,
   onClose,
   initialRuntime = "simulator",
+  onCreated,
 }: {
   w: Workspace;
   onClose: () => void;
   initialRuntime?: string;
+  onCreated?: () => void;
 }) {
+  const [error, setError] = useState("");
   const adapter = w.adapters.find((a) => a.id === initialRuntime);
   const [config, setConfig] = useState<Config>({
     ...defaultConfig,
@@ -55,12 +59,31 @@ export function Settings({
         onSubmit={(e) => {
           e.preventDefault();
           void w.safe(async () => {
-            await w.newSession(config);
-            onClose();
-            w.setNotice("Session created. Send a prompt when you are ready.");
+            setError("");
+            try {
+              await w.newSession({
+                ...config,
+                model: selected?.trial_guard
+                  ? selected.default_model
+                  : config.model,
+              });
+              onClose();
+              onCreated?.();
+              w.setNotice(
+                "Session created. Review your prompt, then choose Send to start the run.",
+              );
+            } catch (e) {
+              setError(errorText(e));
+            }
           });
         }}
       >
+        {error && (
+          <div className="callout" role="alert">
+            <strong>Session could not be created</strong>
+            <p>{error}</p>
+          </div>
+        )}
         <div className="form-grid">
           <Field label="Agent runtime">
             <select
@@ -77,7 +100,9 @@ export function Settings({
           </Field>
           <Field label="Model">
             <Input
-              value={config.model}
+              value={
+                selected?.trial_guard ? selected.default_model : config.model
+              }
               readOnly={selected?.trial_guard}
               onChange={(e) => set("model", e.target.value)}
               maxLength={120}

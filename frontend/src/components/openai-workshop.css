@@ -1,0 +1,262 @@
+.openai-workshop {
+  max-width: 840px;
+  margin: 0 auto;
+  display: grid;
+  gap: 28px;
+  padding: 12px 0 28px;
+}
+.workshop-heading,
+.workshop-result-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 18px;
+  flex-wrap: wrap;
+}
+.workshop-lesson-picker {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 12px;
+  color: var(--muted-foreground);
+}
+.workshop-lesson-picker select {
+  max-width: 275px;
+  background: transparent;
+}
+.workshop-kicker {
+  font-size: 10px;
+  letter-spacing: 1.3px;
+  color: var(--muted-foreground);
+}
+.workshop-brief h2 {
+  font-size: 34px;
+  line-height: 1.2;
+  letter-spacing: -1px;
+  margin: 12px 0 18px;
+}
+.workshop-brief p {
+  max-width: 650px;
+  font-size: 15px;
+  line-height: 1.8;
+  color: var(--muted-foreground);
+}
+.workshop-brief blockquote {
+  font-size: 18px;
+  line-height: 1.65;
+  margin: 22px 0;
+  padding-left: 18px;
+  border-left: 2px solid var(--primary);
+}
+.openai-workshop small {
+  display: block;
+  color: var(--muted-foreground);
+  font-size: 11px;
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+}
+.workshop-task {
+  display: grid;
+  justify-items: start;
+  gap: 14px;
+  padding: 24px;
+  background: var(--soft);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+.workshop-task p {
+  line-height: 1.7;
+}
+.workshop-disclosure {
+  border-top: 1px solid var(--border);
+  padding-top: 16px;
+  min-width: 0;
+}
+.workshop-disclosure > summary {
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--muted-foreground);
+}
+.workshop-disclosure[open] > summary {
+  color: var(--foreground);
+  margin-bottom: 18px;
+}
+.workshop-disclosure p,
+.workshop-disclosure li {
+  font-size: 13px;
+  line-height: 1.9;
+  color: var(--muted-foreground);
+  margin: 10px 0;
+}
+.workshop-disclosure label {
+  display: grid;
+  gap: 8px;
+  margin: 18px 0;
+  font-size: 12px;
+}
+.workshop-disclosure select {
+  max-width: 100%;
+}
+.workshop-disclosure ol {
+  padding-left: 20px;
+}
+.workshop-disclosure a {
+  font-size: 12px;
+  color: var(--primary);
+}
+.workshop-world {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 24px;
+}
+.workshop-world strong {
+  font-size: 13px;
+}
+.workshop-warning,
+.workshop-error {
+  padding: 14px;
+  border-left: 2px solid var(--primary);
+  background: var(--soft);
+  line-height: 1.8;
+  overflow-wrap: anywhere;
+}
+.workshop-results,
+.workshop-mastery {
+  display: grid;
+  gap: 18px;
+}
+.workshop-result-title h3,
+.workshop-mastery h3 {
+  font-weight: 600;
+  font-size: 17px;
+}
+.workshop-flow {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 0;
+  list-style: none;
+}
+.workshop-flow li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted-foreground);
+  font-size: 11px;
+  border: 1px solid var(--border);
+  border-radius: 30px;
+  padding: 6px 10px;
+}
+.workshop-flow li[data-done="true"] {
+  color: var(--primary);
+  background: var(--soft);
+}
+.workshop-dot {
+  width: 10px;
+  height: 10px;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+}
+.workshop-answer {
+  white-space: pre-wrap;
+  font-size: 14px;
+  line-height: 1.9;
+  overflow-wrap: anywhere;
+}
+.workshop-budget {
+  font-size: 11px;
+  color: var(--muted-foreground);
+  font-variant-numeric: tabular-nums;
+}
+.workshop-receipts {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 16px 0;
+}
+.workshop-receipts button {
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  padding: 8px 12px;
+  text-align: left;
+  font-size: 12px;
+}
+.workshop-receipts button[aria-pressed="true"] {
+  border-color: var(--primary);
+  background: var(--soft);
+}
+.workshop-disclosure code {
+  display: block;
+  font-size: 12px;
+  overflow-wrap: anywhere;
+  line-height: 1.8;
+}
+.workshop-raw {
+  max-height: 420px;
+  overflow: auto;
+  margin-top: 15px;
+}
+.workshop-raw details {
+  padding: 10px 0;
+}
+.workshop-raw summary {
+  font-size: 12px;
+  cursor: pointer;
+}
+.workshop-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.workshop-mastery {
+  border-top: 1px solid var(--border);
+  padding-top: 22px;
+}
+.workshop-mastery p {
+  font-size: 13px;
+  line-height: 1.8;
+}
+.workshop-progress {
+  display: flex;
+  align-items: start;
+  gap: 8px;
+  color: var(--muted-foreground);
+}
+.sdk-reference {
+  max-width: 840px;
+  margin: 0 auto;
+  border-top: 1px solid var(--border);
+  padding-top: 20px;
+}
+.sdk-reference > summary {
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--muted-foreground);
+}
+.sdk-reference[open] > summary {
+  margin-bottom: 24px;
+}
+@media (max-width: 600px) {
+  .workshop-brief h2 {
+    font-size: 28px;
+  }
+  .workshop-world {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+  .workshop-task {
+    padding: 18px;
+  }
+  .workshop-heading {
+    align-items: flex-start;
+  }
+  .workshop-lesson-picker {
+    display: grid;
+  }
+  .workshop-lesson-picker select {
+    max-width: 100%;
+  }
+  .openai-workshop {
+    gap: 22px;
+  }
+}

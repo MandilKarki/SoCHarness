@@ -14,6 +14,15 @@ import { eventLayer, learningTrace, lessons } from "../lib/sdkLearning";
 import type { Workspace } from "../useWorkspace";
 import { defaultConfig, type Trace } from "../lib/types";
 
+function renderReference(ui: Parameters<typeof render>[0]) {
+  const result = render(ui);
+  fireEvent.click(
+    screen.getByText(
+      "Advanced reference · diagrams, SDKs and capability coverage",
+    ),
+  );
+  return result;
+}
 const evt = (seq: number, kind: string): Trace => ({
   seq,
   kind,
@@ -79,7 +88,7 @@ describe("SDK learning lab", () => {
     const w = fixture(),
       configure = vi.fn(),
       draft = vi.fn();
-    render(<SdkLab w={w} configure={configure} draft={draft} />);
+    renderReference(<SdkLab w={w} configure={configure} draft={draft} />);
     expect(screen.getByText("Illustration, not a live run.")).toBeVisible();
     fireEvent.click(screen.getByRole("button", { name: "Next learning step" }));
     expect(screen.getByText("Build a bounded context")).toBeVisible();
@@ -94,7 +103,9 @@ describe("SDK learning lab", () => {
   });
   it("plays to the end then stops, and can restart", () => {
     vi.useFakeTimers();
-    render(<SdkLab w={fixture()} configure={vi.fn()} draft={vi.fn()} />);
+    renderReference(
+      <SdkLab w={fixture()} configure={vi.fn()} draft={vi.fn()} />,
+    );
     fireEvent.click(screen.getByRole("button", { name: "Play" }));
     for (let n = 0; n < lessons.length + 1; n++)
       act(() => vi.advanceTimersByTime(3500));
@@ -104,7 +115,7 @@ describe("SDK learning lab", () => {
     expect(screen.getByText("A question enters the system")).toBeVisible();
   });
   it("does not present another SDK's receipts as matching evidence", () => {
-    render(
+    renderReference(
       <SdkLab w={fixture("claude")} configure={vi.fn()} draft={vi.fn()} />,
     );
     fireEvent.click(screen.getByRole("button", { name: "Session evidence" }));
@@ -120,7 +131,7 @@ describe("SDK learning lab", () => {
   it("follows new receipts and pauses following when inspecting older evidence", () => {
     const w = fixture(),
       props = { configure: vi.fn(), draft: vi.fn() };
-    const ui = render(<SdkLab w={w} {...props} />);
+    const ui = renderReference(<SdkLab w={w} {...props} />);
     fireEvent.click(screen.getByRole("button", { name: "Session evidence" }));
     expect(
       screen.getByRole("heading", { name: "run.completed" }),
@@ -169,13 +180,17 @@ describe("SDK learning lab", () => {
       addEventListener: vi.fn(),
       removeEventListener: vi.fn(),
     }));
-    render(<SdkLab w={fixture()} configure={vi.fn()} draft={vi.fn()} />);
+    renderReference(
+      <SdkLab w={fixture()} configure={vi.fn()} draft={vi.fn()} />,
+    );
     expect(screen.getByRole("button", { name: "Play" })).toBeDisabled();
     fireEvent.click(screen.getByRole("button", { name: "Next learning step" }));
     expect(screen.getByText("Build a bounded context")).toBeVisible();
   });
   it("keeps missing capabilities explicit and separate from the current lesson", () => {
-    render(<SdkLab w={fixture()} configure={vi.fn()} draft={vi.fn()} />);
+    renderReference(
+      <SdkLab w={fixture()} configure={vi.fn()} draft={vi.fn()} />,
+    );
     fireEvent.change(
       screen.getByLabelText("Capability implementation filter"),
       { target: { value: "gap" } },
@@ -193,7 +208,7 @@ describe("SDK learning lab", () => {
     const configure = vi.fn(),
       draft = vi.fn(),
       w = fixture();
-    render(<SdkLab w={w} configure={configure} draft={draft} />);
+    renderReference(<SdkLab w={w} configure={configure} draft={draft} />);
     fireEvent.click(screen.getByRole("button", { name: "Configure this SDK" }));
     expect(configure).toHaveBeenCalledWith("openai");
     fireEvent.click(

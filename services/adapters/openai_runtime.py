@@ -20,9 +20,26 @@ async def run_openai(engine, prompt, model_override=None):
     trial = enabled()
     tools = []
     for spec in definitions(config):
+        if spec['name'] == 'query_case_evidence':
+            # Mirror the executable contract; an unconstrained integer invited
+            # invalid requests (for example limit=100) in the live pilot.
+            spec['schema']['properties']['limit'].update(minimum=1, maximum=25,
+                description='Maximum evidence records to return, from 1 to 25. Start with 3.')
         def handler(name):
             async def call(_ctx, arguments):
-                return json.dumps(await dispatch(engine, name, json.loads(arguments)))
+                try:
+                    return json.dumps(await dispatch(engine, name, json.loads(arguments)))
+                except Problem as exc:
+                    # Only recover from these read-tool input mistakes. Never
+                    # turn permission, scope, cancellation or internal failures
+                    # into a model retry. The Runner's turn/usage limits still apply.
+                    if name != 'query_case_evidence' or exc.status != 400 or str(exc) not in ('limit must be 1–25', 'search must be text'):
+                        raise
+                    engine.record('tool.validation_error', {'tool':name, 'message':str(exc),
+                        'executed':False, 'recovery':'Model may correct arguments within remaining turn and spending limits.'})
+                    return json.dumps({'error':'invalid_tool_arguments', 'message':str(exc),
+                        'executed':False, 'allowed_limit':{'minimum':1,'maximum':25},
+                        'search_type':'string', 'instruction':'Correct the arguments or explain the limitation. Do not repeat the invalid request.'})
             return call
         tools.append(FunctionTool(name=spec['name'], description=spec['description'],
                                   params_json_schema=spec['schema'], on_invoke_tool=handler(spec['name'])))
