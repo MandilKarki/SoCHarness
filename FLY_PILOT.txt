@@ -67,7 +67,38 @@ UI assets. Evidence remains 155,350 records / seven cases / zero cloud sessions.
 The deployed login/recovery UI was checked at 390px with passkey support available
 and no browser console errors. No production passkey was registered by automation.
 
-LOGIN
+FIREBASE GOOGLE LOGIN + BOUNDED TRIAL UPDATE - 2026-10-01
+This checkpoint supersedes earlier statements that no model key is installed.
+Deployed image:
+registry.fly.io/socharness-mandil@sha256:f05e96c9d3b4ece3fe90964cf80a6c8b975269fdaf66a9505c54bc46655866af
+Same one-machine / existing-volume pilot; no additional services or machines.
+Firebase Spark Google sign-in is enabled with the exact Fly authorized domain.
+Only the configured verified operator email is accepted. Actual browser Google
+login reached the protected workspace; no recovery token was entered there.
+Recovery-token and passkey authentication remain available.
+
+The server-only OpenAI key was installed only after deployment and verification
+of the persistent trial ledger. The app reserves $0.10 per model request, caps
+accounted requests at $4.50 with $0.50 headroom, blocks other paid runtime paths,
+and ends new paid calls at 2026-10-02T06:59:59Z. No reset or extension on restart.
+The owner-approved OpenAI Default project $5 MONTHLY HARD LIMIT is saved and
+visibly confirmed. It affects all keys in that project. Provider enforcement
+is not instantaneous and can exceed the limit slightly. No funds/recharge added.
+
+One tool-free live connectivity test was attempted. OpenAI returned no credits
+remaining; no second attempt was made. Ledger: one request, $0.10 held unresolved,
+$4.40 available plus $0.50 safety buffer. The hold is NOT a confirmed charge.
+Live model acceptance remains blocked on account billing; do not claim success.
+Free replay remains available. The operator must handle any credit purchase.
+
+Verification: 112 backend tests in the full Linux container, 13 budget and eight
+Firebase tests in the final release container, 31 frontend tests; npm audit clean.
+Live acceptance: Google config present, invalid token denied, cross-origin writes
+denied, protected APIs enforced, trial bounds present. Evidence unchanged:
+155,350 records / 16 hosts / seven cases / eleven adapters / fourteen tools.
+Remove OPENAI_API_KEY before any rollback to an image without the trial guard.
+
+LOGIN (ORIGINAL RECOVERY FLOW)
 From the original local agent-ops-studio directory:
   ./operator-login.ps1 -CopyToken
 Paste into the HTTPS login, then clear the clipboard. Do not paste in chat.

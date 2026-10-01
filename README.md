@@ -58,6 +58,20 @@ cannot create an Apple passkey for you in the background.
 
 ## One-time $5 LLM trial and Google authentication
 
+**Live checkpoint — October 1, 2026:** Google sign-in is configured and a browser
+sign-in reached the protected dashboard. Use **Continue with Google** with the
+approved operator account on your phone or laptop. The OpenAI Default project
+also has a **$5 monthly hard limit** enabled, covering every key in that project.
+Provider enforcement can lag; it is not a guarantee of an exact final invoice.
+
+The first bounded live model test was rejected because the OpenAI account had
+**no API credits remaining**. No funds or automatic recharge were added. The app
+retains its $0.10 uncertainty reservation; this is not a confirmed provider charge.
+Live model acceptance is therefore **blocked on API billing**, not completed.
+Adding credits requires the account owner at
+[OpenAI billing](https://platform.openai.com/settings/organization/billing/).
+Free simulator/replay and Google login do not require those credits.
+
 The trial allows only OpenAI Agents with `gpt-5.4-nano-2026-03-17`, local Relay
 function tools, at most 6 model turns per run and 2,048 output tokens per request.
 Other paid SDK paths are blocked during the trial. Replay remains free.
