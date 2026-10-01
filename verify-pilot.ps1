@@ -23,6 +23,9 @@ try {
     Expect (Request GET '/api/health') 200
     Expect (Request GET '/') 303
     Expect (Request GET '/api/incidents') 401
+    Expect (Request GET '/architecture') 303
+    Expect (Request GET '/architecture.js') 401
+    Expect (Request GET '/guide.js') 401
     Expect (Request POST '/api/login' @{token='invalid-test-token'}) 401
     $secure=Import-Clixml -LiteralPath (Join-Path $PSScriptRoot 'work/fly-operator-token.clixml')
     $pointer=[Runtime.InteropServices.Marshal]::SecureStringToBSTR($secure)
@@ -30,6 +33,9 @@ try {
     finally { [Runtime.InteropServices.Marshal]::ZeroFreeBSTR($pointer) }
     Expect $login 200
     if(!$login.csp){throw 'Missing security headers'}
+    foreach($asset in @('/architecture','/architecture.js','/architecture.css','/guide.js','/guide.css')) { Expect (Request GET $asset) 200 }
+    $atlas=Request GET '/architecture'
+    if($atlas.text.Contains('<script>') -or $atlas.text.Contains('<style>') -or $atlas.text.Contains(' style=')){throw 'Architecture must use external CSP-compatible assets'}
     $inventory=Request GET '/api/inventory';Expect $inventory 200
     $metrics=($inventory.text|ConvertFrom-Json).metrics
     if($metrics.records -ne 155350 -or $metrics.cases -ne 7){throw 'Evidence/cohort count mismatch'}

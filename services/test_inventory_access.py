@@ -103,7 +103,7 @@ class PilotHTTPTest(LabFixture):
                     with urllib.request.urlopen(req) as r:return r.status,dict(r.headers),r.read()
                 except urllib.error.HTTPError as r:return r.code,dict(r.headers),r.read()
             try:
-                for path in ('/api/incidents','/api/inventory','/api/sessions','/api/deployment','/app.js'):
+                for path in ('/api/incidents','/api/inventory','/api/sessions','/api/deployment','/app.js','/guide.js','/guide.css','/architecture.js','/architecture.css'):
                     self.assertEqual(request(path)[0],401,path)
                 self.assertEqual(request('/api/health')[0],200)
                 self.assertEqual(request('/login')[0],200)
@@ -111,6 +111,16 @@ class PilotHTTPTest(LabFixture):
                 self.assertEqual(request('/api/login',{'token':'x'*40},origin='https://evil.example')[0],403)
                 status,headers,_=request('/api/login',{'token':'x'*40});self.assertEqual(status,200)
                 cookie=headers['Set-Cookie'].split(';')[0]
+                for path in ('/architecture','/architecture.css','/architecture.js','/guide.js','/guide.css'):
+                    status,headers,content=request(path,cookie=cookie)
+                    self.assertEqual(status,200,path)
+                    self.assertNotIn("'unsafe-inline'",headers['Content-Security-Policy'])
+                    self.assertTrue(content)
+                status,headers,content=request('/architecture',cookie=cookie)
+                self.assertNotIn(b'<script>',content)
+                self.assertNotIn(b'<style>',content)
+                self.assertNotIn(b' style=',content)
+                self.assertIn(b'/architecture.js',content)
                 self.assertEqual(request('/api/inventory',cookie=cookie)[0],200)
                 sid=self.session()
                 server.run_slots=threading.BoundedSemaphore(0)

@@ -13,9 +13,23 @@ No dedicated IPv4, database server, Redis, object store or additional replica cr
 Existing ledgerline-karki and mandilos-mandil apps were not changed.
 
 FINAL SOURCE-ONLY IMAGE
-registry.fly.io/socharness-mandil@sha256:e42b71da240333ee1da4772b6fb14341f27e0f34093819fd12b3c05ccb1776d7
+registry.fly.io/socharness-mandil@sha256:fa325351e26ebaf4bc014919abd5103f865a835901b1a7a6ee0610aad484d585
 Deploy future source-only images with fly deploy --ha=false.
 Do not scale this SQLite pilot beyond one machine.
+
+GUIDE / ARCHITECTURE UPDATE - 2026-10-01
+The Start here guide walks through six steps without auto-running agents or
+approving actions. Its replay shortcut prepares simulator/read-only settings;
+the operator must still create the session and run it. Review progress stores
+only step numbers in browser localStorage, never credentials or evidence.
+The architecture is at /architecture behind the existing login, with external
+CSS/JavaScript; the strict Content-Security-Policy is unchanged. Anonymous page
+requests redirect through login using a fixed, allowlisted return destination.
+An offline HTML copy is also included in the GitHub repository under docs/.
+77 backend tests passed on Windows and Linux for this update. Browser checks
+covered navigation, safe replay configuration, atlas layout and CSP errors.
+Passkeys remain unimplemented. iPhone enrollment and server-side WebAuthn
+verification are a separate security change; current token login is unchanged.
 
 LOGIN
 From the original local agent-ops-studio directory:

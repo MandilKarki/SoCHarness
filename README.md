@@ -1,5 +1,21 @@
 # SoCHarness — Relay ISOC agent laboratory
 
+## Start here: guide and architecture
+
+The [protected Fly pilot](https://socharness-mandil.fly.dev/) includes **Start here**:
+a six-step interactive guide covering case selection, evidence inspection, safe
+replay setup, traces, approvals and SDK selection. Navigation never automatically
+runs an agent or approves an operation. Checklist progress is stored in this browser.
+
+Open the [architecture atlas](https://socharness-mandil.fly.dev/architecture) after
+signing in, or download [the standalone offline HTML](docs/architecture.html).
+It contains eight views, 60 component specifications, 13 SDK entries (11 implemented,
+Strands and Mastra proposed), 14 tools and explicit production gates.
+
+The current login still uses the operator token. **Passkeys are not implemented**;
+iPhone enrollment, server-side WebAuthn verification and credential recovery are a
+separate security change. No credential or recovery token is in this repository.
+
 ## Four additional native runtimes
 
 Google ADK, Microsoft Agent Framework, OpenHands and Hermes now have executable,
@@ -22,7 +38,7 @@ This is not full upstream-feature parity. See [the tested scope and remaining wo
 
 The workspace includes SDK coverage (27 capability families across eleven tracked frameworks), a searchable library of 14 registered tools plus seven platform features, database-derived metrics, quick actions (Ctrl/Cmd+K), and deployment-readiness cards. Native, Relay-shared, partial and missing coverage are distinguished; upstream support marked unassessed is not a claim of absence.
 
-Read [deployment checklist](DEPLOYMENT.txt) before cloud use. Dockerfile and fly.toml prepare a single-machine, single-operator pilot with optional operator login, secure cookies, origin validation, bounded workers, persistent data paths and an online backup utility. Default startup remains loopback-only. This is not production SaaS: Supabase Auth, tenant/RBAC enforcement, PostgreSQL migration and distributed workers are planned, not implemented. No public deployment has been created.
+Read [deployment checklist](DEPLOYMENT.txt) before cloud use. Dockerfile and fly.toml target the deployed single-machine, single-operator pilot with required operator login in pilot mode, secure cookies, origin validation, bounded workers, persistent data paths and an online backup utility. Default local startup remains loopback-only. This is not production SaaS: Supabase Auth, tenant/RBAC enforcement, PostgreSQL migration and distributed workers are planned, not implemented. See [the deployment record](FLY_PILOT.txt).
 
 A working local analyst UI, SQLite evidence store, and framework-neutral tool boundary. The default runtime is deterministic replay, **not an LLM**. Optional adapters include Claude, PydanticAI, Deep Agents, Pi, Vercel AI SDK, OpenAI Agents, Google ADK, Microsoft Agent Framework, OpenHands, Hermes and a restricted OpenCode snapshot connector.
 

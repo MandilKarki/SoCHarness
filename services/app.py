@@ -66,9 +66,10 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_GET(self):
         try:
-            if urlparse(self.path).path=='/' and self.access.mode=='pilot' and not self.access.authenticated(self.headers):
+            if urlparse(self.path).path in ('/', '/architecture') and self.access.mode=='pilot' and not self.access.authenticated(self.headers):
                 self.access.guard(self.headers,self.server.server_port,public=True)
-                self.send_response(303);self.send_header('Location','/login');self.headers_for('text/plain',0);self.end_headers();return
+                destination='/login?next=architecture' if urlparse(self.path).path=='/architecture' else '/login'
+                self.send_response(303);self.send_header('Location',destination);self.headers_for('text/plain',0);self.end_headers();return
             self.guard()
             parsed=urlparse(self.path);path=parsed.path;query=parse_qs(parsed.query)
             parts=path.strip('/').split('/')
@@ -103,6 +104,7 @@ class Handler(BaseHTTPRequestHandler):
                     if len(parts)==4 and parts[3]=='artifact':return self.send_json(Advanced(store,sid).execute('read_artifact',{'name':query.get('name',[''])[0]}))
                 if path.startswith('/api/'):raise Problem('Endpoint not found',404)
             files={'/':'index.html','/app.js':'app.js','/advanced.js':'advanced.js','/frameworks.js':'frameworks.js','/catalog.js':'catalog.js','/style.css':'style.css','/refinement.css':'refinement.css','/login':'login.html','/login.js':'login.js'}
+            files.update({'/guide.js':'guide.js','/guide.css':'guide.css','/architecture':'architecture.html','/architecture.js':'architecture.js','/architecture.css':'architecture.css'})
             if path not in files:raise Problem('Not found',404)
             file=ROOT/'web'/files[path];body=file.read_bytes()
             self.send_response(200);self.headers_for(mimetypes.guess_type(file)[0]+'; charset=utf-8',len(body));self.end_headers();self.wfile.write(body)
