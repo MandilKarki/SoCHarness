@@ -1,6 +1,11 @@
 import { useEffect, useState } from "react";
 import { ArrowLeft, Fingerprint, ShieldCheck, KeyRound } from "lucide-react";
 import { api } from "../lib/api";
+import {
+  googleLogin,
+  prepareGoogle,
+  type FirebaseConfig,
+} from "../lib/firebase";
 import { authError, available, ceremony, destination } from "../lib/passkeys";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
@@ -21,15 +26,22 @@ export function Auth({ security = false }: { security?: boolean }) {
     [busy, setBusy] = useState(false),
     [local, setLocal] = useState(false),
     [ready, setReady] = useState(false),
+    [googleReady, setGoogleReady] = useState(false),
     [keys, setKeys] = useState<Keys | null>(null),
     [label, setLabel] = useState(""),
     [remove, setRemove] = useState<Key | null>(null);
   async function load() {
-    const auth = await api<{ mode: string; passkeys_available: boolean }>(
-      "/api/auth",
-    );
+    const auth = await api<{
+      mode: string;
+      passkeys_available: boolean;
+      firebase?: FirebaseConfig | null;
+    }>("/api/auth");
     setLocal(auth.mode === "local");
     setReady(auth.passkeys_available && available());
+    if (!security && auth.mode === "pilot" && auth.firebase) {
+      prepareGoogle(auth.firebase);
+      setGoogleReady(true);
+    }
     if (security && auth.mode !== "local")
       setKeys(await api<Keys>("/api/passkeys"));
   }
@@ -76,10 +88,10 @@ export function Auth({ security = false }: { security?: boolean }) {
           </p>
           <div className="identity-points">
             <p>
-              <Fingerprint /> Your passkey stays with your authenticator.
+              <Fingerprint /> {googleReady ? "One approved Google account across your devices." : "Your passkey stays with your authenticator."}
             </p>
             <p>
-              <ShieldCheck /> Face ID, Touch ID, or your device’s screen lock.
+              <ShieldCheck /> {googleReady ? "Your Google password never reaches Relay." : "Face ID, Touch ID, or your device’s screen lock."}
             </p>
             <p>
               <KeyRound /> Recovery token remains your fallback.
@@ -95,7 +107,9 @@ export function Auth({ security = false }: { security?: boolean }) {
           <p>
             {security
               ? "Add a passkey after a fresh sign-in. Synced Apple passkeys can be used across your devices."
-              : "Sign in with a registered passkey, or use your operator recovery token."}
+              : googleReady
+                ? "Use your approved Google account. No passkey or new password required."
+                : "Sign in with a registered passkey, or use your operator recovery token."}
           </p>
           {local ? (
             <div className="callout">
@@ -181,8 +195,18 @@ export function Auth({ security = false }: { security?: boolean }) {
             </>
           ) : (
             <>
+              {googleReady && (
+                <Button
+                  className="full-width"
+                  disabled={busy}
+                  onClick={() => void perform(googleLogin, true)}
+                >
+                  Continue with Google
+                </Button>
+              )}
               <Button
                 className="full-width"
+                variant={googleReady ? "outline" : "default"}
                 disabled={busy || !ready}
                 onClick={() =>
                   void perform(() => ceremony("authentication"), true)
@@ -191,7 +215,7 @@ export function Auth({ security = false }: { security?: boolean }) {
                 <Fingerprint />
                 Sign in with a passkey
               </Button>
-              <details className="recovery" open={!ready}>
+              <details className="recovery" open={!ready && !googleReady}>
                 <summary>Use recovery token</summary>
                 <form
                   className="stack"
@@ -218,8 +242,9 @@ export function Auth({ security = false }: { security?: boolean }) {
                 </form>
               </details>
               <p className="footnote">
-                First visit? Sign in with your recovery token, then open Account
-                security to register a passkey.
+                {googleReady
+                  ? "Use the same approved Google account on your iPhone, Mac, or laptop. Passkeys and the recovery token remain optional alternatives."
+                  : "First visit? Sign in with your recovery token, then open Account security to register a passkey."}
               </p>
             </>
           )}

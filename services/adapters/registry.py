@@ -76,6 +76,7 @@ def version(spec):
     return 'built-in'
 
 def catalog(store=None):
+    from trial_budget import enabled as trial_enabled, MODEL, check_runtime
     switches={r['id']:bool(r['enabled']) for r in store.db.execute('SELECT * FROM relay_adapters')} if store else {}
     items=[]
     for id,spec in ADAPTERS.items():
@@ -85,11 +86,16 @@ def catalog(store=None):
         if spec.get('key') and not os.getenv(spec['key']):requirements.append('Set server-side '+spec['key'])
         if id=='opencode':requirements.append('Dedicated deny-all OpenCode server; snapshot-only connector')
         ready=bool(installed) and (not spec.get('package') or bool(node_binary())) and (not spec.get('key') or bool(os.getenv(spec['key'])))
+        if trial_enabled() and id != 'simulator':
+            try:check_runtime(id)
+            except Problem as exc:
+                ready=False;requirements.append(str(exc))
         items.append(dict(id=id,name=spec['name'],available=ready and enabled,enabled=enabled,installed=bool(installed),version=installed,
             detail=('Disabled for this installation. ' if not enabled else '')+('Local evidence replay; no model or provider calls.' if id=='simulator' else ('; '.join(requirements) or 'Configured; live run not yet verified.')),
-            default_model=spec['model'],features=spec['features'],deferred=DEFERRED[id],docs=spec['docs'],
+            default_model=MODEL if trial_enabled() and id=='openai' else spec['model'],features=spec['features'],deferred=DEFERRED[id],docs=spec['docs'],
             verification='local replay' if id=='simulator' else 'not live-verified',key=spec.get('key'),
-            budget='SDK USD cap' if id=='claude' else ('Timeout only; OpenCode server controls tokens/cost' if id=='opencode' else ('No USD cap; iteration limit plus native final-summary attempt; retries bounded by worker deadline' if id=='hermes' else 'No USD cap; bounded turns/output/time only'))))
+            budget='Shared $5 trial: $4.50 spendable, $0.50 buffer; today only; persistent pre-call reservations.' if trial_enabled() and id=='openai' else ('SDK USD cap' if id=='claude' else ('Timeout only; OpenCode server controls tokens/cost' if id=='opencode' else ('No USD cap; iteration limit plus native final-summary attempt; retries bounded by worker deadline' if id=='hermes' else 'No USD cap; bounded turns/output/time only'))),
+            trial_guard=trial_enabled() and id=='openai'))
     return items
 
 def set_enabled(store,id,enabled):
@@ -104,12 +110,14 @@ def set_enabled(store,id,enabled):
     return next(r for r in catalog(store) if r['id']==id)
 
 def validate(config):
+    from trial_budget import enabled as trial_enabled, check_runtime
+    check_runtime(config['runtime'], config['model'])
     spec=ADAPTERS.get(config['runtime'])
     if not spec:raise Problem('Runtime adapter is not registered')
     if config['runtime']=='simulator':return
     for feature in ('specialists','file_workspace','structured_output','memory','skills','artifacts'):
         if config.get(feature) and feature not in spec['features']:raise Problem(feature+' is not integrated for '+spec['name'])
-    if config['runtime'] not in ('simulator','claude') and not config.get('accept_no_usd_cap'):
+    if config['runtime'] not in ('simulator','claude') and not (trial_enabled() and config['runtime']=='openai') and not config.get('accept_no_usd_cap'):
         raise Problem('Acknowledge that this adapter has no hard USD budget cap')
     if config['runtime']=='opencode' and config['permission']!='read_only':raise Problem('OpenCode connector is snapshot-only and read-only')
 
@@ -119,6 +127,8 @@ def ensure_ready(store,id):
 
 async def run(engine,prompt):
     runtime=engine.store.session(engine.sid)['config']['runtime']
+    from trial_budget import check_runtime
+    check_runtime(runtime, engine.store.session(engine.sid)['config']['model'])
     ensure_ready(engine.store,runtime)
     if runtime not in ENTRYPOINTS:raise Problem('No live adapter entrypoint',409)
     import importlib

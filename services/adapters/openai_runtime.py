@@ -10,10 +10,14 @@ from adapters.state import load, turn_prompt
 
 
 async def run_openai(engine, prompt, model_override=None):
-    from agents import Agent, Runner, FunctionTool, ModelSettings, RunConfig, OpenAIResponsesModel
-    from openai import AsyncOpenAI
+    from agents import Agent, Runner, FunctionTool, ModelSettings, ModelRetrySettings, RunConfig, OpenAIResponsesModel
+    from openai import AsyncOpenAI, APIStatusError, APIConnectionError
+    from store import Problem
     from pydantic import BaseModel
     config = engine.store.session(engine.sid)['config']
+    from trial_budget import enabled, check_runtime, guarded_model, MAX_OUTPUT
+    check_runtime('openai', config['model'])
+    trial = enabled()
     tools = []
     for spec in definitions(config):
         def handler(name):
@@ -35,14 +39,19 @@ async def run_openai(engine, prompt, model_override=None):
         # Explicit base URL: do not silently forward telemetry to an inherited proxy endpoint.
         client = AsyncOpenAI(api_key=os.environ['OPENAI_API_KEY'], base_url='https://api.openai.com/v1', max_retries=0, timeout=120)
     model = model_override or OpenAIResponsesModel(model=config['model'], openai_client=client)
+    if trial:
+        model = guarded_model(model, engine)
     agent = Agent(name='Relay SOC analyst', instructions=SYSTEM, model=model, tools=tools,
-                  model_settings=ModelSettings(max_tokens=config['max_output_tokens'], parallel_tool_calls=False, store=False),
+                  model_settings=ModelSettings(max_tokens=min(config['max_output_tokens'], MAX_OUTPUT) if trial else config['max_output_tokens'],
+                                               parallel_tool_calls=False, store=False,
+                                               retry=ModelRetrySettings(max_retries=0),
+                                               extra_args={'service_tier':'default'} if trial else None),
                   output_type=Findings if config['structured_output'] else None)
     prior = load(engine)
     items = list(prior['messages']) if prior else []
     items.append({'role':'user', 'content':turn_prompt(engine, prompt, prior)})
     engine.record('adapter.lifecycle', {'runtime':'openai', 'event':'session.resumed' if prior else 'session.created'})
-    result = Runner.run_streamed(agent, input=items, max_turns=config['max_turns'],
+    result = Runner.run_streamed(agent, input=items, max_turns=min(config['max_turns'], 6) if trial else config['max_turns'],
                                 run_config=RunConfig(tracing_disabled=True))
 
     async def consume():
@@ -59,6 +68,22 @@ async def run_openai(engine, prompt, model_override=None):
                native_state={'messages':result.to_input_list()})
     try:
         await cancellable(engine, consume())
+    except APIStatusError as exc:
+        # Never persist raw provider messages, which can contain credential
+        # fragments or request content. Reservations remain for failed calls.
+        if exc.code == 'insufficient_quota':
+            message = 'OpenAI API credits are exhausted or its spending limit was reached. Check API billing; ChatGPT subscriptions do not include API credit.'
+        elif exc.status_code == 401:
+            message = 'OpenAI rejected the server API credential. Ask the operator to check the configured key.'
+        elif exc.status_code == 429:
+            message = 'OpenAI rate limit reached. Wait before trying again.'
+        elif exc.status_code in (403,404):
+            message = 'The configured OpenAI project or model is not accessible to this key.'
+        else:
+            message = 'OpenAI returned an API error. No automatic retry was made by the API client.'
+        raise Problem(message,502) from None
+    except APIConnectionError:
+        raise Problem('The OpenAI connection failed. Its budget reservation is retained; check connectivity before retrying.',502) from None
     finally:
         if not result.is_complete: result.cancel()
         if client is not None: await client.close()

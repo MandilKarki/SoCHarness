@@ -1,12 +1,27 @@
-RELAY PASSKEYS — 2026-10-01
+RELAY AUTHENTICATION — 2026-10-01
 
 Scope: one operator on one HTTPS origin, one server process, one persistent SQLite
-volume. This is not multi-user identity, RBAC, enterprise SSO or a hosted auth service.
+volume. This is not multi-user identity, RBAC or enterprise SSO.
+
+GOOGLE SIGN-IN (OPTIONAL)
+When configured, Continue with Google at https://socharness-mandil.fly.dev/login
+accepts only the server-allowlisted verified Google email. No passkey is needed.
+Firebase Spark handles Google authentication; Relay verifies Google's RS256
+signature, key ID, exact project issuer/audience, subject, expiry, issued-at,
+authentication within five minutes, verified email and google.com provider.
+Only public Firebase web configuration reaches the browser. No service-account
+credential is required, and LLM API keys remain server-only. Firebase persistence
+is memory-only; its token is exchanged for Relay's cookie then cleared. Provider
+tokens are neither logged nor saved. Google errors are sanitized, and certificate
+fetches have an eight-second timeout. Existing Relay sessions are not continuously
+checked for Google revocation; they retain the eight-hour/restart/logout lifetime.
+Login-page CSP permits only the required Google API and exact Firebase auth domain;
+other pages keep the same-origin CSP. No unsafe-inline script permission is added.
 
 USER SETUP
 First-time/recovery entry: https://socharness-mandil.fly.dev/login?next=security
 Open https://socharness-mandil.fly.dev/security on your iPhone or Mac.
-Sign in with the existing operator token, then name and add a passkey within five
+Sign in with Google or the existing operator token, then name and add a passkey within five
 minutes. Approve the Apple/browser device prompt yourself. Save to iCloud Keychain
 to sync among supported devices signed into the same Apple Account. On another
 laptop choose the nearby-device option, scan the QR code and approve on iPhone;
@@ -16,7 +31,7 @@ Automated cryptographic tests are not a substitute for testing those devices.
 
 NO SAVED PASSKEYS
 The sign-in QR code looks for an existing passkey. It does not enroll the first
-credential. Use the recovery token first, then Add a passkey on the security page.
+credential. Use Google or the recovery token first, then Add a passkey on the security page.
 On Windows, choose the nearby iPhone option in the CREATION prompt when supported,
 or enroll directly on a trusted Mac/iPhone after recovery-token login there.
 Windows Hello credentials do not automatically sync to Apple Passwords. Apple
@@ -47,15 +62,15 @@ SECURITY BOUNDARY
 - Discoverable sign-in does not return registered credential IDs publicly. The user
   handle must match the persisted operator handle. Maximum eight credentials.
 - All writes require exact Origin/Host and application/json; protected management
-  endpoints also require an authenticated session. Strict same-origin CSP retained.
+  endpoints also require an authenticated session. Google login has narrowly scoped CSP exceptions.
 - Successful sign-in issues a fresh Secure/HttpOnly/SameSite=Strict __Host- cookie;
   sessions expire after eight hours or process restart. Up to 32 active sessions.
-- Recovery-token attempts and passkey-start requests share a global 10/minute limit.
+- Recovery-token attempts, Google exchanges and passkey-start requests share a global 10/minute limit.
   Deliberate tradeoff: bounds a small pilot without trusting forwarded-IP headers,
   but an attacker can temporarily exhaust this global budget (availability limitation).
 - Public keys, credential metadata, operator handle and auth audit events live in
   SQLite. They survive restarts. Challenges and login sessions do not. Backups contain
-  credential metadata: handle the entire database as private. No external auth service.
+  credential metadata: handle the entire database as private. Firebase is an optional external identity verifier.
 - Same-origin XSS or a stolen fresh session can compromise account management;
   recent-auth checks are not a substitute for preventing script injection. User/source
   strings render as text; no inline script permission or arbitrary execution is added.

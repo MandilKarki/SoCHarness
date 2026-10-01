@@ -10,6 +10,7 @@ from engine import Engine, ACTIVE, LOCK, cancel, capabilities
 from advanced import Advanced, otlp_export
 from access import Access, deployment_status
 from passkeys import Passkeys
+from firebase_login import FirebaseLogin
 
 LOCAL_ACCESS = Access(mode='local')
 
@@ -20,6 +21,7 @@ class Server(ThreadingHTTPServer):
     def __init__(self, address, access):
         self.access = access
         self.passkeys = Passkeys(access)
+        self.firebase = FirebaseLogin()
         self.slots = threading.BoundedSemaphore(32)
         self.run_slots = threading.BoundedSemaphore(int(os.getenv('RELAY_MAX_RUNS', '2')))
         super().__init__(address, Handler)
@@ -53,7 +55,15 @@ class Handler(BaseHTTPRequestHandler):
         self.send_header('X-Content-Type-Options','nosniff')
         self.send_header('Referrer-Policy','no-referrer')
         if self.access.mode=='pilot':self.send_header('Strict-Transport-Security','max-age=31536000')
-        self.send_header('Content-Security-Policy',"default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self'; img-src 'self' data:; frame-ancestors 'none'; base-uri 'none'")
+        firebase = getattr(self.server, 'firebase', None)
+        policy = "default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self'; img-src 'self' data:; frame-ancestors 'none'; base-uri 'none'"
+        if firebase and firebase.config and urlparse(self.path).path == '/login':
+            auth_origin = 'https://'+firebase.config['authDomain']
+            policy = policy.replace("script-src 'self'", "script-src 'self' https://apis.google.com")
+            policy = policy.replace("connect-src 'self'", "connect-src 'self' https://identitytoolkit.googleapis.com https://securetoken.googleapis.com "+auth_origin)
+            policy += '; frame-src '+auth_origin
+            self.send_header('Cross-Origin-Opener-Policy', 'same-origin-allow-popups')
+        self.send_header('Content-Security-Policy',policy)
         if length is not None:self.send_header('Content-Length',str(length))
 
     @property
@@ -61,7 +71,7 @@ class Handler(BaseHTTPRequestHandler):
 
     def guard(self,write=False):
         path=urlparse(self.path).path
-        public=path in ('/api/health','/api/auth','/api/login','/login','/login.js','/style.css','/refinement.css','/passkeys.js','/identity.css','/react-app.js','/react-app.css','/api/passkeys/authentication/options','/api/passkeys/authentication/verify')
+        public=path in ('/api/health','/api/auth','/api/login','/api/login/google','/login','/login.js','/style.css','/refinement.css','/passkeys.js','/identity.css','/react-app.js','/react-app.css','/api/passkeys/authentication/options','/api/passkeys/authentication/verify')
         self.access.guard(self.headers,self.server.server_port,write,public)
 
     def cookie_response(self,cookie):
@@ -78,14 +88,17 @@ class Handler(BaseHTTPRequestHandler):
             self.guard()
             parsed=urlparse(self.path);path=parsed.path;query=parse_qs(parsed.query)
             parts=path.strip('/').split('/')
-            if path=='/api/auth':return self.send_json({'mode':self.access.mode,'authenticated':self.access.mode=='local' or self.access.authenticated(self.headers),'passkeys_available':self.access.mode=='pilot'})
+            if path=='/api/auth':return self.send_json({'mode':self.access.mode,'authenticated':self.access.mode=='local' or self.access.authenticated(self.headers),'passkeys_available':self.access.mode=='pilot',
+                'firebase':getattr(getattr(self.server,'firebase',None),'config',None) if self.access.mode=='pilot' else None})
             if path=='/api/health':return self.send_json({'ok':True})
             with Store() as store:
                 if path=='/api/passkeys':return self.send_json(self.server.passkeys.list(store,self.headers))
                 if path=='/api/inventory':
                     from inventory import inventory
                     return self.send_json(inventory(store))
-                if path=='/api/deployment':return self.send_json(deployment_status(self.access))
+                if path=='/api/deployment':
+                    from trial_budget import TrialBudget
+                    return self.send_json({**deployment_status(self.access),'trial':TrialBudget(store).snapshot()})
                 if path=='/api/capabilities':return self.send_json(capabilities(store))
                 if path=='/api/adapters':
                     from adapters.registry import catalog
@@ -139,6 +152,7 @@ class Handler(BaseHTTPRequestHandler):
             if not isinstance(body,dict):raise Problem('JSON object required')
             path=urlparse(self.path).path;parts=path.strip('/').split('/')
             if path=='/api/login':return self.cookie_response(self.access.login(body.get('token')))
+            if path=='/api/login/google':return self.cookie_response(self.server.firebase.login(self.access,body.get('id_token')))
             if path=='/api/logout':return self.cookie_response(self.access.logout(self.headers))
             if path=='/api/passkeys/authentication/options':
                 value,cookie=self.server.passkeys.authentication_options(self.headers)

@@ -40,7 +40,8 @@ export function Settings({
       permission: "read_only",
     });
   }
-  const uncapped = !["claude", "simulator"].includes(config.runtime);
+  const uncapped =
+    !["claude", "simulator"].includes(config.runtime) && !selected?.trial_guard;
   return (
     <Modal
       open
@@ -77,6 +78,7 @@ export function Settings({
           <Field label="Model">
             <Input
               value={config.model}
+              readOnly={selected?.trial_guard}
               onChange={(e) => set("model", e.target.value)}
               maxLength={120}
             />

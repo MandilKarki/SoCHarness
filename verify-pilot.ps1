@@ -1,4 +1,4 @@
-param([switch]$ExpectNoSessions,[string]$TokenFile=(Join-Path $PSScriptRoot 'work/fly-operator-token.clixml'))
+param([switch]$ExpectNoSessions,[switch]$ExpectFirebaseTrial,[string]$TokenFile=(Join-Path $PSScriptRoot 'work/fly-operator-token.clixml'))
 $ErrorActionPreference='Stop'
 Add-Type -AssemblyName System.Net.Http
 $origin='https://socharness-mandil.fly.dev'
@@ -40,6 +40,12 @@ try {
     $publicKey=($options.text|ConvertFrom-Json).publicKey
     if($publicKey.rpId -ne 'socharness-mandil.fly.dev' -or $publicKey.userVerification -ne 'required'){throw 'Unexpected passkey RP or verification policy'}
     Expect (Request POST '/api/login' @{token='invalid-test-token'}) 401
+    if($ExpectFirebaseTrial) {
+        $auth=Request GET '/api/auth';Expect $auth 200
+        if(($auth.text|ConvertFrom-Json).firebase.projectId -ne 'socharness'){throw 'Firebase not configured'}
+        Expect (Request POST '/api/login/google' @{id_token='invalid-test-token'}) 401
+        Expect (Request POST '/api/login/google' @{id_token='invalid-test-token'} 'https://untrusted.invalid') 403
+    }
     $secure=Import-Clixml -LiteralPath $TokenFile
     $pointer=[Runtime.InteropServices.Marshal]::SecureStringToBSTR($secure)
     try { $login=Request POST '/api/login' @{token=[Runtime.InteropServices.Marshal]::PtrToStringBSTR($pointer)} }
@@ -63,6 +69,12 @@ try {
     $adapters=Request GET '/api/adapters';Expect $adapters 200
     $items=$adapters.text|ConvertFrom-Json
     if(($items|Where-Object id -eq 'opencode').enabled){throw 'OpenCode must be disabled'}
+    if($ExpectFirebaseTrial) {
+        $deployment=Request GET '/api/deployment';Expect $deployment 200
+        $trial=($deployment.text|ConvertFrom-Json).trial
+        if(!$trial.enabled -or $trial.limit_usd -ne 5 -or $trial.spendable_usd -ne 4.5 -or $trial.buffer_usd -ne 0.5){throw 'Trial guard missing'}
+        if(($items|Where-Object { $_.id -notin @('simulator','openai') -and $_.available }).Count -gt 0){throw 'Another paid SDK bypasses trial policy'}
+    }
     Expect (Request POST '/api/logout' @{} 'https://untrusted.invalid') 403
     Expect (Request POST '/api/logout' @{}) 200
     Expect (Request GET '/api/incidents') 401

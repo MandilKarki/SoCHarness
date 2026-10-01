@@ -90,6 +90,7 @@ export interface Adapter {
   default_model: string;
   features: string[];
   budget: string;
+  trial_guard?: boolean;
   key?: string;
   docs: string;
   deferred: string[];
@@ -130,6 +131,20 @@ export interface Inventory {
   metrics: Record<string, number | string>;
 }
 export interface Deployment {
+  trial?: {
+    enabled: boolean;
+    limit_usd?: number;
+    spendable_usd?: number;
+    accounted_usd?: number;
+    remaining_usd?: number;
+    buffer_usd?: number;
+    requests?: number;
+    unsettled_requests?: number;
+    expires_at?: string;
+    blocked?: boolean;
+    model?: string;
+    scope?: string;
+  };
   mode: string;
   target: string;
   production_ready: boolean;

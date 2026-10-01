@@ -12,6 +12,14 @@ development; cloning this repository does not give access to the hosted account.
 
 ### Phone says “no saved passkeys”?
 
+The Google-login build adds **Continue with Google** at
+[Relay sign-in](https://socharness-mandil.fly.dev/login). Once configured by the
+operator, use your approved Google account on iPhone, Mac or any trusted laptop.
+No new password, password manager, passkey or repository clone is needed.
+Only the server-configured verified Google email can enter this private pilot.
+If the button is absent, Firebase has not been configured on that deployment;
+the recovery-token and passkey methods below remain available.
+
 **Sign in with a passkey uses an existing credential; it does not create one.**
 First sign in with the operator recovery token, then explicitly **Add a passkey**.
 This is a private, single-operator pilot, not public signup.
@@ -40,14 +48,69 @@ If nearby-device **creation** is unavailable, use the recovery token directly on
 your trusted Mac or iPhone and register there. The encrypted Windows token file
 cannot be decrypted on a Mac; do not copy it there expecting it to work. If you
 cannot access the original Windows user or a secure token copy, recovery requires
-the Fly app owner to rotate the token; there is no anonymous reset or email login.
+the Fly app owner to rotate the token, or the configured Google login; there is
+no anonymous recovery-token reset.
 
 Apple's [Mac passkey guide](https://support.apple.com/en-gb/guide/passwords/mchl4af65d1a/mac)
 explains synced and nearby-device sign-in. See [security and recovery details](AUTH_SECURITY.txt).
 Device enrollment needs your own Face ID / Touch ID / device approval; an agent
 cannot create an Apple passkey for you in the background.
 
-## Start here: guide and architecture
+## One-time $5 LLM trial and Google authentication
+
+The trial allows only OpenAI Agents with `gpt-5.4-nano-2026-03-17`, local Relay
+function tools, at most 6 model turns per run and 2,048 output tokens per request.
+Other paid SDK paths are blocked during the trial. Replay remains free.
+
+The SQLite ledger reserves $0.10 **before every request**, settles verified usage
+at conservative standard uncached token rates, and retains the entire hold for
+errors, cancellation or missing usage. Atomic reservations across connections
+prevent concurrent overspending. The internal ceiling is **$4.50**, leaving a
+$0.50 buffer. This is one shared trial across sessions, not $5 per session/day.
+Restarting the app does not reset its balance or extend its deadline. The pilot
+configuration stops new paid calls after **October 1, 2026, 11:59:59 PM Pacific**;
+already-dispatched requests remain covered by their reservations.
+
+See **Operate → Deployment** for the accounted balance, outstanding holds and
+expiry. Accounted cost is an upper estimate, not an invoice. This guard covers
+only calls through this Relay database: it cannot limit another app using the
+same API key, taxes, provider pricing changes, or account-wide spending. Configure
+an OpenAI project hard limit as a second layer; account billing/credit remains
+separate. No automatic recharge or extra API keys are created by Relay.
+
+Pricing reviewed October 1, 2026: [$0.20/M input and $1.25/M output for GPT-5.4 nano](https://developers.openai.com/api/docs/models/gpt-5.4-nano).
+Cached-input discounts are deliberately ignored. The $0.10 hold covers a full
+400,000-token input window plus the enforced output ceiling at these rates.
+Review rates before changing the model or extending any trial.
+
+Firebase uses the no-cost Spark plan with Google sign-in, not SMS, Hosting,
+Firestore or Identity Platform upgrades. Configure server environment variables:
+
+- `RELAY_FIREBASE_CONFIG`: JSON with `projectId`, `authDomain`, `apiKey`, `appId`.
+  This is Firebase's **public web configuration**, not an LLM key or private key.
+- `RELAY_GOOGLE_EMAIL`: the single allowed verified operator email.
+- `RELAY_TRIAL_ENABLED=1` and an explicit UTC `RELAY_TRIAL_UNTIL`.
+- `OPENAI_API_KEY`: server-only Fly secret; never a `VITE_*` variable.
+
+In Firebase Authentication, enable Google and authorize the exact Fly hostname.
+No service-account key is needed. Relay verifies the RS256 signature against
+Google's certificates, project audience/issuer, expiry, recent authentication,
+verified email and Google provider before issuing its existing eight-hour
+Secure/HttpOnly cookie. Firebase ID tokens remain in memory only and are cleared
+after the exchange. Google-session revocation is not continuously polled; Relay
+sessions expire on logout, restart or after eight hours. This is not team RBAC.
+
+Security tests exercise real RSA-signed test tokens and the real Agents runner
+with an offline model. They do not claim live provider/billing acceptance.
+
+Operators can run `verify-pilot.ps1 -ExpectFirebaseTrial -TokenFile <private-file>`
+without model spending. `trial-smoke.ps1 -TokenFile <private-file>` explicitly
+makes one small guarded LLM run with tools disabled and prints only status/cost
+metadata. Before rolling back to a pre-guard image, remove `OPENAI_API_KEY` from
+Fly; older builds do not enforce this ledger. Never reset or replace the live
+trial database to replenish the allowance.
+
+## Guide and architecture
 
 The [protected Fly pilot](https://socharness-mandil.fly.dev/) includes **Quick start**:
 a six-step interactive guide covering case selection, evidence inspection, safe

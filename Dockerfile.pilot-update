@@ -1,0 +1,11 @@
+# Small pilot update: first build/test the normal Dockerfile as VERIFIED_BUILD.
+# Only use when the base image already has the exact required runtime versions.
+# This preserves its already-uploaded SDK layers instead of reinstalling them.
+ARG VERIFIED_BUILD=relay-firebase-trial:20261001
+ARG PILOT_BASE=registry.fly.io/socharness-mandil@sha256:a674be10a4bb5815f875d767674e86ab4a1902d70b5a746b7249e7185dba18e4
+FROM ${VERIFIED_BUILD} AS verified
+FROM ${PILOT_BASE}
+COPY --from=verified /app/services/ /app/services/
+COPY --from=verified /app/web/ /app/web/
+COPY --from=verified /app/requirements-agents.txt /app/requirements-agents.txt
+RUN python -c "import importlib.metadata as m; expected={'google-auth':'2.59.1','requests':'2.34.2','cryptography':'50.0.2','PyJWT':'2.15.1','openai-agents':'0.22.3','openai':'3.22.1'}; assert all(m.version(k)==v for k,v in expected.items())"

@@ -178,6 +178,34 @@ export function Catalog({
           </h3>
           <p>{w.deployment?.target}</p>
         </div>
+        {w.deployment?.trial?.enabled && (
+          <div className="callout">
+            <Status tone={w.deployment.trial.blocked ? "warning" : "good"}>
+              {w.deployment.trial.blocked
+                ? "Trial stopped"
+                : "$5 total LLM trial"}
+            </Status>
+            <h3>
+              ${w.deployment.trial.remaining_usd?.toFixed(4)} available for new
+              requests
+            </h3>
+            <p>
+              ${w.deployment.trial.accounted_usd?.toFixed(4)} accounted,
+              including unresolved reservations. $
+              {w.deployment.trial.buffer_usd?.toFixed(2)} is held back as a
+              safety buffer.
+            </p>
+            <p>
+              {w.deployment.trial.requests} requests ·{" "}
+              {w.deployment.trial.unsettled_requests} unresolved · Ends{" "}
+              {w.deployment.trial.expires_at &&
+                new Date(w.deployment.trial.expires_at).toLocaleString()}
+            </p>
+            <small>
+              {w.deployment.trial.scope} No automatic reset. Refresh to update.
+            </small>
+          </div>
+        )}
         <div className="card-grid">
           {w.deployment?.gates.map((g) => (
             <Card key={g.name}>

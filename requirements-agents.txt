@@ -5,3 +5,5 @@ langchain-anthropic==1.7.5
 langgraph-checkpoint-sqlite==3.1.1
 openai-agents==0.22.3
 webauthn==3.0.1
+google-auth==2.59.1
+requests==2.34.2
