@@ -27,7 +27,9 @@ def export(destination):
         files.extend(p for p in (ROOT/directory).rglob('*') if p.is_file() and '__pycache__' not in p.parts and p.suffix in ('.py','.js','.css','.html','.md','.txt','.json'))
     files.extend((ROOT/'workers/agent-bridge').glob('*.mjs'))
     files.extend((ROOT/'workers/agent-bridge/test').glob('*.mjs'))
+    files.extend(p for p in (ROOT/'workers/python-bridge').glob('*') if p.is_file() and p.suffix in ('.py','.txt','.md','.lock'))
     files.extend((ROOT/'.github/workflows').glob('*.yml'))
+    files.append(ROOT/'install-extended.ps1')
     files.extend(ROOT/p for p in ('README.md','DEPLOYMENT.txt','Dockerfile','.dockerignore','fly.toml','start.ps1','install-agents.ps1','requirements-agents.txt','requirements-agents.lock','requirements-claude.txt','workers/agent-bridge/package.json','workers/agent-bridge/package-lock.json'))
     with zipfile.ZipFile(destination/'relay-ui-deployment-source.zip','w',zipfile.ZIP_DEFLATED) as archive:
         for path in sorted(set(files)):

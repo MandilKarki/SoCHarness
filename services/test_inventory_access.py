@@ -19,7 +19,7 @@ class InventoryTest(LabFixture):
     def test_inventory_matches_registry_and_database(self):
         value=inventory(self.store)
         self.assertEqual(len(value['rows']),27)
-        self.assertEqual(len(value['frameworks']),8)
+        self.assertEqual(len(value['frameworks']),11)
         self.assertEqual(value['metrics']['records'],8)
         self.assertEqual(value['metrics']['tools'],len(TOOLS))
         self.assertEqual({t['name'] for t in value['tools']},{t['name'] for t in TOOLS})
@@ -27,9 +27,9 @@ class InventoryTest(LabFixture):
 
     def test_not_integrated_frameworks_never_claim_coverage(self):
         value=inventory(self.store)
-        for row in value['rows']:
-            for id in ('hermes',):
-                self.assertEqual(row['cells'][id]['status'],'gap')
+        for id in ('hermes','openhands','google_adk','microsoft'):
+            self.assertEqual(next(r for r in value['rows'] if r['id']=='tools')['cells'][id]['status'],'native')
+            self.assertEqual(next(r for r in value['rows'] if r['id']=='mcp')['cells'][id]['status'],'gap')
         self.assertEqual(next(r for r in value['rows'] if r['id']=='tools')['cells']['opencode']['status'],'gap')
         self.assertEqual(next(r for r in value['rows'] if r['id']=='native_resume')['cells']['pi']['status'],'native')
 

@@ -12,6 +12,8 @@
 !workers/agent-bridge/package.json
 !workers/agent-bridge/package-lock.json
 !workers/agent-bridge/*.mjs
+!workers/python-bridge/
+!workers/python-bridge/**
 **/__pycache__/
 **/*.pyc
 **/.env*

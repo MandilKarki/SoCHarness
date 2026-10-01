@@ -14,7 +14,7 @@ from adapters.registry import catalog, set_enabled, ensure_ready
 
 class RegistryTest(LabFixture):
     def test_all_requested_adapters_registered(self):
-        self.assertEqual({r['id'] for r in catalog(self.store)}, {'simulator','claude','pi','pydantic','vercel','opencode','deepagents','openai'})
+        self.assertEqual({r['id'] for r in catalog(self.store)}, {'simulator','claude','pi','pydantic','vercel','opencode','deepagents','openai','google_adk','microsoft','openhands','hermes'})
     def test_enable_disable_persists_and_blocks_runs(self):
         set_enabled(self.store,'pydantic',False)
         with self.assertRaises(Problem):ensure_ready(self.store,'pydantic')

@@ -1,5 +1,17 @@
 # SoCHarness — Relay ISOC agent laboratory
 
+## Four additional native runtimes
+
+Google ADK, Microsoft Agent Framework, OpenHands and Hermes now have executable,
+isolated Python workers with native tool loops and conversation continuation.
+Google/Microsoft also support typed findings. OpenHands currently emits lifecycle
+events plus final text; Hermes/Google/Microsoft support text deltas. All tool calls
+use Relay's policy gateway. See [setup, tests and exact limits](workers/python-bridge/README.md).
+
+These bring the registry to eleven SDK adapters plus replay. **Full upstream
+feature parity is not complete.** Native delegation/workflows, external MCP,
+multimodal features and general-purpose sandbox tools remain explicit gaps.
+
 ## Native SDK expansion
 
 Native continuation now preserves tool receipts for PydanticAI, Vercel and OpenAI; Pi forks persistent JSONL sessions, Deep Agents uses SQLite checkpoints, and OpenCode forks successful remote sessions. Deep Agents also has persistent planning, structured findings and two bounded read-only specialists. Claude adds explicit thinking budgets and strict terminal-result validation. OpenCode adds filtered SSE and structured output.
@@ -8,15 +20,15 @@ This is not full upstream-feature parity. See [the tested scope and remaining wo
 
 ## UI and deployment checkpoint
 
-The workspace now includes SDK coverage (27 capability families across eight tracked frameworks), a searchable library of 14 registered tools plus seven platform features, database-derived metrics, quick actions (Ctrl/Cmd+K), and deployment-readiness cards. Seven SDKs are integrated; Hermes remains documentation-only. Native, Relay-shared, partial and missing coverage are distinguished; upstream support marked unassessed is not a claim of absence.
+The workspace includes SDK coverage (27 capability families across eleven tracked frameworks), a searchable library of 14 registered tools plus seven platform features, database-derived metrics, quick actions (Ctrl/Cmd+K), and deployment-readiness cards. Native, Relay-shared, partial and missing coverage are distinguished; upstream support marked unassessed is not a claim of absence.
 
 Read [deployment checklist](DEPLOYMENT.txt) before cloud use. Dockerfile and fly.toml prepare a single-machine, single-operator pilot with optional operator login, secure cookies, origin validation, bounded workers, persistent data paths and an online backup utility. Default startup remains loopback-only. This is not production SaaS: Supabase Auth, tenant/RBAC enforcement, PostgreSQL migration and distributed workers are planned, not implemented. No public deployment has been created.
 
-A working local analyst UI, SQLite evidence store, and framework-neutral tool boundary. The default runtime is deterministic replay, **not an LLM**. Optional adapters include Claude, PydanticAI, Deep Agents, Pi, Vercel AI SDK, OpenAI Agents and a restricted OpenCode snapshot connector.
+A working local analyst UI, SQLite evidence store, and framework-neutral tool boundary. The default runtime is deterministic replay, **not an LLM**. Optional adapters include Claude, PydanticAI, Deep Agents, Pi, Vercel AI SDK, OpenAI Agents, Google ADK, Microsoft Agent Framework, OpenHands, Hermes and a restricted OpenCode snapshot connector.
 
 ## Multi-SDK checkpoint
 
-Open **Frameworks** to see installed versions, setup requirements, persistent enable switches, documentation and capability coverage. These are real SDK integrations tested with fake models/transports, not seven labels pointing to the simulator. No live model calls have been verified without credentials.
+Open **Frameworks** to see installed versions, setup requirements, persistent enable switches, documentation and capability coverage. These are real SDK integrations tested with fake models/transports, not labels pointing to the simulator. No live model calls have been verified without credentials.
 
 Use `./start.ps1` for the installed multi-SDK environment. For a fresh Windows setup, use `./install-agents.ps1 -Python PATH_TO_PYTHON_3_11_OR_NEWER -Node PATH_TO_NODE_22_19_OR_NEWER`. Dependencies are pinned in requirements-agents.lock and workers/agent-bridge/package-lock.json.
 

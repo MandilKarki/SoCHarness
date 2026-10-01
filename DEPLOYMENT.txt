@@ -1,13 +1,18 @@
-RELAY DEPLOYMENT CHECKPOINT — 2026-09-30
+RELAY DEPLOYMENT CHECKPOINT — 2026-10-01
 
 Status: prepared single-operator pilot configuration, not a production deployment.
 No Fly application, paid resources, Supabase project, public URL or secrets were created.
 
 VERIFIED LOCALLY
-Docker Linux image built successfully. All 62 Python tests passed both on Windows and
-inside a network-disabled Linux container. Six Node SDK contract tests passed on both
-Windows and Linux (only the test-code directory was mounted read-only for the Node run).
-Image runs as UID 10001; bundled Claude CLI 2.1.281 starts with --version. No model called.
+Docker Linux image relay-isoc:extended-sdks built successfully. All 76 backend tests and
+six Google/Microsoft/OpenHands SDK tests passed on Windows and inside a network-disabled
+Linux container. Eight Node SDK tests passed on both platforms (Linux test code mounted
+read-only). Two Hermes SDK tests passed on Windows; Linux Hermes acceptance is pending.
+SDK tests use fake model transports: no paid model was called. The SDK loops are real.
+The image is configured for UID 10001 and includes the three extended Python 3.12 SDKs
+in /opt/relay-extended. Hermes is NOT included: it requires a separately provisioned
+Python 3.14 interpreter and the pinned editable official source checkout. See
+workers/python-bridge/README.md. Eleven SDK adapters are registered, not full parity.
 Fly TOML syntax and local invariants parsed successfully; Fly CLI account validation is
 blocked by missing login. Cloud health, TLS, volume persistence and paid provider runs
 remain acceptance requirements. These are engineering checks, not a full security audit.
@@ -37,7 +42,8 @@ Volume documentation: https://fly.io/docs/volumes/overview/
 Local build: docker build -t relay-isoc:pilot .
 Image excludes corpus, private configuration, virtual environments and transcripts.
 Python direct dependencies are pinned; Linux transitive resolutions are recorded inside
-the image at /opt/relay-python-resolved.txt. A reproducible Linux lock and vulnerability
+the image at /opt/relay-python-resolved.txt and /opt/relay-extended-resolved.txt.
+A reproducible Linux lock and vulnerability
 review remain release gates. Node uses the checked-in lock and disabled lifecycle scripts.
 Provision /data ownership for UID 10001 using a one-time volume initialization process;
 the application does not run as root and does not chmod an entire host filesystem.

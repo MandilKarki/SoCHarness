@@ -1,0 +1,4 @@
+google-adk==2.10.0
+agent-framework-core==1.19.0
+agent-framework-openai==1.14.4
+openhands-sdk==1.50.1

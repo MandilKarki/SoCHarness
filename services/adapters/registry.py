@@ -17,6 +17,10 @@ ADAPTERS = {
  'vercel':dict(name='Vercel AI SDK',package='ai',key='AI_GATEWAY_API_KEY',model='anthropic/claude-sonnet-4.5',features=COMMON+['structured_output','native_resume'],docs='https://ai-sdk.dev/docs/agents/building-agents'),
  'opencode':dict(name='OpenCode',package='@opencode-ai/sdk',key='RELAY_OPENCODE_URL',model='anthropic/claude-sonnet-4-5',features=['sessions','native_resume','streaming','structured_output','cancellation','usage','evidence_snapshot'],docs='https://opencode.ai/docs/sdk/'),
  'openai':dict(name='OpenAI Agents',module='openai-agents',key='OPENAI_API_KEY',model='gpt-4.1-mini',features=COMMON+['structured_output','native_resume'],docs='https://developers.openai.com/api/docs/guides/agents/sdk'),
+ 'google_adk':dict(name='Google ADK',worker='google_adk',key='GOOGLE_API_KEY',model='gemini-2.5-flash',features=COMMON+['structured_output','native_resume'],docs='https://google.github.io/adk-docs/'),
+ 'microsoft':dict(name='Microsoft Agent Framework',worker='microsoft',key='OPENAI_API_KEY',model='gpt-4.1-mini',features=COMMON+['structured_output','native_resume'],docs='https://learn.microsoft.com/en-us/agent-framework/'),
+ 'openhands':dict(name='OpenHands',worker='openhands',key='OPENAI_API_KEY',model='openai/gpt-4.1-mini',features=[f for f in COMMON if f!='streaming']+['native_resume'],docs='https://docs.openhands.dev/sdk'),
+ 'hermes':dict(name='Hermes',worker='hermes',key='OPENAI_API_KEY',model='gpt-4.1-mini',features=COMMON+['native_resume'],docs='https://hermes-agent.nousresearch.com/docs/'),
 }
 ENTRYPOINTS = {
  'claude':'claude_runtime:run_claude',
@@ -26,8 +30,16 @@ ENTRYPOINTS = {
  'vercel':'adapters.node_runtime:run_node',
  'opencode':'adapters.node_runtime:run_node',
  'openai':'adapters.openai_runtime:run_openai',
+ 'google_adk':'adapters.python_runtime:run_python',
+ 'microsoft':'adapters.python_runtime:run_python',
+ 'openhands':'adapters.python_runtime:run_python',
+ 'hermes':'adapters.python_runtime:run_python',
 }
 DEFERRED = {
+ 'google_adk':['Multi-agent transfer/workflows','Vertex hosted sessions','External MCP/A2A','Live audio/video','Native memory/artifact services','Evaluation service'],
+ 'microsoft':['Graph workflows and handoffs','Foundry hosted tools','External MCP/A2A','Durable workflow workers','Native approval interruptions','Realtime'],
+ 'openhands':['Token streaming','Typed findings','Native terminal/browser/file tools','Remote sandbox workers','Delegation','Native checkpoint restore'],
+ 'hermes':['Typed findings','Native self-learning memory/skills','Messaging gateway','Native shell/browser tools','Delegation','External MCP','Native compaction'],
  'pydantic':['Native durable execution backends','Native capabilities/harness plugins','Multi-agent delegation','External MCP','Multimodal/realtime','Native spend limits'],
  'deepagents':['Native filesystem backends','Native skills discovery','Dynamic/async subagents','Automatic crash recovery','Remote deployment'],
  'pi':['Interactive native branch navigation','Steering/follow-up queue','Native compaction','Third-party extensions','Native skills discovery','OAuth storage','External MCP'],
@@ -50,6 +62,9 @@ def node_binary():
     return None
 
 def version(spec):
+    if spec.get('worker'):
+        from adapters.python_runtime import installed_version
+        return installed_version(spec['worker'])
     if spec.get('module'):
         try:return importlib.metadata.version(spec['module'])
         except importlib.metadata.PackageNotFoundError:return None
@@ -65,7 +80,7 @@ def catalog(store=None):
     items=[]
     for id,spec in ADAPTERS.items():
         installed=version(spec);enabled=switches.get(id,True);requirements=[]
-        if not installed:requirements.append('Install '+str(spec.get('module') or spec.get('package')))
+        if not installed:requirements.append('Install isolated '+id+' worker (workers/python-bridge/README.md)' if spec.get('worker') else 'Install '+str(spec.get('module') or spec.get('package')))
         if spec.get('package') and not node_binary():requirements.append('Node >=22.19 required (RELAY_NODE)')
         if spec.get('key') and not os.getenv(spec['key']):requirements.append('Set server-side '+spec['key'])
         if id=='opencode':requirements.append('Dedicated deny-all OpenCode server; snapshot-only connector')
@@ -74,7 +89,7 @@ def catalog(store=None):
             detail=('Disabled for this installation. ' if not enabled else '')+('Local evidence replay; no model or provider calls.' if id=='simulator' else ('; '.join(requirements) or 'Configured; live run not yet verified.')),
             default_model=spec['model'],features=spec['features'],deferred=DEFERRED[id],docs=spec['docs'],
             verification='local replay' if id=='simulator' else 'not live-verified',key=spec.get('key'),
-            budget='SDK USD cap' if id=='claude' else ('Timeout only; OpenCode server controls tokens/cost' if id=='opencode' else 'No USD cap; bounded turns/output/time only')))
+            budget='SDK USD cap' if id=='claude' else ('Timeout only; OpenCode server controls tokens/cost' if id=='opencode' else ('No USD cap; iteration limit plus native final-summary attempt; retries bounded by worker deadline' if id=='hermes' else 'No USD cap; bounded turns/output/time only'))))
     return items
 
 def set_enabled(store,id,enabled):
