@@ -6,6 +6,8 @@ import { FwIcon, Scene } from "./FrameworkArt";
 import { Glyph, Legend, Section, cellText } from "./shared";
 import { DocsReference } from "./DocsReference";
 import { Blueprint } from "./Blueprint";
+import { DeepDive } from "./DeepDive";
+import { deepDives } from "../../lib/deep";
 import { frameworkDocs } from "../../lib/docs";
 
 export interface Readiness {
@@ -185,6 +187,7 @@ export function FrameworkPage({
       <nav className="fw-jump" aria-label="On this page">
         {[
           ["walkthrough", "Walkthrough"],
+          ["deep", `Under the hood (${deepDives[id]?.chapters.length || 0} chapters)`],
           ["blueprint", "Blueprint · Reference & SOC"],
           ["concepts", "Concepts"],
           ["docs", `Official docs reference (${(frameworkDocs[id]?.sections || []).reduce((n, x) => n + x.items.length, 0)})`],
@@ -236,6 +239,8 @@ export function FrameworkPage({
           )}
         </aside>
       </div>
+
+      <DeepDive id={id} name={fw.name} />
 
       <Blueprint id={id} name={fw.name} />
 

@@ -6,6 +6,7 @@ import {
   render,
   screen,
   waitFor,
+  within,
 } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 import { HarnessApp } from "./HarnessApp";
@@ -358,5 +359,20 @@ it("places every documented capability in reference and SOC blueprints", async (
   fireEvent.click(screen.getByRole("tab", { name: "SOC use case" }));
   expect(screen.getByRole("heading", { level: 3, name: "SOC platform blueprint" })).toBeVisible();
   expect(screen.getByRole("list", { name: "SOC end-to-end flow" })).toBeVisible();
+  expect(calls.some((c) => c.path.endsWith("/messages"))).toBe(false);
+});
+
+it("walks the under-the-hood deep dive chapter by chapter", async () => {
+  render(<HarnessApp />);
+  fireEvent.click(await screen.findByRole("tab", { name: /Frameworks/ }));
+  fireEvent.click(screen.getByRole("button", { name: /^Google ADK/ }));
+  expect(await screen.findByRole("heading", { level: 3, name: "How Google ADK really works" })).toBeVisible();
+  expect(screen.getByRole("heading", { level: 4, name: "Yield, commit, resume" })).toBeVisible();
+  const chapters = screen.getByRole("navigation", { name: "Google ADK deep-dive chapters" });
+  fireEvent.click(within(chapters).getByRole("button", { name: /Dirty reads and partial events/ }));
+  expect(screen.getByRole("heading", { level: 4, name: "Dirty reads and partial events" })).toBeVisible();
+  fireEvent.click(screen.getByRole("button", { name: "Next diagram step" }));
+  expect(document.querySelector(".dd-count")?.textContent).toMatch(/^2\//);
+  expect(screen.getByText("In a SOC")).toBeVisible();
   expect(calls.some((c) => c.path.endsWith("/messages"))).toBe(false);
 });

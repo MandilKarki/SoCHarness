@@ -46,6 +46,16 @@ the Architecture Atlas. Three views (`#anatomy`, `#run`, `#frameworks`; existing
    upstream API, implementation file, test suite and boundary note; select a framework
    for its profile and coverage. A map entry is not proof of live verification.
 
+   Each framework page also has **Under the hood** (6–7 chapters, `frontend/src/lib/deep/`):
+   one internal mechanism per chapter, such as OpenAI's turn classification and guardrail
+   timing, Pydantic AI's node graph, the Deep Agents middleware stack, ADK's
+   yield–commit–resume event loop or Microsoft's workflow supersteps. Every chapter has
+   an animated, steppable diagram, an explanation, real code from the official API and
+   what it means for a SOC, with a link to its docs page. Below that are **Blueprints**
+   (all documented capabilities placed in a reference architecture and a SOC version)
+   and a searchable **official docs reference**. These are written from public docs and
+   source; internals can change between releases.
+
 Browsing, history and export make no model calls. The existing shared $5 October
 allowance and identity controls remain unchanged. Failed or interrupted calls can
 retain budget holds; refresh saved state before retrying. Keep the mobile tab
