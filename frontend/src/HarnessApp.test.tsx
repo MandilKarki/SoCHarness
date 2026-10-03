@@ -347,3 +347,16 @@ it("lists a framework's documented surface with search and a Relay-only filter",
   expect(screen.queryByText("prompt")).toBeNull();
   expect(calls.some((c) => c.path.endsWith("/messages"))).toBe(false);
 });
+it("places every documented capability in reference and SOC blueprints", async () => {
+  render(<HarnessApp />);
+  fireEvent.click(await screen.findByRole("tab", { name: /Frameworks/ }));
+  fireEvent.click(screen.getByRole("button", { name: /^Google ADK/ }));
+  expect(
+    await screen.findByRole("heading", { level: 3, name: "Reference architecture blueprint" }),
+  ).toBeVisible();
+  expect(screen.getByText(/All 78 documented Google ADK capabilities/)).toBeVisible();
+  fireEvent.click(screen.getByRole("tab", { name: "SOC use case" }));
+  expect(screen.getByRole("heading", { level: 3, name: "SOC platform blueprint" })).toBeVisible();
+  expect(screen.getByRole("list", { name: "SOC end-to-end flow" })).toBeVisible();
+  expect(calls.some((c) => c.path.endsWith("/messages"))).toBe(false);
+});

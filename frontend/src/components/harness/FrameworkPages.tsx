@@ -5,6 +5,7 @@ import { safeLink } from "../../lib/api";
 import { FwIcon, Scene } from "./FrameworkArt";
 import { Glyph, Legend, Section, cellText } from "./shared";
 import { DocsReference } from "./DocsReference";
+import { Blueprint } from "./Blueprint";
 import { frameworkDocs } from "../../lib/docs";
 
 export interface Readiness {
@@ -184,6 +185,7 @@ export function FrameworkPage({
       <nav className="fw-jump" aria-label="On this page">
         {[
           ["walkthrough", "Walkthrough"],
+          ["blueprint", "Blueprint · Reference & SOC"],
           ["concepts", "Concepts"],
           ["docs", `Official docs reference (${(frameworkDocs[id]?.sections || []).reduce((n, x) => n + x.items.length, 0)})`],
           ["caps", "Capability profile"],
@@ -234,6 +236,8 @@ export function FrameworkPage({
           )}
         </aside>
       </div>
+
+      <Blueprint id={id} name={fw.name} />
 
       <div className="fw-grid-2">
         <section className="fw-block">
