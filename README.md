@@ -8,32 +8,51 @@
 - **[Architecture atlas](https://socharness-mandil.fly.dev/architecture)** (requires login)
 - **[SDK learning lab](https://socharness-mandil.fly.dev/#sdk-lab)** (requires login)
 
-### OpenAI workbench — the default signed-in homepage
+### Harness Lab — the default signed-in homepage
 
-The phone and desktop homepage now use one workflow, not the older multi-SDK
-dashboard or fictional quiz. Existing `#sdk-lab` links open the same workbench.
+The homepage is a learning lab for agent harnesses, in the same visual language as
+the Architecture Atlas. Three views (`#anatomy`, `#run`, `#frameworks`; existing
+`#sdk-lab` links open Live run):
 
-1. **Source:** select a real imported benchmark collection, inspect records and
-   edit the investigation request. These are not live sensors or confirmed incidents.
-2. **Agent:** inspect instructions, the bounded read-tool schema and output shape.
-   **Run investigation** creates a new OpenAI session and sends that request.
-   Maximum: three model calls (four for manager + specialist), 1,000 output
-   tokens per call, case-scoped read-only tools. All agents share these limits.
-3. **Loop:** select actual persisted events: request context → model response →
-   tool arguments → database result → next request → answer. Each step explains
-   whether the model, SDK or application owns it. No invented steps or private
-   chain-of-thought. Context snapshots are bounded excerpts, not the full wire request.
-4. **Result:** read structured findings, compare citations with returned records,
-   inspect usage and send a follow-up in the same session. Its next model request
-   exposes the carried conversation. A new investigation starts fresh.
+1. **Anatomy:** an interactive map of the twelve parts every harness has — request,
+   instructions & schemas, policy & approvals, limits & budget, model, runner, tools,
+   context & sessions, memory, observability, multi-agent and durable execution —
+   with the agent loop drawn as a ring. Selecting a part explains what it does, how to
+   build it, where Relay implements it, which experiment exercises it (**Try it live**),
+   and how each tracked framework handles it (status and upstream API name, read from
+   `/api/inventory`).
+2. **Live run:** choose an **Experiment**, edit the request and **Run investigation**
+   from one panel. Imported benchmark records are not live sensors or confirmed
+   incidents. Persisted events appear as a swimlane sequence (You → Your app → SDK
+   runner → Model → Evidence): each dot sits in its owner's lane, hand-offs are drawn
+   and every model call is a visible loop iteration. Select a step (or use ↑/↓) for its
+   meaning, SDK equivalent and recorded payload. No invented steps or private
+   chain-of-thought; context snapshots are bounded excerpts. The **Agent map** shows the
+   experiment's configured route and replay. Pending approvals appear above the loop.
+   Findings carry clickable record citations that jump to the returned evidence;
+   follow-ups continue the same session and appear as Run tabs. Maximum: three model
+   calls (four for manager + specialist), 1,000 output tokens per call, case-scoped
+   read-only tools. All agents share these limits.
+3. **Frameworks:** one page per framework (`#frameworks/<id>`, e.g. `#frameworks/claude`)
+   with an original persona (colour, glyph), its design philosophy and mental model, an
+   animated walkthrough of how it runs inside Relay using its real API names (an
+   illustration, not a recorded run), core concepts, Relay wiring, its full capability
+   profile and a **Run it** checklist (adapter installed, key set, spending-guard
+   coverage, live verification). A page switches to **Runs live** only when the server
+   reports that adapter as available *and* guarded; Live run then uses that runtime with
+   bounded read-only limits. Today only OpenAI is guarded. Below the pages,
+   all capability families × frameworks appear as one map, with search,
+   category filter and A/B comparison ("only differences"). Select a cell for the
+   upstream API, implementation file, test suite and boundary note; select a framework
+   for its profile and coverage. A map entry is not proof of live verification.
 
 Browsing, history and export make no model calls. The existing shared $5 October
 allowance and identity controls remain unchanged. Failed or interrupted calls can
 retain budget holds; refresh saved state before retrying. Keep the mobile tab
 foregrounded during streaming; this is not a durable background-job service.
 
-**Experiment** selects one focused SDK exercise. **What am I learning?** opens
-the learning map. Target runtime: Python `openai-agents==0.22.3`.
+**Experiment** selects one focused SDK exercise. Target runtime: Python
+`openai-agents==0.22.3`.
 
 | Experiment | Native API | What the diagram makes inspectable |
 | --- | --- | --- |

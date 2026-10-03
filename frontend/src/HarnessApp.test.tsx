@@ -10,7 +10,7 @@ import {
 import "@testing-library/jest-dom/vitest";
 import { HarnessApp } from "./HarnessApp";
 import { defaultConfig, type Session, type Trace } from "./lib/types";
-import { publicSteps, evidenceIds } from "./lib/harnessView";
+import { publicSteps, evidenceIds, laneOf, stepSummary } from "./lib/harnessView";
 import { OrchestrationMap } from "./components/OrchestrationMap";
 let sessions: Session[],
   trace: Trace[],
@@ -21,6 +21,8 @@ const response = (value: unknown) =>
     headers: { "Content-Type": "application/json" },
   });
 beforeEach(() => {
+  window.history.replaceState(null, "", "/");
+  window.localStorage.clear();
   sessions = [];
   trace = [];
   calls = [];
@@ -140,15 +142,17 @@ afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
 });
+const openLiveRun = async () =>
+  fireEvent.click(await screen.findByRole("tab", { name: /Live run/ }));
 it("starts one real OpenAI session from the default flow and follows up in it", async () => {
   render(<HarnessApp />);
+  await openLiveRun();
   expect(await screen.findByText("FINANCE-07")).toBeVisible();
-  fireEvent.click(screen.getByRole("button", { name: "Review the agent" }));
   const run = await screen.findByRole("button", { name: "Run investigation" });
   await waitFor(() => expect(run).toBeEnabled());
   fireEvent.click(run);
   fireEvent.click(run);
-  await screen.findByRole("button", { name: "Review findings & next step" });
+  const follow = await screen.findByRole("button", { name: "Run follow-up" });
   const creations = calls.filter(
     (c) => c.path === "/api/sessions" && c.body.config,
   );
@@ -163,10 +167,8 @@ it("starts one real OpenAI session from the default flow and follows up in it", 
   expect(calls.find((c) => c.path.endsWith("/messages"))!.path).toBe(
     "/api/sessions/ses-new/messages",
   );
-  fireEvent.click(
-    screen.getByRole("button", { name: "Review findings & next step" }),
-  );
-  fireEvent.click(screen.getByRole("button", { name: "Run follow-up" }));
+  await waitFor(() => expect(follow).toBeEnabled());
+  fireEvent.click(follow);
   await waitFor(() =>
     expect(calls.filter((c) => c.path.endsWith("/messages"))).toHaveLength(2),
   );
@@ -177,13 +179,23 @@ it("starts one real OpenAI session from the default flow and follows up in it", 
 it("fails closed without a spending guard", async () => {
   guard = false;
   render(<HarnessApp />);
-  fireEvent.click(
-    await screen.findByRole("button", { name: "Review the agent" }),
-  );
+  await openLiveRun();
   await screen.findByText(/protected model allowance is not enabled/);
   expect(
     screen.getByRole("button", { name: "Run investigation" }),
   ).toBeDisabled();
+  expect(calls.some((c) => c.path.endsWith("/messages"))).toBe(false);
+});
+it("opens on the anatomy view and inspects a selected harness part", async () => {
+  render(<HarnessApp />);
+  expect(screen.getByRole("tab", { name: /Anatomy/ })).toHaveAttribute(
+    "aria-selected",
+    "true",
+  );
+  fireEvent.click(screen.getByRole("button", { name: /Tools/ }));
+  expect(
+    screen.getByRole("heading", { level: 3, name: "Tools" }),
+  ).toBeVisible();
   expect(calls.some((c) => c.path.endsWith("/messages"))).toBe(false);
 });
 it("does not auto-load another SDK’s session", async () => {
@@ -223,6 +235,7 @@ it.each([
   "starts the %s experiment with bounded read-only configuration",
   async (id, limit) => {
     render(<HarnessApp />);
+    await openLiveRun();
     await screen.findByText("FINANCE-07");
     fireEvent.change(screen.getByLabelText("Experiment"), {
       target: { value: id },
@@ -230,7 +243,7 @@ it.each([
     const start = screen.getByRole("button", { name: "Run investigation" });
     await waitFor(() => expect(start).toBeEnabled());
     fireEvent.click(start);
-    await screen.findByRole("button", { name: "Review findings & next step" });
+    await screen.findByRole("button", { name: "Run follow-up" });
     const creation = calls.find(
       (c) => c.path === "/api/sessions" && c.body.config,
     )!;
@@ -281,4 +294,56 @@ it("replays receipts without making requests and exposes session context", () =>
   );
   expect(inspect).toHaveBeenCalledWith(2);
   expect(calls).toEqual([]);
+});
+it("summarises steps from their recorded payload only", () => {
+  const ev = (kind: string, payload: Record<string, unknown>): Trace =>
+    ({ seq: 1, kind, payload, created_at: "" }) as Trace;
+  expect(laneOf(ev("tool.result", {}))).toBe("data");
+  expect(laneOf(ev("model.response", {}))).toBe("model");
+  expect(laneOf(ev("agent.handoff", {}))).toBe("sdk");
+  expect(laneOf(ev("approval.requested", {}))).toBe("you");
+  expect(
+    stepSummary(ev("agent.handoff", { from: "Triage agent", to: "Evidence specialist" })),
+  ).toBe("Triage agent → Evidence specialist");
+  expect(
+    stepSummary(
+      ev("tool.result", { result: { items: [{ id: 4 }, { id: 9 }] } }),
+    ),
+  ).toBe("2 records returned: #4 #9");
+  expect(
+    stepSummary(
+      ev("model.response", {
+        output: [{ type: "function_call", name: "q", arguments: "{}" }],
+      }),
+    ),
+  ).toBe("Chose a tool: q({})");
+});
+it("opens a framework page from the gallery and keeps an unguarded framework locked", async () => {
+  render(<HarnessApp />);
+  fireEvent.click(await screen.findByRole("tab", { name: /Frameworks/ }));
+  const cards = screen.getAllByRole("button", { name: /Claude Agent SDK|Pydantic AI|Deep Agents|Hermes Agent/ });
+  expect(cards.length).toBeGreaterThanOrEqual(4);
+  fireEvent.click(screen.getByRole("button", { name: /^Claude Agent SDK/ }));
+  expect(
+    await screen.findByRole("heading", { level: 2, name: "Claude Agent SDK" }),
+  ).toBeVisible();
+  expect(screen.getByText("Covered by the spending guard")).toBeVisible();
+  expect(screen.queryByRole("button", { name: "Open in Live run" })).toBeNull();
+  expect(window.location.hash).toBe("#frameworks/claude");
+  expect(calls.some((c) => c.path.endsWith("/messages"))).toBe(false);
+});
+it("lists a framework's documented surface with search and a Relay-only filter", async () => {
+  render(<HarnessApp />);
+  fireEvent.click(await screen.findByRole("tab", { name: /Frameworks/ }));
+  fireEvent.click(screen.getByRole("button", { name: /^OpenAI Agents SDK/ }));
+  expect(
+    await screen.findByRole("heading", { level: 3, name: "From the official docs" }),
+  ).toBeVisible();
+  fireEvent.change(screen.getByRole("searchbox", { name: /Search OpenAI Agents SDK docs/ }), {
+    target: { value: "RunState" },
+  });
+  expect(screen.getAllByText("RunState").length).toBeGreaterThan(0);
+  fireEvent.click(screen.getByRole("checkbox", { name: "Only what Relay uses" }));
+  expect(screen.queryByText("prompt")).toBeNull();
+  expect(calls.some((c) => c.path.endsWith("/messages"))).toBe(false);
 });

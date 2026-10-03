@@ -1,5 +1,5 @@
 # Frontend-only deployment. Build and test frontend locally, then run publish.mjs.
 # The pinned base retains the verified backend, dependencies and October guard.
-FROM registry.fly.io/socharness-mandil@sha256:f7333005f535dbc263185840a9d4611941b0ff5d5ab93c43b2f4bdce67f43627
+FROM registry.fly.io/socharness-mandil@sha256:b51a9d9799f82adb02b74f8338c59eabf818baba4278ebbaf67dfee53b6a4617
 COPY web/react-app.js web/react-app.css /app/web/
 RUN test -s /app/web/react-app.js && test -s /app/web/react-app.css

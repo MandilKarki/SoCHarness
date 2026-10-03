@@ -92,6 +92,7 @@ export interface Adapter {
   features: string[];
   budget: string;
   trial_guard?: boolean;
+  installed?: boolean;
   key?: string;
   docs: string;
   deferred: string[];
@@ -131,6 +132,7 @@ export interface Inventory {
     package?: string;
     version_state?: string;
     credential?: string;
+    live_evidence?: unknown;
     release_source?: string;
   }[];
   rows: {
@@ -139,6 +141,7 @@ export interface Inventory {
     category: string;
     cells: Record<string, Cell>;
   }[];
+  candidates?: { id: string; status: string; docs: string }[];
   tools: Tool[];
   features: { name: string; description: string; view: string }[];
   metrics: Record<string, number | string>;

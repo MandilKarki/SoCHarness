@@ -1,12 +1,36 @@
+/* Orchestration map — uses the Harness Lab / Architecture Atlas tokens from harness.css. */
 .o-workbench {
-  padding: 18px;
-  background: #12181f;
-  border: 1px solid #38475c;
-  border-radius: 10px;
+  padding: 16px 18px 18px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 12px;
   min-width: 0;
   display: flex;
   flex-direction: column;
   gap: 12px;
+}
+.o-workbench .h-eyebrow {
+  text-transform: uppercase;
+  font: 10px var(--mono);
+  letter-spacing: 1.5px;
+  color: var(--cyan);
+  margin-bottom: 4px;
+}
+.o-workbench .h-hint {
+  font-size: 12.5px;
+  color: var(--muted);
+}
+.o-workbench .h-secondary {
+  border: 1px solid var(--line);
+  background: var(--panel2);
+  border-radius: 8px;
+  padding: 7px 12px;
+  font-size: 12.5px;
+  white-space: nowrap;
+}
+.o-workbench .h-secondary[aria-pressed="true"] {
+  border-color: var(--cyan);
+  color: var(--cyan);
 }
 .o-header {
   display: flex;
@@ -16,12 +40,7 @@
 }
 .o-header h3 {
   font-size: 16px;
-}
-.o-header .h-secondary {
-  font-size: 11px !important;
-  white-space: nowrap;
-  padding: 8px 11px;
-  min-height: 38px;
+  font-weight: 600;
 }
 .o-map {
   width: 100%;
@@ -33,54 +52,57 @@
 }
 .o-edge {
   fill: none;
-  stroke: #4b586b;
-  stroke-width: 1.5;
+  stroke: var(--line);
+  stroke-width: 1.6;
 }
 .o-return {
   fill: none;
-  stroke: #56677d;
+  stroke: var(--line);
   stroke-width: 1.5;
   stroke-dasharray: 4 4;
 }
 .o-observed {
-  stroke: #aac6ff;
+  stroke: var(--cyan);
   stroke-dasharray: none;
 }
 .o-arrow {
-  fill: #8095b3;
+  fill: var(--muted);
 }
 .o-edge-label {
   text-anchor: middle;
-  fill: #93a7c2;
-  font-size: 12px;
+  fill: var(--muted);
+  font: 11px var(--mono);
 }
 .o-node {
   cursor: pointer;
   outline: none;
 }
 .o-node rect {
-  fill: #1b222c;
-  stroke: #425066;
-  stroke-width: 1.4;
+  fill: var(--panel2);
+  stroke: var(--line);
+  stroke-width: 1.2;
+  stroke-dasharray: 4 3;
 }
 .o-node[aria-disabled="true"] {
   cursor: default;
 }
 .o-node.o-seen rect {
-  stroke: #6987b4;
-  fill: #1e2a3b;
+  stroke: var(--green);
+  stroke-dasharray: none;
+  fill: var(--panel);
 }
 .o-node.o-selected rect {
-  stroke: #c0d5ff;
-  stroke-width: 2.5;
-  fill: #2c4061;
+  stroke: var(--cyan);
+  stroke-width: 2.4;
+  fill: var(--soft);
 }
 .o-node.o-blocked rect {
-  stroke: #e3ab91;
-  fill: #3d2a29;
+  stroke: var(--rose);
+  stroke-dasharray: none;
+  fill: color-mix(in srgb, var(--rose) 12%, var(--panel));
 }
 .o-node:focus-visible rect {
-  stroke: #fff;
+  stroke: var(--text);
   stroke-width: 3;
 }
 .o-node text {
@@ -88,48 +110,48 @@
   pointer-events: none;
 }
 .o-node-title {
-  fill: #e6edfa;
+  fill: var(--text);
   font-size: 14px;
-  font-weight: 500;
+  font-weight: 600;
 }
 .o-node-detail {
-  fill: #a4b1c6;
-  font-size: 10px;
+  fill: var(--muted);
+  font-size: 10.5px;
 }
 .o-node-state {
-  fill: #adc8f8;
-  font-size: 10px;
+  fill: var(--cyan);
+  font-size: 10.5px;
 }
 .o-api {
   padding: 8px 10px;
-  background: #202a38;
-  border-radius: 5px;
-  font:
-    11px/1.7 ui-monospace,
-    monospace;
-  color: #bed2f5;
+  background: var(--panel2);
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  font: 11.5px/1.7 var(--mono);
+  color: var(--cyan);
   overflow-wrap: anywhere;
 }
 .o-session {
-  border: 1px dashed #576e8d;
-  background: #192536;
+  border: 1px dashed var(--line);
+  background: var(--panel2);
   padding: 14px;
-  border-radius: 7px;
+  border-radius: 9px;
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 10px;
 }
 .o-session small {
   display: block;
-  font-size: 10px;
+  font-size: 11px;
+  color: var(--muted);
 }
 .o-session strong {
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 500;
 }
 .o-session p {
   grid-column: 1/-1;
-  font-size: 11px;
+  font-size: 11.5px;
   overflow-wrap: anywhere;
 }
 .o-replay {
@@ -143,73 +165,45 @@
   align-items: center;
   justify-content: center;
   gap: 5px;
-  min-height: 36px;
-  min-width: 36px;
-  background: #202a37;
-  border: 1px solid #38475e;
-  border-radius: 6px;
-  padding: 7px;
-  color: #c7d9f8;
-  font-size: 11px;
+  min-height: 34px;
+  min-width: 34px;
+  background: var(--panel2);
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  padding: 6px 10px;
+  font-size: 12px;
+}
+.o-replay button:hover:not(:disabled) {
+  border-color: var(--cyan);
 }
 .o-replay span {
-  font-size: 11px;
-  color: #8fa3bf;
+  font: 11px var(--mono);
+  color: var(--muted);
   margin-left: auto;
 }
-.h-experiment {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  margin-bottom: 20px;
-  padding: 13px 16px;
-  border: 1px solid #343f50;
-  border-radius: 9px;
-  background: #171d25;
-}
-.h-experiment label {
-  white-space: normal;
+.o-current {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  min-width: 0;
-  flex: 0 1 280px;
-  margin: 0;
+  gap: 4px;
+  text-align: left;
+  background: var(--soft);
+  border: 1px solid var(--line);
+  border-left: 2px solid var(--cyan);
+  border-radius: 0 9px 9px 0;
+  padding: 12px 14px;
 }
-.h-experiment select {
-  max-width: 310px;
+.o-current small {
+  font: 10.5px var(--mono);
+  color: var(--muted);
 }
-.h-experiment .h-hint {
-  margin-left: auto;
-  max-width: 400px;
+.o-current strong {
+  font-size: 13.5px;
+  font-weight: 600;
 }
-.h-approval {
-  border: 1px solid #ab8a58;
-  border-radius: 8px;
-  padding: 18px;
-  background: #2e281d;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-.h-approval h3 {
-  color: #f1d3a2;
-}
-.h-approval .h-button-row > button {
-  flex: 1;
-}
-.h-guard-options {
-  display: flex;
-  gap: 9px;
-  flex-wrap: wrap;
-}
-.h-guard-options button {
-  min-height: 44px;
-}
-.h-guard-options button[aria-pressed="true"] {
-  border-color: #a9c6ff;
-  color: #bdd2f8;
-  background: #24344c;
+.o-current span {
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--muted);
 }
 @media (max-width: 650px) {
   .o-desktop {
@@ -229,12 +223,6 @@
   .o-header h3 {
     font-size: 14px;
   }
-  .o-header .h-secondary {
-    font-size: 10px !important;
-    padding: 6px;
-    white-space: normal;
-    min-height: 44px;
-  }
   .o-session {
     grid-template-columns: 1fr;
   }
@@ -247,70 +235,9 @@
     min-height: 44px;
     min-width: 44px;
   }
-  .h-experiment {
-    display: block;
-    padding: 13px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .o-node rect {
+    transition: none;
   }
-  .h-experiment select {
-    max-width: none;
-    margin-top: 7px;
-  }
-  .h-experiment .h-hint {
-    margin-top: 8px;
-  }
-  .o-node-title {
-    font-size: 14px;
-  }
-}
-.o-current {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  text-align: left;
-  background: #1c2838;
-  border: 1px solid #455e80;
-  border-radius: 7px;
-  padding: 14px;
-  color: #dce8fc;
-}
-.o-current small {
-  color: #96afcf;
-  font-size: 10px;
-}
-.o-current strong {
-  font-size: 13px;
-  font-weight: 500;
-}
-.o-current span {
-  font-size: 12px;
-  line-height: 1.6;
-  color: #b6c5da;
-}
-.h-experiment p {
-  margin: 0;
-  font-size: 12px;
-  line-height: 1.7;
-}
-.h-experiment p small {
-  display: block;
-  color: #9aa9bf;
-  font-size: 10px;
-}
-.h-approval > div {
-  display: flex;
-  gap: 10px;
-}
-.h-guard-options small {
-  flex-basis: 100%;
-  font-size: 11px;
-}
-.h-event-list {
-  width: 100%;
-  min-width: 0;
-}
-.h-event-list > summary {
-  font-size: 12px;
-}
-.h-event-list .h-timeline {
-  margin-top: 12px;
 }

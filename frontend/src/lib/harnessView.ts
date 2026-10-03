@@ -210,3 +210,176 @@ export function evidenceIds(trace: Trace[]): number[] {
     ),
   ];
 }
+
+/* ---- Workbench view model: lanes, summaries and the expected path ---- */
+export const lanes = ["you", "app", "sdk", "model", "data"] as const;
+export type Lane = (typeof lanes)[number];
+export const laneLabel: Record<Lane, string> = {
+  you: "You",
+  app: "Your app",
+  sdk: "SDK runner",
+  model: "Model",
+  data: "Evidence",
+};
+export const laneRole: Record<Lane, string> = {
+  you: "Writes the request, approves tools and judges the answer.",
+  app: "Relay code: assembles the contract, runs tool callbacks, enforces limits and saves state.",
+  sdk: "The Agents SDK: runs agents, delegations, handoffs, guardrails and its session protocol.",
+  model: "Reads the context, then proposes a tool call or writes the answer.",
+  data: "Read-only case records. Returned only when a tool asks for them.",
+};
+const sdkKinds = new Set([
+  "agent.started",
+  "agent.finished",
+  "agent.delegated",
+  "agent.returned",
+  "agent.handoff",
+  "sdk.tool.started",
+  "sdk.tool.finished",
+  "guardrail.checked",
+  "guardrail.blocked",
+  "sdk.approval.resumed",
+  "session.loaded",
+  "session.staged",
+]);
+export function laneOf(event: Trace): Lane {
+  if (sdkKinds.has(event.kind)) return "sdk";
+  switch (event.kind) {
+    case "message.user":
+    case "approval.requested":
+      return "you";
+    case "model.request":
+    case "model.response":
+    case "message.assistant":
+      return "model";
+    case "tool.result":
+      return "data";
+    default:
+      return "app";
+  }
+}
+const clip = (text: string, n = 110) =>
+  text.length > n ? text.slice(0, n - 1).trimEnd() + "…" : text;
+function items(value: unknown): unknown[] {
+  if (Array.isArray(value)) return value;
+  const o = object(value);
+  return Array.isArray(o.items) ? o.items : [];
+}
+/** True when a captured model request carries tool output back into context. */
+export function carriesToolOutput(event: Trace) {
+  if (event.kind !== "model.request") return false;
+  const input = event.payload.input;
+  const text = typeof input === "string" ? input : JSON.stringify(input ?? "");
+  return text.includes("function_call_output");
+}
+/** One line of real content for a step, derived only from its payload. */
+export function stepSummary(event: Trace): string {
+  const p = event.payload;
+  const agent =
+    p.agent && p.agent !== "Relay SOC analyst" ? String(p.agent) + ": " : "";
+  const base = summaryFor(event);
+  return ["model.request", "model.response"].includes(event.kind) ? agent + base : base;
+}
+function summaryFor(event: Trace): string {
+  const p = event.payload;
+  switch (event.kind) {
+    case "agent.handoff":
+    case "agent.delegated":
+    case "agent.returned":
+      return p.from || p.to
+        ? `${String(p.from ?? "?")} → ${String(p.to ?? "?")}`
+        : String(p.agent ?? "");
+    case "agent.started":
+    case "agent.finished":
+      return String(p.agent ?? "");
+    case "sdk.tool.started":
+    case "sdk.tool.finished":
+      return `${String(p.agent ?? "agent")} · ${String(p.tool ?? "tool")}`;
+    case "guardrail.checked":
+      return `${String(p.name ?? p.phase ?? "Rule")}: ${p.passed ? "passed" : "tripwire triggered"}`;
+    case "guardrail.blocked":
+      return `Stopped at the ${String(p.phase ?? "")} guardrail; no findings released`;
+    case "approval.requested":
+      return clip(`${String(p.tool ?? "tool")}(${JSON.stringify(p.arguments ?? {})}) is waiting for you`);
+    case "sdk.approval.resumed":
+      return `Decision: ${String(p.decision ?? "")}`;
+    case "session.context":
+      return `${String(p.retained_items ?? 0)} retained items before this run`;
+    case "session.loaded":
+      return `${String(p.items ?? 0)} prior items loaded`;
+    case "session.staged":
+      return `${String(p.added ?? 0)} added, ${String(p.total ?? "?")} staged (not yet saved)`;
+    case "session.committed":
+      return `${String(p.items ?? "?")} items saved; next owner ${String(p.last_agent ?? "")}`;
+    case "orchestration.limit":
+      return "No further model requests in this run";
+    case "message.assistant": {
+      const text = String(p.text || "");
+      try {
+        const o = object(JSON.parse(text));
+        if (Array.isArray(o.observations)) {
+          const n = (k: string) => (Array.isArray(o[k]) ? (o[k] as unknown[]).length : 0);
+          const ids = Array.isArray(o.evidence_ids) ? (o.evidence_ids as unknown[]).map((i) => "#" + String(i)).join(" ") : "";
+          return `Structured findings: ${n("observations")} observations, ${n("hypotheses")} hypotheses${ids ? ", cites " + ids : ""}`;
+        }
+      } catch {
+        /* Plain-text answer. */
+      }
+      return clip(text.replace(/\s+/g, " "));
+    }
+    case "message.user":
+      return clip(String(p.text || "").replace(/\s+/g, " "));
+    case "harness.configured":
+      return `Model ${String(p.model ?? "—")}, limits and tool list attached`;
+    case "model.request": {
+      const tools = Array.isArray(p.tools) ? p.tools.length : 0;
+      return `${String(p.input_items ?? "?")} input items, ${tools} tool schema${tools === 1 ? "" : "s"}${carriesToolOutput(event) ? ", including tool output" : ""}`;
+    }
+    case "model.response": {
+      const out = items(object(p.output).excerpt ? [] : p.output).map(object);
+      const call = out.find((o) => o.type === "function_call");
+      const usage = object(p.usage);
+      const tokens =
+        usage.input_tokens != null
+          ? ` (${String(usage.input_tokens)} in / ${String(usage.output_tokens)} out tokens)`
+          : "";
+      if (call)
+        return clip(`Chose a tool: ${String(call.name)}(${String(call.arguments ?? "")})`) + tokens;
+      if (out.some((o) => o.type === "message")) return "Wrote a message" + tokens;
+      return "Response received" + tokens;
+    }
+    case "tool.started":
+      return clip(`${String(p.tool ?? p.name ?? "tool")}(${JSON.stringify(p.arguments ?? {})})`);
+    case "tool.result": {
+      const r = object(p.result);
+      const ids = items(r)
+        .map((v) => object(v).id)
+        .filter((v) => v !== undefined);
+      return ids.length
+        ? `${ids.length} record${ids.length === 1 ? "" : "s"} returned: ${ids.map((i) => "#" + String(i)).join(" ")}`
+        : clip(JSON.stringify(p.result ?? ""));
+    }
+    case "tool.validation_error":
+    case "tool.failed":
+    case "run.failed":
+    case "run.cancelled":
+      return clip(String(p.message || p.error || "No message recorded"));
+    case "run.completed":
+      return "Session saved; a follow-up can continue it";
+    default:
+      return "";
+  }
+}
+/** The path the default request is designed to take. Shown before any run, never as evidence. */
+export const expectedPath: { lane: Lane; title: string; note: string; call?: number }[] = [
+  { lane: "you", title: "Investigation requested", note: "Your request starts the run" },
+  { lane: "app", title: "Agent contract assembled", note: "Instructions, one tool, limits" },
+  { lane: "model", title: "Model call 1 · context sent", note: "Request plus tool schema", call: 1 },
+  { lane: "model", title: "Model call 1 · response received", note: "Likely a function_call", call: 1 },
+  { lane: "app", title: "Execute query_case_evidence", note: "Your code runs the tool" },
+  { lane: "data", title: "Evidence returned to the loop", note: "Three records, read-only" },
+  { lane: "model", title: "Model call 2 · context sent", note: "Now includes the tool output", call: 2 },
+  { lane: "model", title: "Model call 2 · response received", note: "Likely the findings", call: 2 },
+  { lane: "model", title: "Final answer produced", note: "Structured findings" },
+  { lane: "app", title: "Run completed · session saved", note: "Ready for a follow-up" },
+];
