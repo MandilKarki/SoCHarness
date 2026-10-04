@@ -8,6 +8,8 @@ import { FrameworksView, type Focus } from "./components/harness/FrameworksView"
 import type { PartId } from "./lib/anatomy";
 import { experimentFor, type ExperimentId } from "./lib/openaiExperiments";
 import { CompareView } from "./components/harness/CompareView";
+import { GroundsView } from "./components/harness/GroundsView";
+import { frameworkById } from "./lib/frameworks";
 import "./harness.css";
 
 const tabs = [
@@ -15,12 +17,13 @@ const tabs = [
   { id: "run", label: "Live run", hint: "Watch one agent loop" },
   { id: "frameworks", label: "Frameworks", hint: "11 framework pages" },
   { id: "compare", label: "Compare", hint: "One mechanism, every SDK" },
+  { id: "grounds", label: "Proving grounds", hint: "Benchmarks & test ground" },
 ] as const;
 type Tab = (typeof tabs)[number]["id"];
 
 function tabFromHash(): Tab {
   const h = window.location.hash.replace("#", "").split("/")[0];
-  if (h === "anatomy" || h === "frameworks" || h === "compare") return h;
+  if (h === "anatomy" || h === "frameworks" || h === "compare" || h === "grounds") return h;
   return h === "run" || h === "sdk-lab" ? "run" : "anatomy";
 }
 function pageFromHash(): string | null {
@@ -64,6 +67,15 @@ export function HarnessApp() {
     setTabState("frameworks");
     history_replace(id ? `frameworks/${id}` : "frameworks");
     window.scrollTo?.({ top: 0, behavior: "smooth" });
+  };
+  // Open a labelled test-ground case in Live run with its grading prompt.
+  const runScenario = (caseId: string, text: string) => {
+    if (running) return;
+    setExperiment("core");
+    setPrompt(text);
+    setStructured(false);
+    w.selectCase(caseId);
+    setTab("run");
   };
   const runFramework = (id: string) => {
     if (running) return;
@@ -250,6 +262,12 @@ export function HarnessApp() {
           runnable={runnable}
         />
         <CompareView hidden={tab !== "compare"} />
+        <GroundsView
+          hidden={tab !== "grounds"}
+          onRunScenario={runScenario}
+          running={!!running}
+          runtimeName={frameworkById[runtime]?.name || runtime}
+        />
         <FrameworksView
           hidden={tab !== "frameworks"}
           inventory={w.inventory}

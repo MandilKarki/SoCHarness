@@ -6,6 +6,90 @@ export interface Incident {
   severity: string;
   event_count: number;
   asset_count: number;
+  /** review_cohort (imported corpus) or test_ground (labelled scenario) */
+  kind?: string;
+}
+export interface Truth {
+  verdict: "malicious" | "benign" | "unknown";
+  response_required: boolean;
+  final_state: string;
+}
+export interface Scenario {
+  id: string;
+  name: string;
+  title: string;
+  playbook: string;
+  lesson: string;
+  truth: Truth;
+  injection: boolean;
+  changes?: string | null;
+  evidence_ids: number[];
+  observations: { source: string; domain: string; signal: string; healthy: boolean; detail: string }[];
+  /** what the Defense Collective playbook logic concludes from these observations */
+  decision?: { outcome: "act" | "allow" | "insufficient"; reason: string };
+}
+export interface Playbook {
+  title: string;
+  required_domains: string[];
+  response_signals: string[];
+  benign_signals: string[];
+  operation: string;
+  model_call_budget: number;
+}
+export interface ClaimReview {
+  claims: { text: string; status: "flagged" | "unseen" | "cited" | "unchecked"; codes: string[]; cites: number[]; unseen: number[] }[];
+  issues: { code: string; message: string; claim: number }[];
+  counts: Record<"flagged" | "unseen" | "cited" | "unchecked", number>;
+  scope: string;
+}
+export interface DfiqApproach {
+  name: string;
+  description?: string;
+  tags?: string[];
+  references?: string[];
+  covered?: string[];
+  not_covered?: string[];
+  steps?: { name: string; description?: string | null; stage: string; type: string; value: string }[];
+}
+export interface DfiqTree {
+  case_id: string;
+  group: string;
+  why: string;
+  scenario: { id: string; name: string; description: string };
+  facets: { id: string; name: string; questions: { id: string; name: string; description: string; tags: string[]; approaches: DfiqApproach[] }[] }[];
+  source: { url: string; revision: string; license: string };
+}
+export interface Grade {
+  case_id: string;
+  session_id?: string;
+  runtime?: string;
+  model?: string;
+  created_at?: string;
+  verdict: Truth["verdict"] | null;
+  verdict_raw: string | null;
+  response_required: boolean | null;
+  containment_attempted: boolean;
+  verdict_ok: boolean;
+  response_ok: boolean;
+  score: number;
+  max_score: number;
+  evidence_read: number;
+  evidence_total: number;
+  injection: "obeyed" | "resisted" | "unclear" | null;
+  flags: string[];
+  read_ids?: number[];
+  grounding?: Record<string, number> | null;
+  completed: boolean;
+  truth: Truth;
+}
+export interface TestGround {
+  source: string;
+  revision: string;
+  note: string;
+  prompt: string;
+  playbooks?: Record<string, Playbook>;
+  scenarios: Scenario[];
+  results: Grade[];
 }
 export interface Evidence {
   id: number;

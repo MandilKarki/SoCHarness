@@ -1,6 +1,6 @@
 import { Fragment, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { ArrowUpRight, ChevronLeft, ChevronRight, Pause, Play } from "lucide-react";
-import { deepDives, type Chapter, type Diagram, type DNode, type Tag } from "../../lib/deep";
+import { deepDives, type Chapter, type DeepDive as DeepDiveData, type Diagram, type DNode, type Tag } from "../../lib/deep";
 import { safeLink } from "../../lib/api";
 import { runDigest } from "../../lib/deep/live";
 import { eventGuide } from "../../lib/harnessView";
@@ -453,8 +453,21 @@ function latestRun(trace: Trace[]) {
   return start < 0 ? trace : trace.slice(start);
 }
 
-export function DeepDive({ id, name, lastRun }: { id: string; name: string; lastRun?: { runtime: string; trace: Trace[] } }) {
-  const dive = deepDives[id];
+export function DeepDive({
+  id,
+  name,
+  lastRun,
+  dive: given,
+  eyebrow = "Under the hood",
+}: {
+  id: string;
+  name: string;
+  lastRun?: { runtime: string; trace: Trace[] };
+  /** a deep dive supplied directly (proving grounds) instead of a framework's */
+  dive?: DeepDiveData;
+  eyebrow?: string;
+}) {
+  const dive = given || deepDives[id];
   const run = useMemo(() => (lastRun && lastRun.runtime === id ? latestRun(lastRun.trace) : null), [lastRun, id]);
   const digest = useMemo(() => (run ? runDigest(id, run) : null), [run, id]);
   const reduced = useReducedMotion();
@@ -523,7 +536,7 @@ export function DeepDive({ id, name, lastRun }: { id: string; name: string; last
     <section className="fw-block dd" id={`fw-deep-${id}`} ref={ref} aria-labelledby={`dd-title-${id}`}>
       <header className="dd-head">
         <div>
-          <p className="dd-eyebrow">Under the hood · {n} chapters</p>
+          <p className="dd-eyebrow">{eyebrow} · {n} chapters</p>
           <h3 id={`dd-title-${id}`}>How {name} really works</h3>
           <p className="dd-intro">{rich(dive.intro)}</p>
         </div>
@@ -630,5 +643,69 @@ export function DeepDive({ id, name, lastRun }: { id: string; name: string; last
         each chapter links to its docs page.
       </p>
     </section>
+  );
+}
+
+/** A self-contained animated diagram with narration and step controls, for use outside a deep dive. */
+export function AnimatedDiagram({ diagram, label }: { diagram: Diagram; label: string }) {
+  const reduced = useReducedMotion();
+  const beats = useMemo(() => beatsFor(diagram), [diagram]);
+  const [beat, setBeat] = useState(0),
+    [playing, setPlaying] = useState(!reduced);
+  useEffect(() => setBeat(0), [diagram]);
+  useEffect(() => {
+    if (!playing || beats.length < 2) return;
+    const t = setInterval(() => setBeat((b) => (b + 1) % beats.length), 2600);
+    return () => clearInterval(t);
+  }, [playing, beats.length]);
+  const i = beat % Math.max(1, beats.length);
+  const cur = beats[i];
+  const seen = new Set(beats.slice(0, i).map((b) => b.key));
+  const go = (key: string) => {
+    const at = beats.findIndex((b) => b.key === key);
+    if (at >= 0) {
+      setBeat(at);
+      setPlaying(false);
+    }
+  };
+  const step = (d: number) => {
+    setPlaying(false);
+    setBeat((b) => (b + d + beats.length) % beats.length);
+  };
+  return (
+    <div className="dd dd-embed" aria-label={label}>
+      <div className={"dd-stage dd-k-" + diagram.kind}>
+        <DiagramView d={diagram} active={cur?.key || ""} seen={seen} go={go} beat={beat} />
+        <div className="dd-narrate">
+          <div className="dd-controls">
+            <button className="hl-icon" aria-label="Previous diagram step" onClick={() => step(-1)}>
+              <ChevronLeft size={15} />
+            </button>
+            <button className="dd-play" aria-label={playing ? "Pause animation" : "Play animation"} onClick={() => setPlaying(!playing)}>
+              {playing ? <Pause size={14} /> : <Play size={14} />}
+            </button>
+            <button className="hl-icon" aria-label="Next diagram step" onClick={() => step(1)}>
+              <ChevronRight size={15} />
+            </button>
+            <span className="dd-count">
+              {i + 1}/{beats.length}
+            </span>
+            <span className="dd-pips" aria-hidden="true">
+              {beats.map((b, j) => (
+                <i key={b.key + j} className={j === i ? "is-on" : j < i ? "is-seen" : ""} />
+              ))}
+            </span>
+          </div>
+          {cur && (
+            <p className={"dd-caption dd-t-" + (cur.tag || "core")} aria-live="polite">
+              <span className="dd-chip">
+                <i className="dd-dot" /> {tagLabel[cur.tag || "core"]}
+              </span>
+              <strong>{cur.t}.</strong> {rich(cur.s)}
+            </p>
+          )}
+        </div>
+      </div>
+    </div>
   );
 }

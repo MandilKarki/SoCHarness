@@ -92,9 +92,17 @@ class Advanced:
                 (tid,self.sid,title,status,now()));self.db.commit()
             return {'id':tid,'title':title,'status':status}
         if name=='get_playbook':
+            import knowledge
             key=args.get('name')
-            if not isinstance(key,str) or key not in PLAYBOOKS:raise Problem('Unknown playbook',404)
+            ported={k.replace('_','-'):k for k in knowledge.PLAYBOOKS}
+            if not isinstance(key,str) or (key not in PLAYBOOKS and key not in ported and key!='investigative-questions'):raise Problem('Unknown playbook',404)
             if not self.session['config']['skills']:raise Problem('Skills are disabled for this session',403)
+            if key=='investigative-questions':
+                # DFIQ questions linked to this session's case; reference only, nothing is executed.
+                tree=knowledge.questions_for(self.session['case_id'],full=False)
+                if not tree:raise Problem('No investigative questions are linked to this case',404)
+                return {'name':key,'title':'Investigative questions (DFIQ)','steps':[q['name'] for f in tree['facets'] for q in f['questions']],'dfiq':tree}
+            if key in ported:return {'name':key,**knowledge.playbook_text(ported[key])}
             return {'name':key,**PLAYBOOKS[key]}
         if name in ('read_artifact','write_artifact','restore_artifact'):
             if not self.session['config']['artifacts']:raise Problem('Artifact workspace disabled',403)

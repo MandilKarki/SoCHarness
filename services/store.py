@@ -120,6 +120,8 @@ class Store:
           CREATE TABLE IF NOT EXISTS relay_questions(id TEXT PRIMARY KEY,session_id TEXT NOT NULL,question TEXT NOT NULL,status TEXT NOT NULL,answer TEXT,created_at TEXT NOT NULL);
         ''')
         self.db.commit()
+        import test_ground
+        test_ground.install(self.db)
 
     def recover(self):
         for r in self.db.execute("SELECT id FROM relay_sessions WHERE status='running'").fetchall():
@@ -131,10 +133,18 @@ class Store:
         self.db.commit()
 
     def clause(self, case_id):
+        import test_ground
+        if test_ground.is_case(case_id):
+            return 'case_id=?', [case_id]
         case = next((c for c in CASES if c[0] == case_id), None)
         if not case: raise Problem('Unknown case', 404)
         ids = case[3] or ALL_IDS
         return 'event_id ' + ('IN' if case[3] else 'NOT IN') + '(' + ','.join('?' for _ in ids) + ')', ids
+
+    @staticmethod
+    def table(case_id):
+        import test_ground
+        return 'relay_scenario_events' if test_ground.is_case(case_id) else 'events'
 
     def cases(self):
         result = []
@@ -144,7 +154,8 @@ class Store:
             result.append(dict(id=cid,title=title,severity=priority,status='open',scenario=scenario,
                                event_count=row['n'],asset_count=row['hosts'],first_at=row['first_at'],
                                source='Defense Collective benchmark',kind='review_cohort'))
-        return result
+        import test_ground
+        return result + test_ground.cases(self.db)
 
     def events(self, case_id, limit=25, offset=0, search=''):
         where, params = self.clause(case_id)
@@ -152,20 +163,22 @@ class Store:
         if search:
             where += ' AND (host LIKE ? OR raw_json LIKE ?)'
             params += ['%'+search[:200]+'%']*2
-        count = self.db.execute('SELECT count(*) FROM events WHERE '+where,params).fetchone()[0]
-        rows = self.db.execute('SELECT * FROM events WHERE '+where+' ORDER BY id LIMIT ? OFFSET ?',params+[limit,offset]).fetchall()
+        table = self.table(case_id)
+        count = self.db.execute('SELECT count(*) FROM '+table+' WHERE '+where,params).fetchone()[0]
+        rows = self.db.execute('SELECT * FROM '+table+' WHERE '+where+' ORDER BY id LIMIT ? OFFSET ?',params+[limit,offset]).fetchall()
         return {'total':count,'offset':offset,'items':[self.event_dict(r) for r in rows]}
 
     @staticmethod
     def event_dict(row):
         r = dict(row)
         r['raw'] = json.loads(r.pop('raw_json'))
+        r.pop('case_id', None)
         r['source'] = r['source'] or r['raw'].get('SourceName') or 'benchmark'
         return r
 
     def event(self, case_id, event_id):
         where, params = self.clause(case_id)
-        row = self.db.execute('SELECT * FROM events WHERE id=? AND '+where,[event_id]+list(params)).fetchone()
+        row = self.db.execute('SELECT * FROM '+self.table(case_id)+' WHERE id=? AND '+where,[event_id]+list(params)).fetchone()
         if not row: raise Problem('Evidence is not in this case',404)
         return self.event_dict(row)
 

@@ -111,6 +111,21 @@ class Handler(BaseHTTPRequestHandler):
                     from adapters.registry import catalog
                     return self.send_json(catalog(store))
                 if path=='/api/incidents':return self.send_json(store.cases())
+                if path=='/api/test-ground':
+                    import test_ground
+                    return self.send_json({**test_ground.catalog(),'results':test_ground.results(store),'prompt':test_ground.PROMPT})
+                if path=='/api/grounding':
+                    import grounding
+                    return self.send_json({'review':grounding.review_session(store,query.get('session',[''])[0])})
+                if path=='/api/knowledge':
+                    import knowledge
+                    return self.send_json(knowledge.catalog())
+                if path=='/api/knowledge/case':
+                    import knowledge
+                    return self.send_json({'tree':knowledge.questions_for(query.get('case_id',[''])[0])})
+                if path=='/api/test-ground/grade':
+                    import test_ground
+                    return self.send_json({'grade':test_ground.grade(store,query.get('session',[''])[0])})
                 if path=='/api/sessions':return self.send_json(store.sessions())
                 if path=='/api/events':
                     limit=int(query.get('limit',['25'])[0]);offset=int(query.get('offset',['0'])[0])

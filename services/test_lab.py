@@ -27,7 +27,7 @@ class LabFixture(unittest.TestCase):
 
 class LabTest(LabFixture):
     def test_seven_disjoint_stable_cohorts(self):
-        cases=self.store.cases();self.assertEqual(len(cases),7)
+        cases=[c for c in self.store.cases() if c['kind']=='review_cohort'];self.assertEqual(len(cases),7)
         self.assertEqual(sum(c['event_count'] for c in cases),8)
         small=self.store.events('IR-2841',1)['items'];large=self.store.events('IR-2841',2)['items']
         self.assertEqual(small,large[:1])

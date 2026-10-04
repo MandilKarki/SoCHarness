@@ -11,7 +11,9 @@ import {
 } from "lucide-react";
 import type { Workspace } from "../../useWorkspace";
 import { api, errorText } from "../../lib/api";
-import { defaultConfig, type Json, type Trace } from "../../lib/types";
+import { defaultConfig, type Grade, type Json, type Playbook, type Scenario, type TestGround, type Trace } from "../../lib/types";
+import { GradeBadge, GradeDetail } from "./GroundsView";
+import { PlaybookFlow, SessionClaimCheck } from "./KnowledgeViews";
 import { currentRun } from "../../lib/openaiWorkshop";
 import {
   carriesToolOutput,
@@ -245,6 +247,33 @@ export function RunView({
   const returned = useMemo(() => evidenceIds(run), [run]);
   const sessionIds = evidenceIds(trace);
   const settled = run.filter((t) => t.kind === "budget.settled");
+  // Labelled test-ground cases are graded against their answer key once a run finishes.
+  const sessionId = w.data?.session.id,
+    isScenario = !!w.data?.session.case_id?.startsWith("TG-"),
+    lastSeq = trace.at(-1)?.seq || 0;
+  const [grade, setGrade] = useState<Grade | null>(null),
+    [scenarioInfo, setScenarioInfo] = useState<Scenario | undefined>(undefined),
+    [playbookInfo, setPlaybookInfo] = useState<Playbook | undefined>(undefined);
+  useEffect(() => {
+    setGrade(null);
+    if (!isScenario || !sessionId || !completed || active) return;
+    let alive = true;
+    void Promise.all([
+      api<{ grade: Grade | null }>("/api/test-ground/grade?session=" + encodeURIComponent(sessionId)),
+      api<TestGround>("/api/test-ground"),
+    ])
+      .then(([g, tg]) => {
+        if (!alive) return;
+        setGrade(g.grade);
+        const sc = tg.scenarios.find((x) => x.id === g.grade?.case_id);
+        setScenarioInfo(sc);
+        setPlaybookInfo(sc ? tg.playbooks?.[sc.playbook] : undefined);
+      })
+      .catch(() => undefined);
+    return () => {
+      alive = false;
+    };
+  }, [isScenario, sessionId, completed, active, lastSeq]);
   const estimated = settled.reduce(
     (sum, t) => sum + Number(t.payload.estimated_usd ?? t.payload.cost_usd ?? 0),
     0,
@@ -515,19 +544,33 @@ export function RunView({
               });
             }}
           >
-            {w.cases.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.id}: {c.title}
-              </option>
-            ))}
+            <optgroup label="Imported evidence (unlabelled)">
+              {w.cases
+                .filter((c) => c.kind !== "test_ground")
+                .map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.id}: {c.title}
+                  </option>
+                ))}
+            </optgroup>
+            <optgroup label="Test ground (labelled, graded)">
+              {w.cases
+                .filter((c) => c.kind === "test_ground")
+                .map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.id}: {c.title.replace("Test ground: ", "")}
+                  </option>
+                ))}
+            </optgroup>
           </select>
           <div className="hl-meta">
             <span><strong>{caseItem?.event_count?.toLocaleString() || "—"}</strong> records</span>
             <span><strong>{caseItem?.asset_count || "—"}</strong> hosts</span>
           </div>
           <p className="hl-fine">
-            Imported benchmark records, not live sensors. The model only sees a record when the
-            tool returns it.
+            {caseItem?.kind === "test_ground"
+              ? "Labelled synthetic scenario from Defense Collective. The answer key never reaches the agent; it grades the run when it finishes."
+              : "Imported benchmark records, not live sensors. The model only sees a record when the tool returns it."}
           </p>
           <div className="hl-records">
             {w.evidenceLoading ? (
@@ -837,6 +880,17 @@ export function RunView({
               <div><dt>Settled estimate</dt><dd>{settled.length ? `$${estimated.toFixed(4)}` : "—"}</dd></div>
             </dl>
             <Answer result={result} answer={answer} onCite={cite} />
+            {grade && (
+              <section className="pg-live" aria-label="Test ground check">
+                <header>
+                  <strong>Test ground check · {grade.case_id}</strong>
+                  <GradeBadge g={grade} />
+                </header>
+                <GradeDetail g={grade} scenario={scenarioInfo} />
+                {scenarioInfo && <PlaybookFlow scenario={scenarioInfo} playbook={playbookInfo} readIds={grade.read_ids} />}
+              </section>
+            )}
+            <SessionClaimCheck sessionId={sessionId} ready={completed && !active} nonce={lastSeq} />
             <p className="hl-callout">
               Check before you trust. Records returned in this session:{" "}
               {sessionIds.length

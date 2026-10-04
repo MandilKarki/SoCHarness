@@ -11,7 +11,7 @@
 ### Harness Lab — the default signed-in homepage
 
 The homepage is a learning lab for agent harnesses, in the same visual language as
-the Architecture Atlas. Four views (`#anatomy`, `#run`, `#frameworks`, `#compare`; existing
+the Architecture Atlas. Five views (`#anatomy`, `#run`, `#frameworks`, `#compare`, `#grounds`; existing
 `#sdk-lab` links open Live run):
 
 1. **Anatomy:** an interactive map of the twelve parts every harness has — request,
@@ -67,6 +67,48 @@ the Architecture Atlas. Four views (`#anatomy`, `#run`, `#frameworks`, `#compare
    gather under the design pattern they use, with its trade-off; select one for its API,
    real code and the chapter that explains it. A table lines every framework up on the
    same dimensions, and each mechanism ends with guidance for a SOC agent platform.
+
+5. **Proving grounds** (`#grounds`), ported from the Defense Collective evaluation kit
+   ([defense-collective](https://github.com/MandilKarki/defense-collective) at `5a3dced`):
+   SOCBench, Cyber Defense Benchmark, CAGE 4/CybORG, CyberBattleSim, AgentDojo, Atomic Red
+   Team and the CTID emulation library. Each shows what it measures, what an agent observes,
+   does and is scored on, its loop as an animated diagram, the pinned upstream revision, the
+   bridge Defense Collective built, and the runs it actually recorded on September 16, 2026,
+   failures included. Those runs used a local qwen2.5-coder 7B through Defense Collective's
+   own gateway, not SoCHarness; the benchmark harnesses themselves were not ported.
+   SOCBench, Cyber Defense Benchmark, CAGE 4 and AgentDojo also have a detailed page built
+   from their upstream docs (`frontend/src/lib/grounds/`): overview with sources, specialties,
+   a six-chapter animated deep dive, and a parameter, feature and metric reference.
+
+   The **scenario test ground** does run here. Ten hand-written labelled scenarios from
+   Defense Collective `scenarios/` (stolen session, registered VPN, dead identity sensor,
+   beaconing, approved monitoring, conflicting change record, signed admin job, incomplete
+   network evidence, suspicious egress, and log text that tries to give the agent orders)
+   become cases `TG-01`…`TG-10` with neutral titles, stored in `relay_scenario_events`
+   (`services/test_ground.py`, data in `services/test_ground/scenarios.json`). Any guarded
+   framework investigates them with the normal case tools; the answer key never reaches a
+   tool. **Investigate in Live run** opens the case with a prompt asking for `Verdict:` and
+   `Response required:` lines. When the run finishes, Live run shows a graded check (verdict,
+   response decision, evidence read, injection resisted or obeyed, flags such as
+   over-reaction or overconfidence) and the Proving grounds scoreboard compares frameworks.
+   One line in the injection scenario was reworded because the original gave the answer
+   away. The 29 templated role fixtures were left out. Ten synthetic cases are a sanity
+   check, not an accuracy benchmark.
+
+   Also ported from Defense Collective:
+   - **Playbooks** (`services/knowledge/`): account compromise, network beaconing and
+     endpoint containment, with the decision logic made explicit (`decide()` reproduces all
+     ten answer keys). Each answer key shows an animated flow: the evidence drops into the
+     playbook's bins (response, benign, missing domain) and the decision lights up. Agents
+     can read them with `get_playbook`.
+   - **DFIQ** (Google's Digital Forensics Investigative Questions, Apache-2.0, bundled
+     unmodified with its licence): each evidence collection is linked by hand to the closest
+     facets and questions, shown as an animated tree with expandable approaches, and given
+     to agents with `get_playbook("investigative-questions")`.
+   - **Grounding guard** (`services/grounding.py`): every sentence of a final answer is
+     checked against what the tools returned (unsupported historical baselines, missing MFA
+     read as a bypass, a dead sensor read as safety, and record IDs no tool returned). Live
+     run shows it as an animated claim check after each answer; `/api/grounding?session=`.
 
 **Keeping the content honest.** `python services/docs_drift.py` extracts every import and
 `ImportedName.attribute` from the chapter and comparison snippets and resolves them

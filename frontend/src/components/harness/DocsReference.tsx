@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { ArrowUpRight, Search } from "lucide-react";
-import { frameworkDocs, type DocKind } from "../../lib/docs";
+import { frameworkDocs, type DocKind, type FrameworkDocs } from "../../lib/docs";
 import { safeLink } from "../../lib/api";
 
 const groups: { id: string; label: string; kinds: DocKind[] }[] = [
@@ -32,8 +32,22 @@ const kindLabel: Record<DocKind, string> = {
 };
 
 /** Searchable reference of a framework's documented surface, linked to the official docs. */
-export function DocsReference({ id, name, pinned }: { id: string; name: string; pinned?: string }) {
-  const docs = frameworkDocs[id];
+export function DocsReference({
+  id,
+  name,
+  pinned,
+  docs: given,
+  title = "From the official docs",
+}: {
+  id: string;
+  name: string;
+  pinned?: string;
+  /** reference supplied directly (proving grounds) instead of a framework's */
+  docs?: FrameworkDocs;
+  title?: string;
+}) {
+  const docs = given || frameworkDocs[id];
+  const relayAware = !given;
   const [q, setQ] = useState(""),
     [group, setGroup] = useState("all"),
     [relayOnly, setRelayOnly] = useState(false);
@@ -63,10 +77,10 @@ export function DocsReference({ id, name, pinned }: { id: string; name: string; 
     <section className="fw-block fw-docs" id={`fw-docs-${id}`} aria-labelledby={`fw-docs-title-${id}`}>
       <header className="fw-block-head">
         <div>
-          <h3 id={`fw-docs-title-${id}`}>From the official docs</h3>
+          <h3 id={`fw-docs-title-${id}`}>{title}</h3>
           <p className="hl-fine">
-            {total} documented features, classes, functions and techniques across {docs.sections.length} sections;{" "}
-            {wired} are used by Relay. Compiled from{" "}
+            {total} documented {relayAware ? "features, classes, functions and techniques" : "parameters, classes, metrics and concepts"} across{" "}
+            {docs.sections.length} sections{relayAware ? `; ${wired} are used by Relay` : ""}. Compiled from{" "}
             {safeLink(docs.source) ? (
               <a href={safeLink(docs.source)} target="_blank" rel="noreferrer">
                 {name}'s docs
@@ -74,8 +88,10 @@ export function DocsReference({ id, name, pinned }: { id: string; name: string; 
             ) : (
               `${name}'s docs`
             )}{" "}
-            on {docs.checked}. Docs follow the latest release{pinned ? `; Relay pins ${pinned}` : ""}, so names can
-            differ slightly.
+            on {docs.checked}.{" "}
+            {relayAware
+              ? `Docs follow the latest release${pinned ? `; Relay pins ${pinned}` : ""}, so names can differ slightly.`
+              : `Read from the source at the pinned revision${pinned ? ` (${pinned})` : ""}.`}
           </p>
         </div>
       </header>
@@ -92,10 +108,12 @@ export function DocsReference({ id, name, pinned }: { id: string; name: string; 
             </button>
           ))}
         </div>
-        <label className="hl-check hl-check-inline">
-          <input type="checkbox" checked={relayOnly} onChange={(e) => setRelayOnly(e.target.checked)} />
-          <span>Only what Relay uses</span>
-        </label>
+        {relayAware && (
+          <label className="hl-check hl-check-inline">
+            <input type="checkbox" checked={relayOnly} onChange={(e) => setRelayOnly(e.target.checked)} />
+            <span>Only what Relay uses</span>
+          </label>
+        )}
         <span className="fw-docs-count" aria-live="polite">
           {shown} of {total}
         </span>
