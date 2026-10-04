@@ -3,6 +3,16 @@ from adapters.common import SYSTEM, definitions, dispatch, context, finish, canc
 from adapters.state import load, save, turn_prompt
 
 async def run_pydantic(engine,prompt,model_override=None):
+    import anthropic_budget
+    if model_override is None and anthropic_budget.guarded('pydantic'):
+        from pydantic_ai.models.anthropic import AnthropicModel
+        from pydantic_ai.providers.anthropic import AnthropicProvider
+        async with anthropic_budget.MeterProxy(engine) as meter:
+            model=AnthropicModel(anthropic_budget.MODEL,provider=AnthropicProvider(api_key=meter.token,base_url=meter.base_url))
+            return await _run_pydantic(engine,prompt,model)
+    return await _run_pydantic(engine,prompt,model_override)
+
+async def _run_pydantic(engine,prompt,model_override=None):
     from pydantic_ai import Agent
     from pydantic_ai.tools import Tool
     from pydantic_ai.usage import UsageLimits

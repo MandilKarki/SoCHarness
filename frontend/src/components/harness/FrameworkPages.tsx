@@ -1,5 +1,5 @@
 import { ArrowLeft, ArrowUpRight, Check, ChevronLeft, ChevronRight, Lock, Play } from "lucide-react";
-import type { Adapter, Inventory } from "../../lib/types";
+import type { Adapter, Inventory, Trace } from "../../lib/types";
 import { frameworks, frameworkById, isRealApi, type FrameworkProfile } from "../../lib/frameworks";
 import { safeLink } from "../../lib/api";
 import { FwIcon, Scene } from "./FrameworkArt";
@@ -46,8 +46,12 @@ export function readiness(id: string, adapter: Adapter | undefined, inventory: I
       ok: guarded,
       label: "Covered by the spending guard",
       detail: guarded
-        ? "Each call reserves budget from the shared allowance before it runs."
-        : "While the $5 trial is active, only guarded adapters may call a model. This one needs a reservation ledger for its provider first.",
+        ? id === "openai"
+          ? "Each call reserves budget from the OpenAI allowance before it runs."
+          : "A local meter reserves each request's worst-case cost from the $5 Anthropic allowance, then settles from the usage receipt."
+        : ["claude", "pydantic", "deepagents", "pi"].includes(id)
+          ? "Turns on when the server enables the Anthropic allowance (RELAY_ANTHROPIC_TRIAL_ENABLED=1)."
+          : "While the $5 trial is active, only guarded adapters may call a model. This one needs a reservation ledger for its provider first.",
     },
     { ok: enabled, label: "Enabled switch", detail: enabled ? "On" : "Turned off for this installation." },
     { ok: verified, label: "Live-verified", detail: verified ? "Recorded live acceptance evidence exists." : "Only contract-tested with fake model transports so far." },
@@ -120,6 +124,7 @@ export function FrameworkPage({
   onCell,
   onRun,
   running,
+  lastRun,
 }: {
   id: string;
   inventory: Inventory | null;
@@ -129,6 +134,7 @@ export function FrameworkPage({
   onCell: (row: string, fw: string) => void;
   onRun: (id: string) => void;
   running: boolean;
+  lastRun?: { runtime: string; trace: Trace[] };
 }) {
   const fw: FrameworkProfile | undefined = frameworkById[id];
   if (!fw) return null;
@@ -240,7 +246,7 @@ export function FrameworkPage({
         </aside>
       </div>
 
-      <DeepDive id={id} name={fw.name} />
+      <DeepDive id={id} name={fw.name} lastRun={lastRun} />
 
       <Blueprint id={id} name={fw.name} />
 

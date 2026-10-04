@@ -8,6 +8,15 @@ from adapters.common import SYSTEM,FINDINGS,definitions,dispatch,context,finish,
 from adapters.state import load,save,turn_prompt,directory
 
 async def run_node(engine,prompt):
+    import anthropic_budget
+    runtime=engine.store.session(engine.sid)['config']['runtime']
+    if runtime=='pi' and anthropic_budget.guarded('pi'):
+        # Pi gets a per-run token and a loopback URL; the meter holds the real key.
+        async with anthropic_budget.MeterProxy(engine) as meter:
+            return await _run_node(engine,prompt,{'ANTHROPIC_API_KEY':meter.token,'RELAY_ANTHROPIC_BASE_URL':meter.base_url})
+    return await _run_node(engine,prompt)
+
+async def _run_node(engine,prompt,meter_env=None):
     config=engine.store.session(engine.sid)['config'];runtime=config['runtime']
     cwd=directory(engine)
     # Child gets only its provider key, never all server environment secrets.
@@ -15,6 +24,7 @@ async def run_node(engine,prompt):
     names+= {'pi':['ANTHROPIC_API_KEY'],'vercel':['AI_GATEWAY_API_KEY'],'opencode':['RELAY_OPENCODE_URL','RELAY_OPENCODE_PASSWORD']}[runtime]
     env={name:os.environ[name] for name in names if name in os.environ}
     env.update({'NO_COLOR':'1','PI_CODING_AGENT_DIR':str(cwd),'DO_NOT_TRACK':'1'})
+    env.update(meter_env or {})
     async def send(value):
         proc.stdin.write((json.dumps(value,ensure_ascii=False)+'\n').encode());await proc.stdin.drain()
     prior=load(engine)

@@ -1,6 +1,6 @@
 import { Fragment, useMemo, useState } from "react";
 import { ArrowUpRight, Search } from "lucide-react";
-import type { Inventory } from "../../lib/types";
+import type { Inventory, Trace } from "../../lib/types";
 import { parts, shortName, type PartId } from "../../lib/anatomy";
 import { safeLink } from "../../lib/api";
 import { Glyph, Legend, Section, cellText } from "./shared";
@@ -24,6 +24,7 @@ export function FrameworksView({
   adapters,
   onRun,
   running,
+  lastRun,
 }: {
   hidden: boolean;
   inventory: Inventory | null;
@@ -35,6 +36,7 @@ export function FrameworksView({
   adapters: Adapter[];
   onRun: (id: string) => void;
   running: boolean;
+  lastRun?: { runtime: string; trace: Trace[] };
 }) {
   const [query, setQuery] = useState(""),
     [category, setCategory] = useState("All"),
@@ -181,6 +183,7 @@ export function FrameworksView({
           }}
           onRun={onRun}
           running={running}
+          lastRun={lastRun}
         />
       </div>
     );

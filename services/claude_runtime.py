@@ -12,6 +12,13 @@ Only the provided case-scoped tools are available. No real containment is possib
 Return a concise analyst answer; never claim an approval or a simulated action is a real endpoint change.'''
 
 async def run_claude(engine,prompt):
+    import anthropic_budget
+    if not anthropic_budget.guarded('claude'):return await _run_claude(engine,prompt)
+    # The CLI only ever sees a per-run token and a loopback URL; the meter holds the key.
+    async with anthropic_budget.MeterProxy(engine) as meter:
+        return await _run_claude(engine,prompt,anthropic_budget.claude_env(meter))
+
+async def _run_claude(engine,prompt,meter_env=None):
     from claude_agent_sdk import ClaudeSDKClient, ClaudeAgentOptions, tool, create_sdk_mcp_server, PermissionResultDeny, PermissionResultAllow, HookMatcher, AgentDefinition
     session=engine.store.session(engine.sid)
     config=session['config']
@@ -106,7 +113,7 @@ async def run_claude(engine,prompt):
         max_budget_usd=config['budget_usd'],permission_mode='default',can_use_tool=deny_other,
         resume=session['sdk_session'],cwd=str(cwd),include_partial_messages=True,agents=agents,
         plugins=[{'type':'local','path':str(ROOT/'plugins'/'relay-soc')}] if config['skills'] else [],
-        env={**__import__('child_env').claude_environment(),'CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH':'1','CLAUDE_CODE_MAX_CONCURRENT_SUBAGENTS':'2'},
+        env={**__import__('child_env').claude_environment(),'CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH':'1','CLAUDE_CODE_MAX_CONCURRENT_SUBAGENTS':'2',**(meter_env or {})},
         enable_file_checkpointing=config['file_workspace'],extra_args={'replay-user-messages':None} if config['file_workspace'] else {},
         hooks={name:[HookMatcher(hooks=[observe_hook])] for name in ('PreToolUse','PostToolUse','PostToolUseFailure','PreCompact','SubagentStart','SubagentStop')},
         output_format={'type':'json_schema','schema':{'type':'object','properties':{
@@ -169,8 +176,9 @@ async def run_claude(engine,prompt):
                     got_result=True
                     usage=message.usage or {}
                     cost=message.total_cost_usd or 0
+                    # Under the Anthropic meter the ledger already added exact per-request costs.
                     engine.store.db.execute('UPDATE relay_sessions SET cost_usd=cost_usd+?,input_tokens=input_tokens+?,output_tokens=output_tokens+? WHERE id=?',
-                        (cost,usage.get('input_tokens',0),usage.get('output_tokens',0),engine.sid));engine.store.db.commit()
+                        (0 if meter_env else cost,usage.get('input_tokens',0),usage.get('output_tokens',0),engine.sid));engine.store.db.commit()
                     structured=getattr(message,'structured_output',None)
                     engine.record('sdk.result',{'subtype':message.subtype,'is_error':message.is_error,'cost_usd':cost,'usage':usage,'num_turns':message.num_turns,'structured_output':structured})
                     if message.is_error: raise Problem('SDK stopped: '+message.subtype)

@@ -77,6 +77,12 @@ class Store:
             id TEXT PRIMARY KEY,session_id TEXT NOT NULL REFERENCES relay_sessions(id),model TEXT NOT NULL,
             charged_micros INTEGER NOT NULL CHECK(charged_micros>=0),state TEXT NOT NULL,
             input_tokens INTEGER,output_tokens INTEGER,created_at TEXT NOT NULL,settled_at TEXT);
+          CREATE TABLE IF NOT EXISTS relay_anthropic_trial(id INTEGER PRIMARY KEY CHECK(id=1),expires_at REAL NOT NULL,halted INTEGER NOT NULL);
+          CREATE TABLE IF NOT EXISTS relay_anthropic_calls(
+            id TEXT PRIMARY KEY,session_id TEXT NOT NULL REFERENCES relay_sessions(id),model TEXT NOT NULL,
+            reserved_micros INTEGER NOT NULL CHECK(reserved_micros>=0),charged_micros INTEGER NOT NULL CHECK(charged_micros>=0),
+            state TEXT NOT NULL,input_tokens INTEGER,output_tokens INTEGER,cache_write_tokens INTEGER,cache_read_tokens INTEGER,
+            detail TEXT,created_at TEXT NOT NULL,settled_at TEXT);
           CREATE TABLE IF NOT EXISTS relay_auth_meta(key TEXT PRIMARY KEY,value TEXT NOT NULL);
           CREATE TABLE IF NOT EXISTS relay_passkeys(
             id TEXT PRIMARY KEY,public_key BLOB NOT NULL,sign_count INTEGER NOT NULL,

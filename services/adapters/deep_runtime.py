@@ -5,6 +5,18 @@ from store import Problem, uid
 
 
 async def run_deep(engine, prompt, model_override=None):
+    import anthropic_budget
+    if model_override is None and anthropic_budget.guarded('deepagents'):
+        from langchain_anthropic import ChatAnthropic
+        config = engine.store.session(engine.sid)['config']
+        async with anthropic_budget.MeterProxy(engine) as meter:
+            model = ChatAnthropic(model=anthropic_budget.MODEL, max_tokens=config['max_output_tokens'], max_retries=0, timeout=120,
+                                  base_url=meter.base_url, api_key=meter.token)
+            return await _run_deep(engine, prompt, model)
+    return await _run_deep(engine, prompt, model_override)
+
+
+async def _run_deep(engine, prompt, model_override=None):
     from deepagents import create_deep_agent
     from langchain.agents import create_agent
     from langchain_core.tools import StructuredTool

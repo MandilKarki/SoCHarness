@@ -36,6 +36,8 @@ def cell_metadata(runtime, capability, status):
     file = spec['implementation'] if implemented else None
     if status == 'shared' and capability in SHARED:
         file, mechanism = SHARED[capability]
+    if status == 'shared' and capability == 'usd_budget' and runtime in ('pydantic', 'deepagents', 'pi'):
+        file, mechanism = 'services/anthropic_budget.py', 'MeterProxy + AnthropicBudget.reserve / settle'
     if implemented and not mechanism:
         mechanism = 'Restricted integration in the referenced adapter; API-level mapping still requires review.'
     live = spec['live_evidence']
@@ -49,7 +51,7 @@ def cell_metadata(runtime, capability, status):
         'live_status': 'connectivity smoke only' if live and capability in live['scope'] else 'not live-tested',
         'live_evidence': live if live and capability in live['scope'] else None,
         'required_credential': spec['credential'],
-        'paid_test_policy': 'Only guarded OpenAI nano is enabled. Other runtimes require a shared cost guard and explicit provider setup.',
+        'paid_test_policy': 'Only guarded runtimes may make paid calls: OpenAI nano, and Claude Haiku 4.5 for Claude, PydanticAI, Deep Agents and Pi through the Anthropic meter. Other runtimes require a cost guard and explicit provider setup.',
     }
 
 def validate_manifest(root):

@@ -160,6 +160,78 @@ export function eventGuide(
       "This is the model’s interpretation. Verify its claims against the returned evidence; formatted output alone cannot establish truth.",
       "result.final_output",
     ],
+    "budget.meter": [
+      "Metering proxy opened",
+      "Application",
+      "Relay started a loopback proxy for this run. The framework only gets a one-run token and a local URL; the real Anthropic key stays in Relay.",
+      "ANTHROPIC_BASE_URL=http://127.0.0.1:<port>",
+    ],
+    "budget.reserved": [
+      "Budget reserved · $" + Number(p.reserved_usd ?? 0).toFixed(4),
+      "Application",
+      "Before the provider is called, Relay holds the worst-case cost of this request in its ledger. If the allowance cannot cover it, nothing is sent.",
+      p.provider === "anthropic" ? "MeterProxy → AnthropicBudget.reserve()" : "GuardedModel.reserve() → TrialBudget.reserve()",
+    ],
+    "budget.settled": [
+      "Cost settled · $" + Number(p.cost_usd ?? 0).toFixed(5),
+      "Application",
+      "The provider's usage receipt replaced the hold with the exact cost. Unused reservation returns to the allowance.",
+      p.provider === "anthropic" ? "usage from message_start + message_delta (cumulative)" : "response.completed usage → TrialBudget.settle()",
+    ],
+    "budget.released": [
+      "Hold released · provider error",
+      "Application",
+      "The provider answered with an HTTP error before producing output, which is not billed, so the hold was released at $0.",
+      "HTTP 4xx/5xx → AnthropicBudget.release()",
+    ],
+    "budget.retained": [
+      "Hold kept · outcome unknown",
+      "Application",
+      "The stream broke or arrived without a usage receipt. Relay keeps the whole reservation because it cannot prove what was billed.",
+      "AnthropicBudget.retain()",
+    ],
+    "budget.halted": [
+      "Allowance halted",
+      "Application",
+      "The usage receipt was missing, null or implausible, so Relay kept the whole hold and stopped all further paid calls until an operator reviews the ledger.",
+      "AnthropicBudget.settle() → halt()",
+    ],
+    "budget.blocked": [
+      "Request blocked before the provider",
+      "Application",
+      "The meter refused this request (wrong model, paid server tool, thinking, or no allowance left). Nothing reached the provider.",
+      "MeterProxy policy → HTTP 400/403",
+    ],
+    "sdk.tool_use": [
+      "Model asks for " + String(p.tool ?? "a tool"),
+      "SDK",
+      "The model emitted a tool-use block. Before it runs, Claude's permission chain (hooks, rules, mode, callback) decides.",
+      "ToolUseBlock(id, name, input)",
+    ],
+    "permission.denied": [
+      "Permission denied · " + String(p.tool ?? ""),
+      "SDK",
+      "A hook or permission callback refused this tool. The model receives the refusal as the tool result and must continue without it.",
+      "PreToolUse → permissionDecision: deny",
+    ],
+    "adapter.lifecycle": [
+      String(p.runtime ?? "Framework") + " · " + String(p.event ?? "event"),
+      "SDK",
+      "A lifecycle event from the framework's own loop (session created or resumed, turn start or end, tool execution).",
+      "framework event stream",
+    ],
+    "adapter.plan": [
+      "Plan updated (write_todos)",
+      "SDK",
+      "Deep Agents wrote its to-do list into graph state. Planning is a tool call, so it shows up like any other step.",
+      "TodoListMiddleware → write_todos",
+    ],
+    "sdk.result": [
+      "Framework returned its result",
+      "SDK",
+      "The framework's loop ended and reported usage. For metered runs the authoritative cost is in the budget events.",
+      "ResultMessage / RunResult / final state",
+    ],
     "run.completed": [
       "Run completed · session saved",
       "Application",
@@ -241,6 +313,11 @@ const sdkKinds = new Set([
   "sdk.approval.resumed",
   "session.loaded",
   "session.staged",
+  "sdk.tool_use",
+  "permission.denied",
+  "adapter.lifecycle",
+  "adapter.plan",
+  "sdk.result",
 ]);
 export function laneOf(event: Trace): Lane {
   if (sdkKinds.has(event.kind)) return "sdk";

@@ -15,8 +15,13 @@ export async function runPi(request,bridge,overrides={}){
   const runtime=overrides.runtime||await ModelRuntime.create({authPath:join(request.cwd,'auth.json'),modelsPath:null,
     modelsStorePath:join(request.cwd,'models-cache.json'),allowModelNetwork:false,refreshOnCreate:false});
   if(!overrides.runtime)await runtime.setRuntimeApiKey('anthropic',process.env.ANTHROPIC_API_KEY);
-  const model=runtime.getModel('anthropic',request.config.model);
-  if(!model)throw Error('Pi model not found in installed catalog: '+request.config.model);
+  const meterUrl=process.env.RELAY_ANTHROPIC_BASE_URL;
+  // Under Relay's Anthropic allowance the pinned snapshot may be listed by its alias.
+  const found=runtime.getModel('anthropic',request.config.model)||
+    (meterUrl&&request.config.model.startsWith('claude-haiku-4-5')?runtime.getModel('anthropic','claude-haiku-4-5'):undefined);
+  if(!found)throw Error('Pi model not found in installed catalog: '+request.config.model);
+  // Every request goes to Relay's loopback metering proxy, which holds the real key.
+  const model=meterUrl?{...found,baseUrl:meterUrl}:found;
   const customTools=request.tools.map(t=>({name:t.name,label:t.name,description:t.description,parameters:t.schema,
     executionMode:'sequential',execute:async(_id,args)=>({content:[{type:'text',text:JSON.stringify(await bridge.call(t.name,args))}],details:{}})}));
   const sessionDir=join(request.cwd,'sessions');

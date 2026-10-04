@@ -11,7 +11,7 @@
 ### Harness Lab — the default signed-in homepage
 
 The homepage is a learning lab for agent harnesses, in the same visual language as
-the Architecture Atlas. Three views (`#anatomy`, `#run`, `#frameworks`; existing
+the Architecture Atlas. Four views (`#anatomy`, `#run`, `#frameworks`, `#compare`; existing
 `#sdk-lab` links open Live run):
 
 1. **Anatomy:** an interactive map of the twelve parts every harness has — request,
@@ -40,7 +40,8 @@ the Architecture Atlas. Three views (`#anatomy`, `#run`, `#frameworks`; existing
    profile and a **Run it** checklist (adapter installed, key set, spending-guard
    coverage, live verification). A page switches to **Runs live** only when the server
    reports that adapter as available *and* guarded; Live run then uses that runtime with
-   bounded read-only limits. Today only OpenAI is guarded. Below the pages,
+   bounded read-only limits. OpenAI is guarded by its trial ledger; Claude, Pydantic AI,
+   Deep Agents and Pi by the separate Anthropic allowance below. Below the pages,
    all capability families × frameworks appear as one map, with search,
    category filter and A/B comparison ("only differences"). Select a cell for the
    upstream API, implementation file, test suite and boundary note; select a framework
@@ -56,8 +57,28 @@ the Architecture Atlas. Three views (`#anatomy`, `#run`, `#frameworks`; existing
    and a searchable **official docs reference**. These are written from public docs and
    source; internals can change between releases.
 
-Browsing, history and export make no model calls. The existing shared $5 October
-allowance and identity controls remain unchanged. Failed or interrupted calls can
+   **Live runs meet the diagrams.** Each Live run step whose mechanism a chapter explains
+   gets an **Under the hood** link in the inspector (`#frameworks/<id>/deep/<chapter>`).
+   On the framework page, chapters exercised by your last run are marked *in your run*,
+   and each shows the recorded events behind it with their timing.
+4. **Compare** (`#compare/<mechanism>`): one mechanism, all eleven frameworks. Eight
+   mechanisms (loop and stopping, tools, human approval, guardrails/hooks/permissions,
+   sessions and memory, context management, multi-agent, events and tracing). Frameworks
+   gather under the design pattern they use, with its trade-off; select one for its API,
+   real code and the chapter that explains it. A table lines every framework up on the
+   same dimensions, and each mechanism ends with guidance for a SOC agent platform.
+
+**Keeping the content honest.** `python services/docs_drift.py` extracts every import and
+`ImportedName.attribute` from the chapter and comparison snippets and resolves them
+against the installed, pinned SDKs (Python with the main and extended interpreters,
+TypeScript through `workers/agent-bridge`). It reports `missing` (real drift: the package
+is installed but the name is gone), `not_installed` (skipped) and `type_only`. CI runs it
+report-only in each SDK job. On October 4, 2026 the Python snippets were also checked
+statically against the source of each pinned release tag.
+
+Browsing, history and export make no model calls. The shared $5 October OpenAI
+allowance and identity controls remain unchanged; Anthropic-key frameworks use their own
+$5 allowance (see below). Failed or interrupted calls can
 retain budget holds; refresh saved state before retrying. Keep the mobile tab
 foregrounded during streaming; this is not a durable background-job service.
 
@@ -160,7 +181,8 @@ and Google login require no API credit. No automatic recharge was configured.
 
 The trial allows only OpenAI Agents with `gpt-5.4-nano-2026-03-17`, local Relay
 function tools, at most 6 model turns per run and 2,048 output tokens per request.
-Other paid SDK paths are blocked during the trial. Replay remains free.
+Other paid SDK paths are blocked during the trial, apart from the separate Anthropic
+allowance described below. Replay remains free.
 
 The SQLite ledger reserves $0.10 **before every request**, settles verified usage
 at conservative standard uncached token rates, and retains the entire hold for
@@ -185,6 +207,51 @@ Pricing reviewed October 1, 2026: [$0.20/M input and $1.25/M output for GPT-5.4 
 Cached-input discounts are deliberately ignored. The $0.10 hold covers a full
 400,000-token input window plus the enforced output ceiling at these rates.
 Review rates before changing the model or extending any trial.
+
+### Separate $5 Anthropic allowance (Claude, Pydantic AI, Deep Agents, Pi)
+
+Owner-approved October 4, 2026: a second, independent ledger with the same rules as the
+OpenAI trial ($5 total, $4.50 spendable, $0.50 buffer, no refill, same deadline and never
+later than **2026-11-01T06:59:59Z**). Only `claude-haiku-4-5-20251001` is allowed, output
+is capped at 2,048 tokens per request and extended thinking is off.
+
+These frameworks own their HTTP clients (the Claude SDK even runs the Claude Code CLI as a
+subprocess), so Relay meters at the network edge instead of wrapping a model object.
+`services/anthropic_budget.py` starts a loopback proxy for each run. The framework gets
+only a random per-run token and `http://127.0.0.1:<port>`. Child processes (the Claude
+CLI, the Pi worker) never see the real key; PydanticAI and Deep Agents run inside the
+server process, so they are handed the token too, but the server's own environment
+still holds the key. For every Messages API request the proxy:
+
+1. checks the request against an allowlist: the pinned model, known top-level fields
+   only, custom (client) tools only, no extended thinking, the standard service tier, no
+   document inputs, no priced beta headers, and a clean request line and headers (no
+   control characters, a Content-Length body of at most 2 MB). It clamps `max_tokens` to
+   2,048 and accepts only `/v1/messages` and the free `/v1/messages/count_tokens`, which
+   gets the same checks;
+2. reserves the worst case **before** contacting Anthropic: the whole 200k context
+   window priced as 1-hour cache writes ($2/M) plus the output cap at $5/M, so **$0.41**
+   per in-flight request (about ten at once fit in the allowance);
+3. sends it to a fixed upstream path with only price-neutral headers, and streams the
+   response back byte for byte;
+4. settles the exact cost from the usage receipt (`message_start` plus cumulative
+   `message_delta` for streams): $1/M input, $1.25/M or $2/M cache writes, $0.10/M cache
+   reads, $5/M output (Haiku 4.5 pricing reviewed October 4, 2026).
+
+A request that never reached Anthropic, or an HTTP error before any output (error
+responses are not billed), is released at $0. A dropped stream, a missing, null or
+implausible receipt, or unexpected billable fields (server tools, iterations, a
+non-standard tier) keep the whole hold, and an unusable receipt halts the ledger. Live run shows each reservation and settlement as steps, and the header shows
+both balances. This is not an account-wide limit: set a spend limit in the Anthropic
+Console as a second layer.
+
+To turn it on: `RELAY_ANTHROPIC_TRIAL_ENABLED=1` (already in `fly.toml`) and
+`fly secrets set ANTHROPIC_API_KEY=...` from your own terminal. Never paste the key into
+the browser or chat. The proxy was tested against a local fake Anthropic endpoint
+(`services/test_anthropic_budget.py`, including request smuggling, null usage and
+unreachable-upstream cases) and reviewed independently; a first live run of each
+framework is still needed to confirm it end to end. If a framework sends a field the
+allowlist does not know, the run fails closed with a `budget.blocked` step naming it.
 
 Firebase uses the no-cost Spark plan with Google sign-in, not SMS, Hosting,
 Firestore or Identity Platform upgrades. Configure server environment variables:

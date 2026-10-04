@@ -47,6 +47,10 @@ jobs:
       - run: python -m unittest discover -s services -p "test_*.py" -v
       - run: node --test test/adapters.test.mjs
         working-directory: workers/agent-bridge
+      # Report-only: flags learning-content APIs that no longer exist in the pinned SDKs.
+      - name: Learning content API drift (core SDKs)
+        continue-on-error: true
+        run: python services/docs_drift.py
 
   extended-contracts:
     strategy:
@@ -67,6 +71,9 @@ jobs:
       - run: python -m pip install -r workers/python-bridge/requirements.txt
       - run: python -m pip check
       - run: python -m unittest discover -s workers/python-bridge -p test_contracts.py -v
+      - name: Learning content API drift (ADK, Microsoft, OpenHands)
+        continue-on-error: true
+        run: python services/docs_drift.py
 
   hermes-contracts:
     strategy:
@@ -89,3 +96,6 @@ jobs:
       - run: python -m pip install -e ./work/vendor/hermes-agent
       - run: python -m pip check
       - run: python -m unittest discover -s workers/python-bridge -p test_hermes.py -v
+      - name: Learning content API drift (Hermes)
+        continue-on-error: true
+        run: python services/docs_drift.py

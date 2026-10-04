@@ -2,6 +2,9 @@ import { Fragment, useEffect, useMemo, useRef, useState, type ReactNode } from "
 import { ArrowUpRight, ChevronLeft, ChevronRight, Pause, Play } from "lucide-react";
 import { deepDives, type Chapter, type Diagram, type DNode, type Tag } from "../../lib/deep";
 import { safeLink } from "../../lib/api";
+import { runDigest } from "../../lib/deep/live";
+import { eventGuide } from "../../lib/harnessView";
+import type { Trace } from "../../lib/types";
 
 /* ---------- small helpers ---------- */
 
@@ -136,7 +139,7 @@ function highlight(src: string, lang: Chapter["code"]["lang"]): ReactNode[] {
   return out;
 }
 
-function CodeView({ code }: { code: Chapter["code"] }) {
+export function CodeView({ code }: { code: Chapter["code"] }) {
   const [copied, setCopied] = useState(false);
   const copy = async () => {
     try {
@@ -408,10 +411,52 @@ function DiagramView(p: DiagramProps) {
   }
 }
 
+/* ---------- what actually happened in your last run ---------- */
+
+function RunPanel({ events, start, name }: { events: Trace[]; start?: Trace; name: string }) {
+  const t0 = start ? Date.parse(start.created_at) : NaN;
+  if (!events.length)
+    return (
+      <p className="dd-run dd-run-empty">
+        Your last {name} run did not exercise this mechanism. Pick a chapter marked <em>in your run</em> to compare the
+        diagram with what was recorded.
+      </p>
+    );
+  return (
+    <section className="dd-run" aria-label="In your last run">
+      <header>
+        <strong>In your last run</strong>
+        <small>{events.length} recorded events explained by this chapter</small>
+      </header>
+      <ol>
+        {events.slice(0, 12).map((e) => {
+          const ms = Date.parse(e.created_at) - t0;
+          return (
+            <li key={e.seq}>
+              <span className="dd-run-t">{Number.isFinite(ms) ? `+${(ms / 1000).toFixed(2)}s` : "#" + e.seq}</span>
+              <span>{eventGuide(e)?.title || e.kind}</span>
+              <code>{e.kind}</code>
+            </li>
+          );
+        })}
+        {events.length > 12 && <li className="dd-run-more">+{events.length - 12} more in Live run</li>}
+      </ol>
+    </section>
+  );
+}
+
 /* ---------- the section ---------- */
 
-export function DeepDive({ id, name }: { id: string; name: string }) {
+/** Events from the most recent run (after the last analyst message). */
+function latestRun(trace: Trace[]) {
+  const start = trace.map((t) => t.kind).lastIndexOf("message.user");
+  return start < 0 ? trace : trace.slice(start);
+}
+
+export function DeepDive({ id, name, lastRun }: { id: string; name: string; lastRun?: { runtime: string; trace: Trace[] } }) {
   const dive = deepDives[id];
+  const run = useMemo(() => (lastRun && lastRun.runtime === id ? latestRun(lastRun.trace) : null), [lastRun, id]);
+  const digest = useMemo(() => (run ? runDigest(id, run) : null), [run, id]);
   const reduced = useReducedMotion();
   const [ch, setCh] = useState(0),
     [beat, setBeat] = useState(0),
@@ -427,6 +472,20 @@ export function DeepDive({ id, name }: { id: string; name: string }) {
   useEffect(() => {
     setBeat(0);
   }, [id, ch]);
+  // Deep link from Live run: #frameworks/<id>/deep/<chapter>
+  useEffect(() => {
+    const open = () => {
+      const m = window.location.hash.match(/^#frameworks\/([^/]+)\/deep\/([^/]+)$/);
+      if (!m || m[1] !== id || !dive) return;
+      const i = dive.chapters.findIndex((c) => c.id === m[2]);
+      if (i < 0) return;
+      setCh(i);
+      setTimeout(() => ref.current?.scrollIntoView?.({ behavior: "smooth", block: "start" }), 60);
+    };
+    open();
+    window.addEventListener("hashchange", open);
+    return () => window.removeEventListener("hashchange", open);
+  }, [id, dive]);
   useEffect(() => {
     const el = ref.current;
     if (!el || typeof IntersectionObserver === "undefined") return;
@@ -481,6 +540,11 @@ export function DeepDive({ id, name }: { id: string; name: string }) {
                     <strong>{c.title}</strong>
                     <small>
                       <KindIcon kind={c.diagram.kind} /> {kindLabel[c.diagram.kind]}
+                      {digest?.get(c.id) && (
+                        <em className="dd-seen" title="Events from your last run map to this chapter">
+                          ● {digest.get(c.id)!.length} in your run
+                        </em>
+                      )}
                     </small>
                   </span>
                 </button>
@@ -530,6 +594,8 @@ export function DeepDive({ id, name }: { id: string; name: string }) {
               )}
             </div>
           </div>
+
+          {run && <RunPanel events={digest?.get(chapter.id) || []} start={run[0]} name={name} />}
 
           <div className="dd-cols">
             <div className="dd-explain">

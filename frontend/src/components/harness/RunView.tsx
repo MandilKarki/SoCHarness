@@ -1,4 +1,6 @@
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
+import { chapterFor, chapterHash } from "../../lib/deep/live";
+import { deepDives } from "../../lib/deep";
 import {
   ChevronLeft,
   ChevronRight,
@@ -202,7 +204,9 @@ export function RunView({
 
   const isOpenAI = runtime === "openai";
   const adapter = w.adapters.find((a) => a.id === runtime),
-    trial = w.deployment?.trial;
+    // Each provider has its own fail-closed ledger: OpenAI's trial, or the metered Anthropic allowance.
+    trial = isOpenAI ? w.deployment?.trial : w.deployment?.anthropic_trial?.runtimes?.includes(runtime) ? w.deployment.anthropic_trial : undefined,
+    ledgerName = isOpenAI ? "OpenAI allowance" : "Anthropic allowance";
   const fwProfile = frameworkById[runtime];
   const active = pending || w.busy || w.data?.session.status === "running";
   const continuationSafe =
@@ -245,6 +249,9 @@ export function RunView({
     (sum, t) => sum + Number(t.payload.estimated_usd ?? t.payload.cost_usd ?? 0),
     0,
   );
+  // Metered frameworks report one settled receipt per model request and usage on their final result.
+  const meteredCalls = settled.filter((t) => t.payload.provider === "anthropic").length;
+  const frameworkUsage = object([...run].reverse().find((t) => t.kind === "sdk.result")?.payload.usage);
   const tokens = run
     .filter((t) => t.kind === "model.response")
     .reduce(
@@ -262,9 +269,9 @@ export function RunView({
         : !isOpenAI && !adapter.trial_guard
           ? "This adapter isn't covered by the spending guard yet, so it can't make paid calls here."
         : !trial?.enabled
-          ? "The protected model allowance is not enabled. No unprotected call will be made."
+          ? `The protected ${ledgerName} is not enabled. No unprotected call will be made.`
           : trial.blocked || !Number.isFinite(trial.remaining_usd) || Number(trial.remaining_usd) < 0.1
-            ? "The shared allowance is unavailable or too low for another request."
+            ? `The ${ledgerName} is unavailable or too low for another request.`
             : !w.caseId
               ? "No evidence case is available."
               : (isOpenAI && !contract) || !w.inventory || !w.tools.some((t) => t.name === "query_case_evidence")
@@ -388,6 +395,7 @@ export function RunView({
       total={steps.length}
       onStep={step}
       onPart={onPart}
+      runtime={w.data?.session.config.runtime || runtime}
     />
   ) : null;
 
@@ -817,9 +825,15 @@ export function RunView({
               <span className="hl-tag hl-l-model">Model</span>
             </header>
             <dl className="hl-metrics">
-              <div><dt>Model calls</dt><dd>{requests.length || "—"}</dd></div>
+              <div><dt>Model calls</dt><dd>{requests.length || meteredCalls || "—"}</dd></div>
               <div><dt>Records returned</dt><dd>{returned.length}</dd></div>
-              <div><dt>Tokens in / out</dt><dd>{tokens[0] || tokens[1] ? `${tokens[0]} / ${tokens[1]}` : "—"}</dd></div>
+              <div><dt>Tokens in / out</dt><dd>
+                {tokens[0] || tokens[1]
+                  ? `${tokens[0]} / ${tokens[1]}`
+                  : frameworkUsage.input_tokens || frameworkUsage.output_tokens
+                    ? `${Number(frameworkUsage.input_tokens || 0)} / ${Number(frameworkUsage.output_tokens || 0)}`
+                    : "—"}
+              </dd></div>
               <div><dt>Settled estimate</dt><dd>{settled.length ? `$${estimated.toFixed(4)}` : "—"}</dd></div>
             </dl>
             <Answer result={result} answer={answer} onCite={cite} />
@@ -967,14 +981,18 @@ function Inspector({
   total,
   onStep,
   onPart,
+  runtime,
 }: {
   event: Trace;
   index: number;
   total: number;
   onStep: (d: number) => void;
   onPart: (id: PartId) => void;
+  runtime: string;
 }) {
   const g = eventGuide(event)!;
+  const chapterId = chapterFor(runtime, event);
+  const chapter = chapterId ? deepDives[runtime]?.chapters.find((c) => c.id === chapterId) : undefined;
   const lane = laneOf(event);
   const part = partForEvent(event.kind);
   return (
@@ -997,6 +1015,13 @@ function Inspector({
       <Section title="SDK equivalent">
         <code className="hl-code">{g.code}</code>
       </Section>
+      {chapter && (
+        <Section title="Under the hood">
+          <a className="hl-link hl-deep-link" href={chapterHash(runtime, chapter.id)}>
+            {frameworkById[runtime]?.name || runtime}: {chapter.title} →
+          </a>
+        </Section>
+      )}
       {part && (
         <Section title="Harness part">
           <button className="hl-link" onClick={() => onPart(part.id)}>

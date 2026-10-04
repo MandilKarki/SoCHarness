@@ -146,7 +146,26 @@ export interface Inventory {
   features: { name: string; description: string; view: string }[];
   metrics: Record<string, number | string>;
 }
+export interface Allowance {
+  enabled: boolean;
+  provider?: string;
+  limit_usd?: number;
+  spendable_usd?: number;
+  accounted_usd?: number;
+  remaining_usd?: number;
+  buffer_usd?: number;
+  requests?: number;
+  unsettled_requests?: number;
+  expires_at?: string;
+  blocked?: boolean;
+  halted?: boolean;
+  model?: string;
+  runtimes?: string[];
+  scope?: string;
+}
 export interface Deployment {
+  /** Anthropic-key frameworks (Claude, Pydantic AI, Deep Agents, Pi), metered per request. */
+  anthropic_trial?: Allowance;
   trial?: {
     enabled: boolean;
     limit_usd?: number;

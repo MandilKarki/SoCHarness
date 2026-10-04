@@ -12,11 +12,13 @@ import "@testing-library/jest-dom/vitest";
 import { HarnessApp } from "./HarnessApp";
 import { defaultConfig, type Session, type Trace } from "./lib/types";
 import { publicSteps, evidenceIds, laneOf, stepSummary } from "./lib/harnessView";
+import { chapterFor, runDigest } from "./lib/deep/live";
 import { OrchestrationMap } from "./components/OrchestrationMap";
 let sessions: Session[],
   trace: Trace[],
   calls: { path: string; body: Record<string, unknown> }[],
-  guard: boolean;
+  guard: boolean,
+  anthropic: Record<string, unknown> | undefined;
 const response = (value: unknown) =>
   new Response(JSON.stringify(value), {
     headers: { "Content-Type": "application/json" },
@@ -28,6 +30,7 @@ beforeEach(() => {
   trace = [];
   calls = [];
   guard = true;
+  anthropic = undefined;
   window.scrollTo = vi.fn();
   window.HTMLElement.prototype.scrollIntoView = vi.fn();
   vi.stubGlobal(
@@ -80,6 +83,7 @@ beforeEach(() => {
             limit_usd: 5,
             model: "test-model",
           },
+          ...(anthropic ? { anthropic_trial: anthropic } : {}),
         });
       if (path.startsWith("/api/events?"))
         return response({
@@ -181,7 +185,7 @@ it("fails closed without a spending guard", async () => {
   guard = false;
   render(<HarnessApp />);
   await openLiveRun();
-  await screen.findByText(/protected model allowance is not enabled/);
+  await screen.findByText(/protected OpenAI allowance is not enabled/);
   expect(
     screen.getByRole("button", { name: "Run investigation" }),
   ).toBeDisabled();
@@ -375,4 +379,41 @@ it("walks the under-the-hood deep dive chapter by chapter", async () => {
   expect(document.querySelector(".dd-count")?.textContent).toMatch(/^2\//);
   expect(screen.getByText("In a SOC")).toBeVisible();
   expect(calls.some((c) => c.path.endsWith("/messages"))).toBe(false);
+});
+
+it("compares one mechanism across every framework and links to its chapter", async () => {
+  render(<HarnessApp />);
+  fireEvent.click(await screen.findByRole("tab", { name: /Compare/ }));
+  expect(screen.getByRole("heading", { level: 3, name: "Loop and stopping" })).toBeVisible();
+  fireEvent.click(screen.getByRole("button", { name: /Human approval/ }));
+  expect(screen.getByRole("heading", { level: 3, name: "Human approval" })).toBeVisible();
+  expect(screen.getByText("Pause, serialise, resume", { selector: "strong" })).toBeVisible();
+  const zones = screen.getByLabelText("Frameworks grouped by pattern");
+  fireEvent.click(within(zones).getByRole("button", { name: /Claude Agent SDK/ }));
+  expect(screen.getByRole("link", { name: /Under the hood: The permission evaluation order/ })).toHaveAttribute(
+    "href",
+    "#frameworks/claude/deep/permissions",
+  );
+  expect(screen.getAllByRole("row")).toHaveLength(12); // header + 11 frameworks
+  expect(calls.some((c) => c.path.endsWith("/messages"))).toBe(false);
+});
+
+it("shows the separate Anthropic allowance when the server enables it", async () => {
+  anthropic = { enabled: true, provider: "anthropic", remaining_usd: 4.41, limit_usd: 5, runtimes: ["claude", "pydantic", "deepagents", "pi"] };
+  render(<HarnessApp />);
+  expect(await screen.findByText("$4.41")).toBeVisible();
+  expect(screen.getByText("$4.40")).toBeVisible();
+});
+
+it("maps recorded run events to the chapter that explains them", () => {
+  const ev = (seq: number, kind: string, payload: Record<string, string> = {}) =>
+    ({ seq, kind, payload, created_at: "2026-10-04T00:00:00Z" }) as Trace;
+  expect(chapterFor("openai", ev(1, "guardrail.blocked"))).toBe("guardrails");
+  expect(chapterFor("claude", ev(2, "sdk.tool_use"))).toBe("permissions");
+  expect(chapterFor("pi", ev(3, "adapter.lifecycle", { event: "session.created" }))).toBe("tree");
+  expect(chapterFor("pi", ev(4, "adapter.lifecycle", { event: "turn_start" }))).toBe("loop");
+  expect(chapterFor("vercel", ev(5, "tool.result"))).toBeUndefined();
+  const digest = runDigest("deepagents", [ev(1, "adapter.plan"), ev(2, "agent.delegated"), ev(3, "adapter.plan")]);
+  expect(digest.get("todos")).toHaveLength(2);
+  expect(digest.get("subagents")).toHaveLength(1);
 });

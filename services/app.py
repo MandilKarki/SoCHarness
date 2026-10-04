@@ -103,7 +103,9 @@ class Handler(BaseHTTPRequestHandler):
                     return self.send_json(contract(config))
                 if path=='/api/deployment':
                     from trial_budget import TrialBudget
-                    return self.send_json({**deployment_status(self.access),'trial':TrialBudget(store).snapshot()})
+                    from anthropic_budget import AnthropicBudget
+                    return self.send_json({**deployment_status(self.access),'trial':TrialBudget(store).snapshot(),
+                                           'anthropic_trial':AnthropicBudget(store).snapshot()})
                 if path=='/api/capabilities':return self.send_json(capabilities(store))
                 if path=='/api/adapters':
                     from adapters.registry import catalog

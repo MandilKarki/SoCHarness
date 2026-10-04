@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useRef, useEffect, useState } from "react";
 import { Dialog as DialogPrimitive } from "radix-ui";
 import { ArrowUpRight, Fingerprint, History, Moon, Sun, X } from "lucide-react";
 import { useWorkspace } from "./useWorkspace";
@@ -7,18 +7,20 @@ import { AnatomyView } from "./components/harness/AnatomyView";
 import { FrameworksView, type Focus } from "./components/harness/FrameworksView";
 import type { PartId } from "./lib/anatomy";
 import { experimentFor, type ExperimentId } from "./lib/openaiExperiments";
+import { CompareView } from "./components/harness/CompareView";
 import "./harness.css";
 
 const tabs = [
   { id: "anatomy", label: "Anatomy", hint: "What a harness is made of" },
   { id: "run", label: "Live run", hint: "Watch one agent loop" },
   { id: "frameworks", label: "Frameworks", hint: "11 framework pages" },
+  { id: "compare", label: "Compare", hint: "One mechanism, every SDK" },
 ] as const;
 type Tab = (typeof tabs)[number]["id"];
 
 function tabFromHash(): Tab {
   const h = window.location.hash.replace("#", "").split("/")[0];
-  if (h === "anatomy" || h === "frameworks") return h;
+  if (h === "anatomy" || h === "frameworks" || h === "compare") return h;
   return h === "run" || h === "sdk-lab" ? "run" : "anatomy";
 }
 function pageFromHash(): string | null {
@@ -47,7 +49,8 @@ export function HarnessApp() {
     [page, setPageState] = useState<string | null>(pageFromHash),
     [runtime, setRuntime] = useState("openai");
   const adapter = w.adapters.find((a) => a.id === "openai"),
-    trial = w.deployment?.trial;
+    trial = w.deployment?.trial,
+    claudeTrial = w.deployment?.anthropic_trial;
   const running = w.busy || w.data?.session.status === "running";
 
   const setTab = (t: Tab) => {
@@ -80,6 +83,14 @@ export function HarnessApp() {
     return () => window.removeEventListener("hashchange", on);
   }, []);
   const runnable = w.adapters.filter((a) => a.available && a.trial_guard).map((a) => a.id);
+  const tabStrip = useRef<HTMLElement>(null);
+  // On phones the tab strip scrolls sideways: keep the active tab in view.
+  useEffect(() => {
+    const nav = tabStrip.current,
+      on = nav?.querySelector<HTMLElement>('[aria-selected="true"]');
+    if (nav && on && nav.scrollWidth > nav.clientWidth)
+      nav.scrollLeft = Math.max(0, on.offsetLeft - nav.offsetLeft - (nav.clientWidth - on.offsetWidth) / 2);
+  }, [tab]);
   useEffect(() => {
     try {
       localStorage.setItem("relay-harness-theme", theme);
@@ -123,10 +134,23 @@ export function HarnessApp() {
           {trial?.remaining_usd !== undefined && (
             <span
               className="hl-budget"
-              title={`Shared $${trial.limit_usd ?? 5} allowance for live runs. Browsing, inspecting and exporting are free.`}
+              data-short={claudeTrial?.remaining_usd !== undefined ? "OAI" : undefined}
+              title={`OpenAI: $${trial.limit_usd ?? 5} allowance for live runs. Browsing, inspecting and exporting are free.`}
             >
+              {claudeTrial?.remaining_usd !== undefined && <span className="hl-budget-of">OpenAI </span>}
               <strong>${trial.remaining_usd.toFixed(2)}</strong>
               <span className="hl-budget-of"> of ${trial.limit_usd ?? 5} left</span>
+            </span>
+          )}
+          {claudeTrial?.remaining_usd !== undefined && (
+            <span
+              className="hl-budget"
+              data-short="ANT"
+              title={`Anthropic: $${claudeTrial.limit_usd ?? 5} allowance for Claude, Pydantic AI, Deep Agents and Pi, metered per request.`}
+            >
+              <span className="hl-budget-of">Anthropic </span>
+              <strong>${claudeTrial.remaining_usd.toFixed(2)}</strong>
+              <span className="hl-budget-of"> left</span>
             </span>
           )}
           {running && <span className="hl-live-pill">Run in progress</span>}
@@ -183,7 +207,7 @@ export function HarnessApp() {
           </dl>
         </section>
 
-        <nav className="hl-tabs" role="tablist" aria-label="Lab views">
+        <nav className="hl-tabs" role="tablist" aria-label="Lab views" ref={tabStrip}>
           {tabs.map((t, i) => (
             <button
               key={t.id}
@@ -225,6 +249,7 @@ export function HarnessApp() {
           setRuntime={setRuntime}
           runnable={runnable}
         />
+        <CompareView hidden={tab !== "compare"} />
         <FrameworksView
           hidden={tab !== "frameworks"}
           inventory={w.inventory}
@@ -236,6 +261,7 @@ export function HarnessApp() {
           adapters={w.adapters}
           onRun={runFramework}
           running={!!running}
+          lastRun={w.data ? { runtime: w.data.session.config.runtime, trace: w.data.trace } : undefined}
         />
 
         <footer className="hl-footer">

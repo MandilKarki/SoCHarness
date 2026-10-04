@@ -34,11 +34,17 @@ def deadline():
 def check_runtime(runtime, model=None):
     if runtime == 'simulator':
         return
+    import anthropic_budget
+    if anthropic_budget.guarded(runtime):
+        # Separate fail-closed Anthropic ledger, enforced per request by its metering proxy.
+        anthropic_budget.check(model)
+        return
     if enabled():
         if datetime.now(timezone.utc).timestamp() >= deadline():
             raise Problem('The LLM testing allowance has expired. No new paid requests are allowed.', 409)
         if runtime != 'openai' or (model is not None and model != MODEL):
-            raise Problem('The shared trial budget permits only OpenAI Agents with '+MODEL+'.', 409)
+            extra = ' (Anthropic-key frameworks need the Anthropic allowance)' if runtime in anthropic_budget.RUNTIMES else ''
+            raise Problem('The shared trial budget permits only OpenAI Agents with '+MODEL+extra+'.', 409)
     elif os.getenv('RELAY_MODE') == 'pilot' and runtime == 'openai':
         raise Problem('Pilot OpenAI calls require the trial spending guard.', 409)
 

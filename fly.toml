@@ -17,6 +17,11 @@ kill_timeout = "30s"
   # Owner-approved October extension. Same $5 lifetime allowance; no monthly reset.
   # A single audited migration extends the original deadline without refunding costs.
   RELAY_TRIAL_UNTIL = "2026-11-01T06:59:59Z"
+  # Owner-approved separate $5 Anthropic allowance (Claude Haiku 4.5 only) for Claude,
+  # PydanticAI, Deep Agents and Pi. Enforced per request by services/anthropic_budget.py;
+  # ends with the deadline above and never later than 2026-11-01T06:59:59Z.
+  # Stays inert until ANTHROPIC_API_KEY is set as a Fly secret.
+  RELAY_ANTHROPIC_TRIAL_ENABLED = "1"
   PORT = "8787"
 
 [[mounts]]
