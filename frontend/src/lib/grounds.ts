@@ -43,6 +43,8 @@ export interface Ground {
   caveats: string[];
   /** command from the Defense Collective backend directory */
   reproduce?: string;
+  /** official documentation, shown for grounds without a detailed page */
+  links?: { label: string; url: string; note: string }[];
 }
 
 const DC = "squad.evaluation";
@@ -197,6 +199,12 @@ export const grounds: Ground[] = [
     ],
     caveats: ["Attacker-policy test inside a simulation, not a defensive SOC score.", "The eight-action projection is declared in the result."],
     reproduce: `.eval-envs/cyberbattlesim/bin/python -m ${DC} run cyberbattlesim --source upstream/cyberbattlesim --policy random --episodes 2 --steps 20 --seed 7`,
+    links: [
+      { label: "Quick introduction", url: "https://github.com/microsoft/CyberBattleSim/blob/main/docs/quickintro.md", note: "What the simulation models and how the environments are set up." },
+      { label: "Benchmark documentation", url: "https://github.com/microsoft/CyberBattleSim/blob/main/docs/benchmark.md", note: "How agents are compared, with links to the recorded notebook runs." },
+      { label: "Microsoft Security blog announcement", url: "https://www.microsoft.com/en-us/security/blog/2021/04/08/gamifying-machine-learning-for-stronger-security-and-ai-models/", note: "April 8, 2021: why Microsoft built it and what it is for." },
+      { label: "Repository", url: "https://github.com/microsoft/CyberBattleSim", note: "Source, notebooks and issues." },
+    ],
   },
   {
     id: "agentdojo",
@@ -263,6 +271,12 @@ export const grounds: Ground[] = [
     bridge: "`evaluation range-plan` + `squad.benchmarks`: selection, provenance and isolated execution contract only.",
     runs: [{ policy: "—", scope: "Planning contract", result: "No test executed", status: "partial", note: "Test images and range telemetry are operator-provisioned and not validated." }],
     caveats: ["Many tests need Windows VMs, privileges or topology the constrained runner cannot provide."],
+    links: [
+      { label: "Atomic Red Team documentation", url: "https://www.atomicredteam.io/docs/atomic-red-team", note: "The official guide to the test library." },
+      { label: "Invoke-AtomicRedTeam documentation", url: "https://www.atomicredteam.io/docs/invoke-atomicredteam", note: "The official execution framework and its guide." },
+      { label: "Invoke-AtomicRedTeam wiki", url: "https://github.com/redcanaryco/invoke-atomicredteam/wiki", note: "Installation and usage, maintained by Red Canary." },
+      { label: "Repository", url: "https://github.com/redcanaryco/atomic-red-team", note: "The test library itself." },
+    ],
   },
   {
     id: "emulation",
@@ -289,6 +303,11 @@ export const grounds: Ground[] = [
     bridge: "Same range-plan and runner as Atomic; pinned source and reviewed selection only.",
     runs: [{ policy: "—", scope: "Planning only", result: "No plan executed", status: "partial" }],
     caveats: ["Lab planning and evidence review do not establish emulation capability."],
+    links: [
+      { label: "Repository and plans index", url: "https://github.com/center-for-threat-informed-defense/adversary_emulation_library", note: "Every published emulation plan, each with its own README." },
+      { label: "Library wiki", url: "https://github.com/center-for-threat-informed-defense/adversary_emulation_library/wiki", note: "How plans are structured and how to use them." },
+      { label: "Center for Threat-Informed Defense", url: "https://ctid.mitre.org/", note: "The research centre behind the library and its other projects." },
+    ],
   },
   {
     id: "scenarios",

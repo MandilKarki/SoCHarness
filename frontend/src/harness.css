@@ -5455,3 +5455,20 @@ thead .hl-mx-label {
   .pb-decision code { margin-left: 0; }
 }
 .cc header { display: flex; }
+
+.pg-links { display: flex; flex-direction: column; gap: 10px; }
+.pg-links p { margin: 0; color: var(--muted); font-size: 13.5px; }
+.pg-links p b { color: var(--tc); margin-right: 6px; }
+.pg-links ul { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(220px, 100%), 1fr)); gap: 10px; }
+.pg-links li { animation: pg-rise 0.4s ease both; animation-delay: calc(var(--i, 0) * 70ms); }
+.pg-links a {
+  display: flex; flex-direction: column; gap: 4px; height: 100%;
+  border: 1px solid color-mix(in srgb, var(--tc) 30%, var(--line)); border-radius: 10px;
+  padding: 10px 12px; background: var(--panel2); color: var(--text); text-decoration: none;
+  transition: border-color 0.2s, transform 0.2s;
+}
+.pg-links a:hover, .pg-links a:focus-visible { border-color: var(--tc); transform: translateY(-2px); }
+.pg-links strong { display: inline-flex; align-items: center; gap: 4px; font-size: 13.5px; }
+.pg-links small { color: var(--muted); font-size: 12.5px; line-height: 1.5; }
+.pg-links code { margin-top: auto; font-size: 11px; color: var(--faint); }
+@media (prefers-reduced-motion: reduce) { .pg-links li { animation: none; } .pg-links a:hover { transform: none; } }

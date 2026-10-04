@@ -131,6 +131,28 @@ function GroundDetail({ g }: { g: Ground }) {
           </p>
         </div>
       )}
+      {!docs && !!g.links?.length && (
+        <nav className="pg-links" aria-label={`Official documentation for ${g.name}`}>
+          <p>
+            <b>Official documentation</b> SoCHarness keeps a short summary of {g.name}; the full detail lives with its maintainers.
+          </p>
+          <ul>
+            {g.links.map((l, i) =>
+              safeLink(l.url) ? (
+                <li key={l.url} style={{ ["--i" as string]: i }}>
+                  <a href={safeLink(l.url)} target="_blank" rel="noreferrer">
+                    <strong>
+                      {l.label} <ArrowUpRight size={12} />
+                    </strong>
+                    <small>{l.note}</small>
+                    <code>{new URL(l.url).hostname.replace(/^www\./, "")}</code>
+                  </a>
+                </li>
+              ) : null,
+            )}
+          </ul>
+        </nav>
+      )}
       <div className="pg-body">
         <div>
           <ol className="pg-contract" aria-label="How an agent plugs in">
