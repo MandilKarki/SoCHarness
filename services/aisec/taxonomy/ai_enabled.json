@@ -1,0 +1,185 @@
+{
+ "note": "Threats aimed at the company using AI. Assessed as risks with controls; the lab does not generate synthetic media or phishing.",
+ "register": [
+  {
+   "id": "deepfake-payment",
+   "title": "Deepfake executive instructs a payment",
+   "techniques": [
+    "AML.T0088",
+    "AML.T0052.001",
+    "AML.T0073"
+   ],
+   "what": "A cloned voice or video of a senior person asks staff to move money or share data urgently.",
+   "default": {
+    "likelihood": 2,
+    "impact": 4
+   },
+   "controls": [
+    {
+     "id": "callback",
+     "label": "Call-back on a known number before any payment change",
+     "reduces": "likelihood"
+    },
+    {
+     "id": "dual",
+     "label": "Dual approval above a set amount",
+     "reduces": "impact"
+    },
+    {
+     "id": "training",
+     "label": "Staff shown real deepfake examples",
+     "reduces": "likelihood"
+    },
+    {
+     "id": "codeword",
+     "label": "Out-of-band code words for executives",
+     "reduces": "likelihood"
+    }
+   ]
+  },
+  {
+   "id": "synthetic-identity",
+   "title": "Deepfake identities at onboarding",
+   "techniques": [
+    "AML.T0088",
+    "AML.T0073"
+   ],
+   "what": "Generated documents and faces pass identity verification to open accounts or claims.",
+   "default": {
+    "likelihood": 3,
+    "impact": 3
+   },
+   "controls": [
+    {
+     "id": "liveness",
+     "label": "Liveness detection on selfie checks",
+     "reduces": "likelihood"
+    },
+    {
+     "id": "docforensics",
+     "label": "Document forensics",
+     "reduces": "likelihood"
+    },
+    {
+     "id": "stepup",
+     "label": "Step-up review when signals disagree",
+     "reduces": "impact"
+    }
+   ]
+  },
+  {
+   "id": "voice-auth-bypass",
+   "title": "Cloned voice defeats voice authentication",
+   "techniques": [
+    "AML.T0088",
+    "AML.T0073"
+   ],
+   "what": "A few seconds of public audio is enough to imitate a customer on a phone line that trusts voiceprints.",
+   "default": {
+    "likelihood": 2,
+    "impact": 3
+   },
+   "controls": [
+    {
+     "id": "novoiceonly",
+     "label": "Voiceprint never the only factor",
+     "reduces": "likelihood"
+    },
+    {
+     "id": "riskcalls",
+     "label": "Extra checks on high-risk call requests",
+     "reduces": "impact"
+    }
+   ]
+  },
+  {
+   "id": "ai-phishing",
+   "title": "AI-written, personalised phishing at scale",
+   "techniques": [
+    "AML.T0052",
+    "AML.T0052.000"
+   ],
+   "what": "Fluent, tailored lures in any language, produced cheaply and in volume.",
+   "default": {
+    "likelihood": 4,
+    "impact": 2
+   },
+   "controls": [
+    {
+     "id": "fido",
+     "label": "Phishing-resistant MFA (passkeys or FIDO2)",
+     "reduces": "impact"
+    },
+    {
+     "id": "dmarc",
+     "label": "DMARC enforcement",
+     "reduces": "likelihood"
+    },
+    {
+     "id": "report",
+     "label": "One-click reporting and fast takedown",
+     "reduces": "impact"
+    }
+   ]
+  },
+  {
+   "id": "automated-vuln-discovery",
+   "title": "AI-accelerated vulnerability discovery",
+   "techniques": [
+    "AML.T0016",
+    "AML.T0006"
+   ],
+   "what": "Attackers use AI to find and weaponise flaws in exposed systems faster than patch cycles assume.",
+   "default": {
+    "likelihood": 3,
+    "impact": 3
+   },
+   "controls": [
+    {
+     "id": "kev",
+     "label": "Shorter patch deadlines for exploited, internet-facing flaws",
+     "reduces": "likelihood"
+    },
+    {
+     "id": "inventory",
+     "label": "Complete internet-facing asset inventory",
+     "reduces": "likelihood"
+    },
+    {
+     "id": "segmentation",
+     "label": "Segmentation that limits blast radius",
+     "reduces": "impact"
+    }
+   ]
+  },
+  {
+   "id": "ai-generated-code",
+   "title": "Unreviewed AI-generated code reaches production",
+   "techniques": [
+    "AML.T0102"
+   ],
+   "what": "Code written by assistants ships without the review and testing human code gets.",
+   "default": {
+    "likelihood": 3,
+    "impact": 2
+   },
+   "controls": [
+    {
+     "id": "review",
+     "label": "Human review required for AI-generated changes",
+     "reduces": "likelihood"
+    },
+    {
+     "id": "sast",
+     "label": "Static analysis and dependency checks in CI",
+     "reduces": "likelihood"
+    },
+    {
+     "id": "provenance",
+     "label": "Mark AI-generated changes so they can be found later",
+     "reduces": "impact"
+    }
+   ]
+  }
+ ]
+}

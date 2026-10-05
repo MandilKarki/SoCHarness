@@ -1,0 +1,207 @@
+{
+ "note": "Guidance summaries are SoCHarness paraphrases with links to the source or a law-firm summary of it; check the original before relying on them.",
+ "sectors": {
+  "financial_services": {
+   "label": "Financial services",
+   "guidance": [
+    {
+     "name": "NYDFS 23 NYCRR Part 500 and its frontier-AI letters",
+     "date": "2026-05",
+     "url": "https://datamatters.sidley.com/2026/05/28/new-york-department-of-financial-services-issues-coordinated-guidance-on-frontier-ai-cybersecurity-risks/",
+     "why": "Faster remediation of exploited vulnerabilities, testing and human review of AI-generated code, third-party dependency maps, more frequent resilience testing."
+    },
+    {
+     "name": "NYDFS industry letter on cybersecurity risks arising from AI",
+     "date": "2024-10",
+     "url": "https://www.cozen.com/news-resources/publications/2024/nydfs-issues-guidance-on-cybersecurity-risks-arising-from-artificial-intelligence",
+     "why": "AI-enabled social engineering and deepfakes, AI-enhanced attacks, exposure of data used by AI, and third-party AI dependencies."
+    },
+    {
+     "name": "FinCEN alert on fraud schemes involving deepfake media",
+     "date": "2024-11",
+     "url": "https://fincen.gov/news/news-releases/fincen-issues-alert-fraud-schemes-involving-deepfake-media-targeting-financial",
+     "why": "Red flags for deepfake identity documents and impersonation used to open accounts or move money."
+    }
+   ],
+   "priority_cards": [
+    "indirect-injection",
+    "tool-exfiltration",
+    "tool-misuse",
+    "adversarial-evasion",
+    "approval-manipulation",
+    "model-supply-chain"
+   ],
+   "priority_register": [
+    "deepfake-payment",
+    "synthetic-identity",
+    "voice-auth-bypass",
+    "automated-vuln-discovery"
+   ],
+   "uses": [
+    "Customer service assistants",
+    "Fraud and AML scoring",
+    "Credit decisions",
+    "Coding assistants"
+   ]
+  },
+  "insurance": {
+   "label": "Insurance",
+   "guidance": [
+    {
+     "name": "NAIC Model Bulletin on the Use of AI Systems by Insurers",
+     "date": "2023-12",
+     "url": "https://www.sullcrom.com/insights/memo/2023/December/NAIC-Model-Bulletin-on-Use-of-AI-by-Insurers",
+     "why": "A written AI programme with governance, risk management and controls over third-party AI, adopted by a growing number of states."
+    }
+   ],
+   "priority_cards": [
+    "data-poisoning",
+    "adversarial-evasion",
+    "misinformation",
+    "tool-exfiltration",
+    "model-supply-chain"
+   ],
+   "priority_register": [
+    "synthetic-identity",
+    "ai-phishing",
+    "deepfake-payment"
+   ],
+   "uses": [
+    "Claims triage",
+    "Underwriting models",
+    "Customer service assistants"
+   ]
+  },
+  "healthcare": {
+   "label": "Healthcare",
+   "guidance": [
+    {
+     "name": "FDA draft guidance on AI-enabled device software functions",
+     "date": "2025-01",
+     "url": "https://www.dlapiper.com/en-br/insights/publications/2025/01/fda-issues-artificial-intelligence-enabled-device-software-functions-guidance",
+     "why": "Lifecycle management for AI-enabled devices, including AI-specific cybersecurity threats such as data poisoning and model evasion."
+    }
+   ],
+   "priority_cards": [
+    "tool-exfiltration",
+    "misinformation",
+    "data-poisoning",
+    "indirect-injection",
+    "adversarial-evasion"
+   ],
+   "priority_register": [
+    "ai-phishing",
+    "voice-auth-bypass",
+    "automated-vuln-discovery"
+   ],
+   "uses": [
+    "Clinical documentation assistants",
+    "Patient messaging",
+    "Imaging and triage models"
+   ]
+  },
+  "retail": {
+   "label": "Retail",
+   "guidance": [
+    {
+     "name": "FTC Operation AI Comply",
+     "date": "2024-09",
+     "url": "https://www.davispolk.com/insights/client-update/ftc-announces-new-enforcement-initiative-targeting-deceptive-ai-practices",
+     "why": "Enforcement against deceptive AI claims and AI tools used to deceive consumers."
+    }
+   ],
+   "priority_cards": [
+    "direct-injection",
+    "unsafe-output",
+    "consumption",
+    "tool-misuse",
+    "misinformation"
+   ],
+   "priority_register": [
+    "ai-phishing",
+    "synthetic-identity"
+   ],
+   "uses": [
+    "Shopping assistants",
+    "Customer support",
+    "Recommendation and pricing models"
+   ]
+  },
+  "public_sector": {
+   "label": "Public sector",
+   "guidance": [
+    {
+     "name": "OMB M-25-21: Accelerating Federal Use of AI through Innovation, Governance, and Public Trust",
+     "date": "2025-04",
+     "url": "https://www.whitehouse.gov/wp-content/uploads/2025/02/M-25-21-Accelerating-Federal-Use-of-AI-through-Innovation-Governance-and-Public-Trust.pdf",
+     "why": "AI governance for US federal agencies, with minimum risk practices for high-impact AI."
+    }
+   ],
+   "priority_cards": [
+    "misinformation",
+    "tool-exfiltration",
+    "indirect-injection",
+    "model-supply-chain"
+   ],
+   "priority_register": [
+    "ai-phishing",
+    "deepfake-payment",
+    "automated-vuln-discovery"
+   ],
+   "uses": [
+    "Citizen services assistants",
+    "Caseworker copilots",
+    "Document processing"
+   ]
+  },
+  "technology": {
+   "label": "Technology",
+   "guidance": [
+    {
+     "name": "OWASP Top 10 for Agentic Applications (2026)",
+     "date": "2025-12",
+     "url": "https://genai.owasp.org/resource/owasp-top-10-for-agentic-applications-for-2026",
+     "why": "The baseline list of agent-specific risks this lab tags work with."
+    }
+   ],
+   "priority_cards": [
+    "indirect-injection",
+    "tool-supply-chain",
+    "code-execution",
+    "agent-identity",
+    "tool-misuse"
+   ],
+   "priority_register": [
+    "automated-vuln-discovery",
+    "ai-generated-code",
+    "ai-phishing"
+   ],
+   "uses": [
+    "Coding assistants",
+    "Developer agents",
+    "Support assistants"
+   ]
+  },
+  "other": {
+   "label": "Other",
+   "guidance": [
+    {
+     "name": "OWASP Top 10 for Agentic Applications (2026)",
+     "date": "2025-12",
+     "url": "https://genai.owasp.org/resource/owasp-top-10-for-agentic-applications-for-2026",
+     "why": "The baseline list of agent-specific risks this lab tags work with."
+    }
+   ],
+   "priority_cards": [
+    "indirect-injection",
+    "tool-misuse",
+    "tool-exfiltration"
+   ],
+   "priority_register": [
+    "ai-phishing",
+    "deepfake-payment"
+   ],
+   "uses": []
+  }
+ }
+}

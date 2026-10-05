@@ -9,6 +9,7 @@ import type { PartId } from "./lib/anatomy";
 import { experimentFor, type ExperimentId } from "./lib/openaiExperiments";
 import { CompareView } from "./components/harness/CompareView";
 import { GroundsView } from "./components/harness/GroundsView";
+import { AiSecView } from "./components/harness/AiSecView";
 import { frameworkById } from "./lib/frameworks";
 import "./harness.css";
 
@@ -18,12 +19,13 @@ const tabs = [
   { id: "frameworks", label: "Frameworks", hint: "11 framework pages" },
   { id: "compare", label: "Compare", hint: "One mechanism, every SDK" },
   { id: "grounds", label: "Proving grounds", hint: "Benchmarks & test ground" },
+  { id: "aisec", label: "AI security", hint: "Threat research lab" },
 ] as const;
 type Tab = (typeof tabs)[number]["id"];
 
 function tabFromHash(): Tab {
   const h = window.location.hash.replace("#", "").split("/")[0];
-  if (h === "anatomy" || h === "frameworks" || h === "compare" || h === "grounds") return h;
+  if (h === "anatomy" || h === "frameworks" || h === "compare" || h === "grounds" || h === "aisec") return h;
   return h === "run" || h === "sdk-lab" ? "run" : "anatomy";
 }
 function pageFromHash(): string | null {
@@ -268,6 +270,7 @@ export function HarnessApp() {
           running={!!running}
           runtimeName={frameworkById[runtime]?.name || runtime}
         />
+        <AiSecView hidden={tab !== "aisec"} />
         <FrameworksView
           hidden={tab !== "frameworks"}
           inventory={w.inventory}

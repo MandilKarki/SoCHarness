@@ -1,0 +1,400 @@
+{
+ "note": "Threat cards are SoCHarness summaries in its own words. Technique ids are MITRE ATLAS or OWASP; tests point at checks that exist in SoCHarness today.",
+ "cards": [
+  {
+   "id": "direct-injection",
+   "title": "Direct prompt injection and jailbreaks",
+   "techniques": [
+    "AML.T0051.000",
+    "AML.T0054",
+    "AML.T0068"
+   ],
+   "what": "A user types instructions meant to override the system prompt or talk the model out of its rules, sometimes obfuscated to slip past filters.",
+   "preconditions": [
+    "People can type to the model",
+    "The model holds rules or data the user should not reach"
+   ],
+   "components": [
+    "Chat input",
+    "System prompt",
+    "Guardrails"
+   ],
+   "tests": []
+  },
+  {
+   "id": "indirect-injection",
+   "title": "Indirect prompt injection",
+   "techniques": [
+    "AML.T0051.001",
+    "AML.T0093",
+    "ASI01"
+   ],
+   "what": "Instructions hidden in content the model reads (email, documents, web pages, tool output, logs) redirect what it does, without the user typing anything.",
+   "preconditions": [
+    "The model reads content an outsider can write",
+    "The model can act or answer on that content"
+   ],
+   "components": [
+    "Email",
+    "Documents",
+    "Web pages",
+    "Tool output",
+    "Retrieved passages"
+   ],
+   "tests": [
+    {
+     "kind": "test_ground",
+     "id": "TG-10",
+     "label": "Test ground TG-10: log text that tries to give the agent orders",
+     "hash": "grounds"
+    },
+    {
+     "kind": "benchmark",
+     "id": "agentdojo",
+     "label": "AgentDojo: injected tool output against utility and security",
+     "hash": "grounds"
+    }
+   ]
+  },
+  {
+   "id": "system-prompt-leak",
+   "title": "System prompt and configuration extraction",
+   "techniques": [
+    "AML.T0056",
+    "AML.T0069.002",
+    "AML.T0084"
+   ],
+   "what": "Users coax the model into revealing its instructions, tool definitions or embedded secrets, which then guide further attacks.",
+   "preconditions": [
+    "A system prompt or tool definitions exist",
+    "Secrets or business rules are written into them"
+   ],
+   "components": [
+    "System prompt",
+    "Tool definitions"
+   ],
+   "tests": []
+  },
+  {
+   "id": "rag-poisoning",
+   "title": "Retrieval (RAG) poisoning",
+   "techniques": [
+    "AML.T0070",
+    "AML.T0071",
+    "AML.T0066"
+   ],
+   "what": "Content planted where a retrieval index will pick it up steers answers or carries injected instructions to every user who triggers it.",
+   "preconditions": [
+    "Answers draw on an index or search results",
+    "Someone outside the owning team can add or edit indexed content"
+   ],
+   "components": [
+    "Vector store",
+    "Indexed documents"
+   ],
+   "tests": []
+  },
+  {
+   "id": "memory-poisoning",
+   "title": "Memory and context poisoning",
+   "techniques": [
+    "AML.T0080",
+    "ASI06"
+   ],
+   "what": "A malicious entry saved into agent memory or shared context keeps influencing decisions in later sessions.",
+   "preconditions": [
+    "The agent writes to persistent memory or shared context",
+    "Later sessions read it back"
+   ],
+   "components": [
+    "Agent memory",
+    "Conversation history"
+   ],
+   "tests": []
+  },
+  {
+   "id": "tool-misuse",
+   "title": "Tool misuse and excessive agency",
+   "techniques": [
+    "AML.T0053",
+    "AML.T0101",
+    "LLM06",
+    "ASI02"
+   ],
+   "what": "The agent is steered into calling tools it legitimately holds in harmful ways: changing or deleting data, chaining calls, or acting beyond the task.",
+   "preconditions": [
+    "The agent can call tools that change things",
+    "Some of those calls need no human approval"
+   ],
+   "components": [
+    "Agent tools",
+    "Write and delete actions"
+   ],
+   "tests": [
+    {
+     "kind": "benchmark",
+     "id": "agentdojo",
+     "label": "AgentDojo: injected tool output against utility and security",
+     "hash": "grounds"
+    }
+   ]
+  },
+  {
+   "id": "tool-exfiltration",
+   "title": "Data exfiltration through agent tools and output",
+   "techniques": [
+    "AML.T0086",
+    "AML.T0057",
+    "LLM02"
+   ],
+   "what": "Sensitive data the agent can see is sent out through a tool (email, HTTP, tickets) or leaks into an answer.",
+   "preconditions": [
+    "The agent sees confidential or restricted data",
+    "A tool or channel can carry data outside"
+   ],
+   "components": [
+    "Outbound tools",
+    "Answers"
+   ],
+   "tests": [
+    {
+     "kind": "benchmark",
+     "id": "agentdojo",
+     "label": "AgentDojo: injected tool output against utility and security",
+     "hash": "grounds"
+    }
+   ]
+  },
+  {
+   "id": "tool-supply-chain",
+   "title": "Poisoned or swapped tools and MCP servers",
+   "techniques": [
+    "AML.T0110",
+    "AML.T0109",
+    "AML.T0010.005",
+    "AML.T0099",
+    "ASI04"
+   ],
+   "what": "A third-party tool, plugin or MCP server ships malicious descriptions or changes behaviour after it has been approved (a \"rug pull\").",
+   "preconditions": [
+    "Agents load tools or MCP servers you did not write",
+    "Tool descriptions are trusted as instructions"
+   ],
+   "components": [
+    "MCP servers",
+    "Third-party tools"
+   ],
+   "tests": []
+  },
+  {
+   "id": "model-supply-chain",
+   "title": "Model and framework supply chain",
+   "techniques": [
+    "AML.T0010",
+    "AML.T0018",
+    "AML.T0115",
+    "LLM03"
+   ],
+   "what": "A model, adapter, dataset or framework package from outside is tampered with, vulnerable or silently replaced.",
+   "preconditions": [
+    "You run third-party models, open weights or AI frameworks"
+   ],
+   "components": [
+    "Models",
+    "Frameworks",
+    "Model hubs"
+   ],
+   "tests": []
+  },
+  {
+   "id": "data-poisoning",
+   "title": "Training and fine-tuning data poisoning",
+   "techniques": [
+    "AML.T0020",
+    "AML.T0059",
+    "LLM04"
+   ],
+   "what": "Whoever can influence training or fine-tuning data plants a backdoor or bias that later decisions inherit.",
+   "preconditions": [
+    "You train or fine-tune models",
+    "Training data includes sources others can influence"
+   ],
+   "components": [
+    "Training data",
+    "Fine-tuning pipeline"
+   ],
+   "tests": []
+  },
+  {
+   "id": "model-theft",
+   "title": "Model extraction and theft",
+   "techniques": [
+    "AML.T0024.002",
+    "AML.T0048.004"
+   ],
+   "what": "Repeated queries copy a model's behaviour, or weights and artefacts are stolen outright.",
+   "preconditions": [
+    "The model can be queried at volume",
+    "The model or its outputs have commercial value"
+   ],
+   "components": [
+    "Inference API",
+    "Model artefacts"
+   ],
+   "tests": []
+  },
+  {
+   "id": "adversarial-evasion",
+   "title": "Adversarial evasion of predictive models",
+   "techniques": [
+    "AML.T0015",
+    "AML.T0043"
+   ],
+   "what": "Inputs are shaped so a classifier or scoring model (fraud, malware, spam) makes the wrong call while looking normal.",
+   "preconditions": [
+    "A predictive model makes or gates decisions",
+    "Attackers can probe it and see the outcome"
+   ],
+   "components": [
+    "Scoring model",
+    "Input features"
+   ],
+   "tests": []
+  },
+  {
+   "id": "unsafe-output",
+   "title": "Unsafe output handling and rendering",
+   "techniques": [
+    "AML.T0077",
+    "AML.T0067",
+    "LLM05"
+   ],
+   "what": "Model output is rendered or passed on without checks, so links, images, markup or commands in it reach people and systems.",
+   "preconditions": [
+    "Output is shown in a browser, email or UI, or fed to another system"
+   ],
+   "components": [
+    "Chat UI",
+    "Email",
+    "Downstream systems"
+   ],
+   "tests": []
+  },
+  {
+   "id": "code-execution",
+   "title": "Unexpected code execution",
+   "techniques": [
+    "AML.T0050",
+    "AML.T0102",
+    "ASI05"
+   ],
+   "what": "Generated or injected code runs in the agent's environment, CI or connected systems without the intended review.",
+   "preconditions": [
+    "The agent can run code, shell commands or tests"
+   ],
+   "components": [
+    "Sandboxes",
+    "CI",
+    "Shells"
+   ],
+   "tests": []
+  },
+  {
+   "id": "agent-identity",
+   "title": "Agent identity and privilege abuse",
+   "techniques": [
+    "AML.T0098",
+    "AML.T0083",
+    "AML.T0082",
+    "ASI03"
+   ],
+   "what": "Credentials, tokens or delegated roles held by the agent or its tools are harvested or used beyond what the user may do.",
+   "preconditions": [
+    "The agent holds credentials or can change access"
+   ],
+   "components": [
+    "Agent credentials",
+    "Delegated roles"
+   ],
+   "tests": []
+  },
+  {
+   "id": "approval-manipulation",
+   "title": "Manipulated human approvals",
+   "techniques": [
+    "ASI09"
+   ],
+   "what": "A convincing but wrong explanation from the agent gets a risky action approved by a person who trusts it.",
+   "preconditions": [
+    "Risky actions wait for human approval",
+    "Approvers rely on the agent's own summary"
+   ],
+   "components": [
+    "Approval steps"
+   ],
+   "tests": []
+  },
+  {
+   "id": "multi-agent",
+   "title": "Inter-agent manipulation and cascading failures",
+   "techniques": [
+    "AML.T0118",
+    "ASI07",
+    "ASI08"
+   ],
+   "what": "Messages between agents are spoofed or poisoned, and one bad step spreads through connected agents faster than people can stop it.",
+   "preconditions": [
+    "Agents pass work or messages to other agents"
+   ],
+   "components": [
+    "Agent-to-agent messages",
+    "Orchestration"
+   ],
+   "tests": []
+  },
+  {
+   "id": "consumption",
+   "title": "Denial of service and cost harvesting",
+   "techniques": [
+    "AML.T0029",
+    "AML.T0034",
+    "LLM10"
+   ],
+   "what": "Floods of requests or deliberately expensive prompts exhaust capacity or run up model spend.",
+   "preconditions": [
+    "Outsiders can reach the application or its API"
+   ],
+   "components": [
+    "Public endpoints",
+    "Model budget"
+   ],
+   "tests": []
+  },
+  {
+   "id": "misinformation",
+   "title": "Confident, unsupported answers",
+   "techniques": [
+    "LLM09",
+    "AML.T0062",
+    "AML.T0060"
+   ],
+   "what": "The model states things its evidence does not support and people act on them; attackers can also exploit predictable hallucinations.",
+   "preconditions": [
+    "People act on the answers",
+    "Answers are not checked against sources"
+   ],
+   "components": [
+    "Answers",
+    "Reports"
+   ],
+   "tests": [
+    {
+     "kind": "test_ground",
+     "id": "grounding",
+     "label": "Test-ground grading flags unsupported claims (grounding guard)",
+     "hash": "grounds"
+    }
+   ]
+  }
+ ]
+}

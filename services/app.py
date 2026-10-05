@@ -126,6 +126,37 @@ class Handler(BaseHTTPRequestHandler):
                 if path=='/api/test-ground/grade':
                     import test_ground
                     return self.send_json({'grade':test_ground.grade(store,query.get('session',[''])[0])})
+                if path=='/api/aisec':
+                    import aisec
+                    return self.send_json(aisec.catalog())
+                if path=='/api/aisec/technique':
+                    import aisec
+                    return self.send_json(aisec.record(query.get('id',[''])[0],full=True))
+                if path=='/api/aisec/workspaces':
+                    import aisec
+                    return self.send_json(aisec.workspaces(store.db))
+                if path=='/api/aisec/inventory':
+                    from aisec import bom, threatmodel
+                    ws=query.get('workspace',[''])[0]
+                    return self.send_json({**bom.inventory(store.db,ws),'enums':bom.enums(),'in_models':threatmodel.techniques_in_models(store.db,ws)})
+                if path=='/api/aisec/export':
+                    from aisec import bom
+                    return self.send_json(bom.export_cyclonedx(store.db,query.get('workspace',[''])[0]))
+                if path=='/api/aisec/sample':
+                    from aisec import bom
+                    return self.send_json(json.loads(bom.SAMPLE.read_text(encoding='utf-8')))
+                if path=='/api/aisec/threat-model':
+                    from aisec import threatmodel
+                    return self.send_json(threatmodel.get(store.db,query.get('workspace',[''])[0],query.get('app',[''])[0]))
+                if path=='/api/aisec/intel':
+                    from aisec import intel
+                    return self.send_json(intel.overview(store.db,query.get('workspace',[''])[0]))
+                if path=='/api/aisec/snapshot':
+                    from aisec import intel
+                    return self.send_json(intel.get_snapshot(store.db,query.get('workspace',[''])[0],query.get('month',[''])[0]))
+                if path=='/api/aisec/tracked':
+                    import aisec
+                    return self.send_json(aisec.tracked(store.db,query.get('workspace',[''])[0]))
                 if path=='/api/sessions':return self.send_json(store.sessions())
                 if path=='/api/events':
                     limit=int(query.get('limit',['25'])[0]);offset=int(query.get('offset',['0'])[0])
@@ -169,7 +200,8 @@ class Handler(BaseHTTPRequestHandler):
         try:
             self.guard(True)
             length=int(self.headers.get('Content-Length','0'))
-            if not 0<length<=32000:raise Problem('Request body must be 1–32000 bytes',413)
+            limit=1_000_000 if urlparse(self.path).path=='/api/aisec/import' else 32000
+            if not 0<length<=limit:raise Problem(f'Request body must be 1–{limit} bytes',413)
             body=json.loads(self.rfile.read(length))
             if not isinstance(body,dict):raise Problem('JSON object required')
             path=urlparse(self.path).path;parts=path.strip('/').split('/')
@@ -184,6 +216,29 @@ class Handler(BaseHTTPRequestHandler):
                 if path=='/api/passkeys/registration/options':return self.send_json(self.server.passkeys.registration_options(store,self.headers,body))
                 if path=='/api/passkeys/registration/verify':return self.send_json(self.server.passkeys.register(store,self.headers,body))
                 if path=='/api/passkeys/remove':return self.send_json(self.server.passkeys.remove(store,self.headers,body))
+                if path.startswith('/api/aisec/') and path not in ('/api/aisec/workspaces','/api/aisec/members','/api/aisec/track'):
+                    from aisec import bom, threatmodel
+                    def run_import(db,b):
+                        if b.get('sample') is True:return bom.import_sample(db)
+                        if b.get('source')=='socharness':return bom.import_socharness(db,b.get('workspace'))
+                        return bom.import_file(db,b)
+                    def run_model(db,b):
+                        return {'generate':threatmodel.generate,'decide':threatmodel.decide,'accept':threatmodel.accept}[
+                            b.get('action') if b.get('action') in ('generate','decide','accept') else 'generate'](db,b)
+                    routes={'/api/aisec/profile':bom.set_profile,'/api/aisec/assets':bom.save_asset,'/api/aisec/assets/delete':bom.delete_asset,
+                            '/api/aisec/applications':bom.save_application,'/api/aisec/applications/delete':bom.delete_application,
+                            '/api/aisec/import':run_import,'/api/aisec/threat-model':run_model}
+                    from aisec import intel
+                    routes.update({'/api/aisec/intel/feed':intel.add_item,'/api/aisec/intel/feed/delete':intel.delete_item,
+                                   '/api/aisec/intel/advisories':intel.check_advisories,'/api/aisec/intel/register':intel.save_register,
+                                   '/api/aisec/intel/gap':intel.open_gap,'/api/aisec/intel/gap/close':intel.close_gap,
+                                   '/api/aisec/intel/snapshot':intel.snapshot})
+                    if path not in routes:raise Problem('Endpoint not found',404)
+                    return self.send_json(routes[path](store.db,body))
+                if path in ('/api/aisec/workspaces','/api/aisec/members','/api/aisec/track'):
+                    import aisec
+                    action={'/api/aisec/workspaces':aisec.create_workspace,'/api/aisec/members':aisec.set_member,'/api/aisec/track':aisec.track}[path]
+                    return self.send_json(action(store.db,body),201 if path=='/api/aisec/workspaces' else 200)
                 if path=='/api/adapters':
                     from adapters.registry import set_enabled
                     return self.send_json(set_enabled(store,body.get('id'),body.get('enabled')))

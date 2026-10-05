@@ -54,3 +54,23 @@ R.run(agent); handoff_filters.remove_all_tools'''
 
 if __name__ == '__main__':
     unittest.main()
+
+
+class TaxonomyDriftTests(unittest.TestCase):
+    def test_reports_pinned_versions_and_upstream_atlas(self):
+        import datetime
+        import aisec
+        pinned = aisec.ATLAS['source']['release']
+        manifest = lambda release: (lambda url: f"- release: '{release}'\n  release-date: '2099-01-01'\n- release: '{pinned}'\n")
+        rows = {r['id']: r for r in docs_drift.taxonomies(fetch=manifest(pinned), today=datetime.date(2026, 10, 4))}
+        self.assertEqual(set(rows), {'atlas', 'owasp-llm', 'owasp-agentic'})
+        self.assertEqual(rows['atlas']['status'], 'current')
+        self.assertEqual(rows['owasp-llm']['status'], 'manual')
+        newer = {r['id']: r for r in docs_drift.taxonomies(fetch=manifest('2099.01'))}['atlas']
+        self.assertEqual((newer['status'], newer['upstream']), ('newer_upstream', '2099.01'))
+        def down(url):
+            raise OSError('offline')
+        self.assertEqual({r['id']: r for r in docs_drift.taxonomies(fetch=down)}['atlas']['status'], 'unknown')
+        self.assertEqual({r['id']: r for r in docs_drift.taxonomies(online=False)}['atlas']['status'], 'skipped')
+        late = {r['id']: r for r in docs_drift.taxonomies(online=False, today=datetime.date(2027, 6, 1))}
+        self.assertEqual(late['owasp-agentic']['status'], 'stale')

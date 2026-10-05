@@ -14,8 +14,15 @@ Statuses: ok, missing (package installed, name gone: real drift), not_installed
 (package absent in this environment: skipped), type_only (TypeScript name not
 present at runtime; usually a type, reported but not failed).
 
-    python services/docs_drift.py            # human summary, exit 1 on drift
+It also reports the threat taxonomies the AI Security Lab pins (MITRE ATLAS,
+OWASP Top 10 for LLM and for Agentic Applications): ATLAS is compared with the
+latest release in mitre-atlas/atlas-data; the OWASP lists have no machine-readable
+feed, so they are reported with the date they were last checked by hand and
+flagged as stale after 180 days. Taxonomy findings never change the exit code.
+
+    python services/docs_drift.py            # human summary, exit 1 on API drift
     python services/docs_drift.py --json out.json
+    python services/docs_drift.py --offline  # skip the upstream ATLAS lookup
 """
 import argparse
 import json
@@ -199,13 +206,57 @@ def check():
     return report
 
 
+ATLAS_MANIFEST = 'https://raw.githubusercontent.com/mitre-atlas/atlas-data/main/dist/manifest.yaml'
+STALE_DAYS = 180
+
+
+def _fetch(url):
+    import urllib.request
+    with urllib.request.urlopen(url, timeout=10) as r:
+        return r.read(200_000).decode('utf-8', 'replace')
+
+
+def latest_atlas_release(fetch=_fetch):
+    """The newest release named in atlas-data's manifest (its first entry), or None."""
+    try:
+        m = re.search(r"^- release:\s*'?([0-9][0-9.]*)'?", fetch(ATLAS_MANIFEST), re.M)
+    except Exception:
+        return None
+    return m.group(1) if m else None
+
+
+def taxonomies(online=True, fetch=_fetch, today=None):
+    import datetime
+    sys.path.insert(0, str(Path(__file__).parent))
+    import aisec
+    today = today or datetime.date.today()
+    rows = []
+    for v in aisec.versions():
+        row = {'id': v['id'], 'name': v['name'], 'pinned': v['version']}
+        if v['id'] == 'atlas':
+            latest = latest_atlas_release(fetch) if online else None
+            row['upstream'] = latest
+            row['status'] = 'skipped' if not online else 'unknown' if latest is None else \
+                'current' if latest == v['version'] else 'newer_upstream' if latest > v['version'] else 'current'
+            row['note'] = 'Re-pin with services/aisec/pin_atlas.py' if row['status'] == 'newer_upstream' else ''
+        else:
+            age = (today - datetime.date.fromisoformat(v['checked'])).days
+            row['checked'] = v['checked']
+            row['status'] = 'stale' if age > STALE_DAYS else 'manual'
+            row['note'] = f"checked by hand {age} days ago at {v['url']}"
+        rows.append(row)
+    return rows
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__.split('\n\n')[0])
     parser.add_argument('--json', help='write the full report to this file')
+    parser.add_argument('--offline', action='store_true', help='do not look up the latest ATLAS release')
     args = parser.parse_args()
     report = check()
+    tax = taxonomies(online=not args.offline)
     if args.json:
-        Path(args.json).write_text(json.dumps(report, indent=2), encoding='utf-8')
+        Path(args.json).write_text(json.dumps({'api': report, 'taxonomies': tax}, indent=2), encoding='utf-8')
     counts = {}
     for row in report:
         counts[row['status']] = counts.get(row['status'], 0) + 1
@@ -220,6 +271,10 @@ def main():
         seen.add(key)
         ref = row['module'] + (':' + row['name'] if row['name'] else '') + ('.' + row['attr'] if row['attr'] else '')
         print(f"  {row['status'].upper():9} {row['file']}  {ref}  ({row['note']})")
+    print('Threat taxonomies:')
+    for t in tax:
+        upstream = f" (upstream {t['upstream']})" if t.get('upstream') else ''
+        print(f"  {t['status'].upper():14} {t['name']} {t['pinned']}{upstream}" + (f"  {t['note']}" if t['note'] else ''))
     return 1 if counts.get('missing') else 0
 
 

@@ -75,6 +75,67 @@ beforeEach(() => {
           rows: [],
           frameworks: [],
         });
+      if (path.startsWith("/api/aisec")) {
+        const t = (id: string, name: string, tactics: string[], refs: string[] = []) => ({
+          id, framework: "atlas", kind: "technique", name, summary: name + " summary.", parent: null, tactics,
+          platforms: ["Agentic AI"], maturity: "Realized", refs, subtechniques: [], counts: {}, url: "https://atlas.mitre.org/techniques/" + id,
+        });
+        const risk = { id: "LLM01", framework: "owasp-llm", kind: "risk", name: "Prompt Injection", summary: "Input changes behaviour.",
+          parent: null, tactics: [], platforms: [], maturity: null, refs: ["AML.T0051"], subtechniques: [], counts: {}, url: "https://genai.owasp.org/llmrisk/llm01-prompt-injection/" };
+        const roles = { lead_researcher: { label: "Lead researcher", summary: "Runs the lab.", can: ["view_threats", "track_techniques", "manage_workspace", "run_tests"] },
+          vendor_guest: { label: "Vendor guest", summary: "Own scorecard only.", can: ["view_own_scorecard"] } };
+        if (path === "/api/aisec")
+          return response({
+            versions: [{ id: "atlas", name: "MITRE ATLAS", version: "2026.09", license: "Apache-2.0", url: "https://atlas.mitre.org" }],
+            tactics: [{ id: "AML.TA0004", name: "Initial Access", summary: "", url: "" }, { id: "AML.TA0005", name: "Execution", summary: "", url: "" }],
+            techniques: [t("AML.T0051", "LLM Prompt Injection", ["AML.TA0005"], ["LLM01"]), t("AML.T0010", "AI Supply Chain Compromise", ["AML.TA0004"])],
+            owasp: [{ id: "owasp-llm", name: "OWASP Top 10 for LLM Applications", edition: "2025", url: "https://genai.owasp.org/llm-top-10/", license: "CC BY-SA 4.0", items: [risk] }],
+            crosswalk_note: "Curated crosswalk.", counts: { tactics: 2, techniques: 2, subtechniques: 0, mitigations: 0, case_studies: 0, owasp_items: 1 },
+            roles, actions: { view_threats: { label: "Threats", phase: 0 } }, kinds: { lab: "Lab", company: "Company" }, sectors: {},
+          });
+        if (path.startsWith("/api/aisec/technique"))
+          return response({ ...t("AML.T0051", "LLM Prompt Injection", ["AML.TA0005"], ["LLM01"]), subtechniques: [],
+            description: "See [Indirect](/techniques/AML.T0051.001).", owasp: [{ id: "LLM01", name: "Prompt Injection", list: "owasp-llm", url: risk.url }],
+            sources: [{ label: "MITRE ATLAS · AML.T0051", url: "https://atlas.mitre.org/techniques/AML.T0051" }] });
+        if (path === "/api/aisec/workspaces")
+          return response({ operator: "operator", enforcement: "Single operator.", workspaces: [{ id: "socharness", name: "SoCHarness", kind: "lab", sector: null,
+            created_at: "", members: [{ member: "operator", role: "lead_researcher", added_at: "" }], records: {}, you: "lead_researcher" }] });
+        if (path === "/api/aisec/track") return response({ workspace: "socharness", tracked: [{ id: "AML.T0051", note: "", updated_at: "" }] });
+        if (path.startsWith("/api/aisec/intel?")) {
+          const gapped = calls.some((c) => c.path === "/api/aisec/intel/gap");
+          const card = { id: "rag-poisoning", title: "Retrieval (RAG) poisoning", what: "Planted content steers answers.", techniques: ["AML.T0070"],
+            preconditions: ["Answers draw on an index"], components: [], maturity: 2, maturity_label: "Demonstrated by researchers", likelihood: 2,
+            exposure: 6, score: 12, band: "high", reasons: ["Exposure 6/6: applies to 1 application."], tests: [], case_studies: [], case_study_count: 0,
+            recent_case_studies: 0, apps: [{ id: "app-x", name: "Support bot", tier: 1, proposals: 1, accepted: 0, rejected: 0, excluded: false, direct: true, surfaces: ["Index"] }],
+            gap: gapped ? { card: "rag-poisoning", status: "open", note: "Phase 3 pack", owner: "", planned: "Attack-range pack in Phase 3", opened_at: "" } : null,
+            coverage: gapped ? "gap" : "none" };
+          return response({ workspace: "socharness", cards: [card], feed: [], feed_kinds: {}, register: [], sector: null, sector_id: null, gaps: [],
+            heatmap: { rows: [{ id: card.id, title: card.title, band: "high", coverage: card.coverage }], cols: [{ id: "app-x", name: "Support bot", tier: 1 }],
+              cells: { "rag-poisoning": { "app-x": { weight: 3, state: "open", proposals: 1 } } } },
+            coverage: { high: 1, tested: 0, gaps: gapped ? 1 : 0, uncovered: gapped ? [] : ["rag-poisoning"], ok: gapped },
+            snapshots: [], advisory_check: null, risk_appetite: "moderate", notes: { cards: "", sectors: "", register: "", feed: "" } });
+        }
+        if (path === "/api/aisec/intel/gap") return response({ card: "rag-poisoning", status: "open" });
+        const app = { id: "app-x", name: "Support bot", owner: "", description: "", archetype: "tool_agent", classification: "restricted",
+          users: "customers", channel: "web", autonomy: 2, tier: 1, assets: [], actions: [{ id: "act-email", label: "Send email", effect: "external", tool: null, approval: false }],
+          inputs: [{ id: "in-email", kind: "email", label: "Inbound email", trusted: false }] };
+        const enums = { asset_types: { model: "Model" }, classifications: { restricted: "Restricted" }, users: { customers: "Customers" },
+          autonomy: { "2": "Proposes actions for approval" }, tiers: { "1": "Tier 1" }, archetypes: { tool_agent: "Tool-using agent" },
+          channels: { web: "Public web" }, input_kinds: { email: "Email" }, effects: { external: "Sends data outside" }, hosting: {} };
+        if (path.startsWith("/api/aisec/inventory"))
+          return response({ workspace: "socharness", assets: [], counts: { model: 0 }, enums, in_models: {},
+            profile: { sector: null, regulators: [], risk_appetite: "moderate", appetite_note: "", tiers: { "1": "a", "2": "b", "3": "c" }, retest_days: { critical: 7, high: 30, medium: 90, low: 180 } },
+            applications: [{ ...app, threat_model: { status: "draft", proposed: 1, accepted: 0, rejected: 0, undecided: 1 } }] });
+        if (path.startsWith("/api/aisec/threat-model")) {
+          const decided = body.action === "decide";
+          return response({ workspace: "socharness", application: app, assets: [],
+            summary: { status: "draft", proposed: 1, accepted: decided ? 1 : 0, rejected: 0, undecided: decided ? 0 : 1 },
+            proposals: [{ key: "AML.T0086@action:act-email", technique: "AML.T0086", surface: { kind: "action", id: "act-email", label: "Send email" },
+              rationale: "Send email: this can carry data outside the organisation.", decision: decided ? "accepted" : null, note: "",
+              name: "Exfiltration via AI Agent Tool Invocation", framework: "atlas", refs: ["LLM06"], tactics: [] }] });
+        }
+        if (path.startsWith("/api/aisec/tracked")) return response({ workspace: "socharness", tracked: [] });
+      }
       if (path === "/api/test-ground")
         return response({
           source: "https://github.com/MandilKarki/defense-collective",
@@ -456,4 +517,46 @@ it("ports the Defense Collective proving grounds and launches a graded scenario"
   expect(screen.getByRole("tab", { name: /Live run/ })).toHaveAttribute("aria-selected", "true");
   expect(screen.getByDisplayValue("Investigate test-ground case TG-05.")).toBeVisible();
   expect(calls.some((c) => c.path.endsWith("/messages"))).toBe(false);
+});
+
+it("opens the AI Security Lab threat map, a sourced technique page, and tracks it per workspace", async () => {
+  render(<HarnessApp />);
+  fireEvent.click(await screen.findByRole("tab", { name: /AI security/ }));
+  expect(screen.getByRole("heading", { level: 2, name: "Know the attack surface of AI" })).toBeVisible();
+  const map = await screen.findByRole("region", { name: "Threat map" });
+  expect(within(map).getByText("LLM01")).toBeVisible();
+  fireEvent.click(within(map).getByRole("button", { name: /LLM Prompt Injection/ }));
+  expect(await screen.findByRole("heading", { level: 3, name: "LLM Prompt Injection" })).toBeVisible();
+  expect(window.location.hash).toBe("#aisec/threats/AML.T0051");
+  expect(screen.getByRole("link", { name: /MITRE ATLAS · AML.T0051/ })).toHaveAttribute("href", "https://atlas.mitre.org/techniques/AML.T0051");
+  fireEvent.click(screen.getByRole("button", { name: /Track for this workspace/ }));
+  await waitFor(() => expect(calls.some((c) => c.path === "/api/aisec/track" && c.body.workspace === "socharness")).toBe(true));
+  fireEvent.change(screen.getByRole("combobox", { name: "View as" }), { target: { value: "vendor_guest" } });
+  expect(await screen.findByText(/don't see this workbench/)).toBeVisible();
+});
+
+it("shows an application's attack surface and records threat-model decisions", async () => {
+  window.history.replaceState(null, "", "/#aisec/inventory");
+  render(<HarnessApp />);
+  fireEvent.click(await screen.findByRole("button", { name: /Support bot/ }));
+  expect(await screen.findByRole("heading", { level: 3, name: "Support bot" })).toBeVisible();
+  expect(screen.getByRole("figure", { name: "Attack surface of Support bot" })).toBeVisible();
+  expect(window.location.hash).toBe("#aisec/inventory/app-x");
+  expect(screen.getByRole("button", { name: "Accept threat model" })).toBeDisabled();
+  fireEvent.click(screen.getByRole("button", { name: "Accept" }));
+  await waitFor(() => expect(calls.some((c) => c.path === "/api/aisec/threat-model" && c.body.action === "decide" && c.body.decision === "accepted")).toBe(true));
+  expect(await screen.findByRole("button", { name: "Accept threat model" })).toBeEnabled();
+});
+
+it("scores threats for the workspace and tracks coverage gaps until every high threat is covered", async () => {
+  window.history.replaceState(null, "", "/#aisec/intel");
+  render(<HarnessApp />);
+  expect(await screen.findByText(/1 with neither/)).toBeVisible();
+  expect(screen.getByRole("figure", { name: "Threats by application" })).toBeVisible();
+  fireEvent.click(screen.getAllByRole("button", { name: /Retrieval \(RAG\) poisoning/ })[0]);
+  expect(await screen.findByRole("heading", { level: 3, name: "Retrieval (RAG) poisoning" })).toBeVisible();
+  expect(window.location.hash).toBe("#aisec/intel/card/rag-poisoning");
+  fireEvent.click(screen.getByRole("button", { name: "Open gap" }));
+  await waitFor(() => expect(calls.some((c) => c.path === "/api/aisec/intel/gap" && c.body.card === "rag-poisoning")).toBe(true));
+  expect(await screen.findByText(/Every high threat links to a test or an open gap/)).toBeVisible();
 });

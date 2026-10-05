@@ -1,0 +1,107 @@
+{
+ "note": "Curated items; summaries are SoCHarness paraphrases. ATLAS releases and case studies are added from the pinned ATLAS data.",
+ "items": [
+  {
+   "id": "nydfs-2026-05",
+   "kind": "regulator",
+   "published": "2026-05-21",
+   "title": "NYDFS guidance on frontier AI cybersecurity risks",
+   "url": "https://datamatters.sidley.com/2026/05/28/new-york-department-of-financial-services-issues-coordinated-guidance-on-frontier-ai-cybersecurity-risks/",
+   "summary": "Two coordinated documents: frontier AI amplifies the speed and scale of finding and exploiting vulnerabilities; regulated entities should accelerate remediation, review AI-generated code, map third-party dependencies and test resilience more often.",
+   "techniques": [
+    "AML.T0016",
+    "AML.T0102"
+   ]
+  },
+  {
+   "id": "csa-acs-2026-09",
+   "kind": "standard",
+   "published": "2026-09",
+   "title": "Agent Control Standard v0.1 and OWASP GenAI updates",
+   "url": "https://labs.cloudsecurityalliance.org/research/csa-research-note-owasp-genai-top10-2026-agent-control-stand/",
+   "summary": "A runtime governance draft with guardian-agent enforcement points, OpenTelemetry and OCSF observability, and an agent bill of materials.",
+   "techniques": [
+    "ASI02",
+    "ASI04"
+   ]
+  },
+  {
+   "id": "zenity-atlas-2026-01",
+   "kind": "research",
+   "published": "2026-01-12",
+   "title": "New agentic techniques contributed to MITRE ATLAS",
+   "url": "https://zenity.io/blog/current-events/mitre-atlas-ai-security",
+   "summary": "Tool credential harvesting, tool data poisoning, agent clickbait and data destruction through tool invocation were added to ATLAS.",
+   "techniques": [
+    "AML.T0098",
+    "AML.T0099",
+    "AML.T0100",
+    "AML.T0101"
+   ]
+  },
+  {
+   "id": "owasp-agentic-2025-12",
+   "kind": "standard",
+   "published": "2025-12",
+   "title": "OWASP Top 10 for Agentic Applications (2026)",
+   "url": "https://genai.owasp.org/resource/owasp-top-10-for-agentic-applications-for-2026",
+   "summary": "Ten agent-specific risk categories, ASI01 to ASI10, from goal hijack to rogue agents.",
+   "techniques": [
+    "ASI01",
+    "ASI02",
+    "ASI03",
+    "ASI04",
+    "ASI05",
+    "ASI06",
+    "ASI07",
+    "ASI08",
+    "ASI09",
+    "ASI10"
+   ]
+  },
+  {
+   "id": "fincen-2024-11",
+   "kind": "regulator",
+   "published": "2024-11",
+   "title": "FinCEN alert on deepfake media fraud schemes",
+   "url": "https://fincen.gov/news/news-releases/fincen-issues-alert-fraud-schemes-involving-deepfake-media-targeting-financial",
+   "summary": "Red flags for generated identity documents and impersonation used against financial institutions.",
+   "techniques": [
+    "AML.T0088"
+   ]
+  },
+  {
+   "id": "nydfs-2024-10",
+   "kind": "regulator",
+   "published": "2024-10",
+   "title": "NYDFS industry letter on cybersecurity risks arising from AI",
+   "url": "https://www.cozen.com/news-resources/publications/2024/nydfs-issues-guidance-on-cybersecurity-risks-arising-from-artificial-intelligence",
+   "summary": "AI-enabled social engineering, AI-enhanced attacks, exposure of nonpublic data used by AI, and third-party AI dependencies.",
+   "techniques": [
+    "AML.T0052",
+    "AML.T0088",
+    "AML.T0057"
+   ]
+  },
+  {
+   "id": "owasp-llm-2025",
+   "kind": "standard",
+   "published": null,
+   "title": "OWASP Top 10 for LLM Applications (2025 edition)",
+   "url": "https://genai.owasp.org/llm-top-10/",
+   "summary": "The current official LLM list, LLM01 Prompt Injection to LLM10 Unbounded Consumption.",
+   "techniques": [
+    "LLM01",
+    "LLM02",
+    "LLM03",
+    "LLM04",
+    "LLM05",
+    "LLM06",
+    "LLM07",
+    "LLM08",
+    "LLM09",
+    "LLM10"
+   ]
+  }
+ ]
+}

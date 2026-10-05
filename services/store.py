@@ -122,6 +122,8 @@ class Store:
         self.db.commit()
         import test_ground
         test_ground.install(self.db)
+        import aisec
+        aisec.install(self.db)
 
     def recover(self):
         for r in self.db.execute("SELECT id FROM relay_sessions WHERE status='running'").fetchall():

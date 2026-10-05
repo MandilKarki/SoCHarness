@@ -1,0 +1,415 @@
+{
+ "bomFormat": "CycloneDX",
+ "specVersion": "1.6",
+ "serialNumber": "urn:uuid:7d3f5c1e-2b9a-4c8e-9f61-0a2b3c4d5e6f",
+ "version": 1,
+ "metadata": {
+  "timestamp": "2026-10-04T00:00:00Z",
+  "component": {
+   "type": "application",
+   "bom-ref": "ridgeway",
+   "name": "Ridgeway Savings Bank AI estate (fictional sample)",
+   "description": "A made-up mid-sized bank used to show the AI Security Lab with something other than SoCHarness. No real organisation is described."
+  },
+  "properties": [
+   {
+    "name": "socharness:vendor",
+    "value": "OpenAI"
+   },
+   {
+    "name": "socharness:vendor",
+    "value": "BAAI"
+   },
+   {
+    "name": "socharness:vendor",
+    "value": "Brightline CRM (fictional)"
+   },
+   {
+    "name": "socharness:vendor",
+    "value": "Example Code AI"
+   }
+  ]
+ },
+ "components": [
+  {
+   "type": "machine-learning-model",
+   "bom-ref": "model-gpt-4-1",
+   "name": "gpt-4.1",
+   "version": "2025-04-14",
+   "supplier": {
+    "name": "OpenAI"
+   },
+   "description": "Hosted chat model behind the support assistant.",
+   "properties": [
+    {
+     "name": "socharness:type",
+     "value": "model"
+    },
+    {
+     "name": "socharness:hosting",
+     "value": "third_party_api"
+    }
+   ]
+  },
+  {
+   "type": "machine-learning-model",
+   "bom-ref": "model-bge-large",
+   "name": "bge-large-en-v1.5",
+   "version": "1.5",
+   "supplier": {
+    "name": "BAAI"
+   },
+   "description": "Open-weights embedding model used to index policy documents.",
+   "properties": [
+    {
+     "name": "socharness:type",
+     "value": "model"
+    },
+    {
+     "name": "socharness:hosting",
+     "value": "open_weights"
+    }
+   ]
+  },
+  {
+   "type": "machine-learning-model",
+   "bom-ref": "model-fraud-v7",
+   "name": "Card fraud scoring model",
+   "version": "7.2",
+   "description": "Gradient-boosted model trained in house on card transactions.",
+   "properties": [
+    {
+     "name": "socharness:type",
+     "value": "model"
+    },
+    {
+     "name": "socharness:hosting",
+     "value": "in_house"
+    },
+    {
+     "name": "socharness:classification",
+     "value": "restricted"
+    }
+   ]
+  },
+  {
+   "type": "machine-learning-model",
+   "bom-ref": "model-code-assist",
+   "name": "Hosted coding model",
+   "supplier": {
+    "name": "Example Code AI"
+   },
+   "description": "Coding model reached through the vendor plugin.",
+   "properties": [
+    {
+     "name": "socharness:type",
+     "value": "model"
+    },
+    {
+     "name": "socharness:hosting",
+     "value": "third_party_api"
+    }
+   ]
+  },
+  {
+   "type": "library",
+   "bom-ref": "fw-langchain-core",
+   "name": "langchain-core",
+   "version": "0.3.0",
+   "supplier": {
+    "name": "LangChain"
+   },
+   "description": "Orchestration for the support assistant.",
+   "purl": "pkg:pypi/langchain-core@0.3.0",
+   "properties": [
+    {
+     "name": "socharness:type",
+     "value": "framework"
+    }
+   ]
+  },
+  {
+   "type": "library",
+   "bom-ref": "fw-openai-python",
+   "name": "openai",
+   "version": "1.99.0",
+   "supplier": {
+    "name": "OpenAI"
+   },
+   "description": "Python client for the hosted model.",
+   "purl": "pkg:pypi/openai@1.99.0",
+   "properties": [
+    {
+     "name": "socharness:type",
+     "value": "framework"
+    }
+   ]
+  },
+  {
+   "type": "library",
+   "bom-ref": "fw-xgboost",
+   "name": "xgboost",
+   "version": "2.1.0",
+   "supplier": {
+    "name": "XGBoost contributors"
+   },
+   "description": "Training and scoring library for the fraud model.",
+   "purl": "pkg:pypi/xgboost@2.1.0",
+   "properties": [
+    {
+     "name": "socharness:type",
+     "value": "framework"
+    }
+   ]
+  },
+  {
+   "type": "data",
+   "bom-ref": "vs-policy-index",
+   "name": "Policy knowledge index",
+   "description": "pgvector index of product terms, fee schedules and support policies.",
+   "properties": [
+    {
+     "name": "socharness:type",
+     "value": "vector_store"
+    },
+    {
+     "name": "socharness:classification",
+     "value": "internal"
+    }
+   ]
+  },
+  {
+   "type": "data",
+   "bom-ref": "data-policies",
+   "name": "Product and policy documents",
+   "description": "Published terms plus internal support procedures.",
+   "properties": [
+    {
+     "name": "socharness:type",
+     "value": "data_source"
+    },
+    {
+     "name": "socharness:classification",
+     "value": "internal"
+    }
+   ]
+  },
+  {
+   "type": "data",
+   "bom-ref": "data-emails",
+   "name": "Customer emails",
+   "description": "Inbound support email; written by customers or anyone who can email the bank.",
+   "properties": [
+    {
+     "name": "socharness:type",
+     "value": "data_source"
+    },
+    {
+     "name": "socharness:classification",
+     "value": "restricted"
+    }
+   ]
+  },
+  {
+   "type": "data",
+   "bom-ref": "data-transactions",
+   "name": "Card transaction history",
+   "description": "Training and scoring data for fraud detection.",
+   "properties": [
+    {
+     "name": "socharness:type",
+     "value": "data_source"
+    },
+    {
+     "name": "socharness:classification",
+     "value": "restricted"
+    }
+   ]
+  },
+  {
+   "type": "data",
+   "bom-ref": "data-repos",
+   "name": "Internal code repositories",
+   "description": "Source code the coding assistant reads.",
+   "properties": [
+    {
+     "name": "socharness:type",
+     "value": "data_source"
+    },
+    {
+     "name": "socharness:classification",
+     "value": "confidential"
+    }
+   ]
+  },
+  {
+   "type": "data",
+   "bom-ref": "prompt-support",
+   "name": "Support assistant system prompt",
+   "version": "4",
+   "description": "Tone, refund policy limits and escalation rules.",
+   "properties": [
+    {
+     "name": "socharness:type",
+     "value": "prompt"
+    },
+    {
+     "name": "socharness:classification",
+     "value": "internal"
+    }
+   ]
+  },
+  {
+   "type": "application",
+   "bom-ref": "agent-support",
+   "name": "Support assistant agent",
+   "description": "Retrieval plus tool-using agent behind the web chat and email desk.",
+   "properties": [
+    {
+     "name": "socharness:type",
+     "value": "agent"
+    }
+   ]
+  },
+  {
+   "type": "application",
+   "bom-ref": "app-support",
+   "name": "Customer support assistant",
+   "description": "Answers customers on web chat and drafts replies to support email; can look up accounts, start refunds and send emails.",
+   "properties": [
+    {
+     "name": "socharness:application",
+     "value": "{\"actions\": [{\"approval\": false, \"effect\": \"read\", \"id\": \"act-lookup\", \"label\": \"Look up account\", \"tool\": \"tool-lookup-account\"}, {\"approval\": true, \"effect\": \"money\", \"id\": \"act-refund\", \"label\": \"Create refund request\", \"tool\": \"tool-create-refund\"}, {\"approval\": false, \"effect\": \"external\", \"id\": \"act-email\", \"label\": \"Send customer email\", \"tool\": \"tool-send-email\"}], \"archetype\": \"tool_agent\", \"assets\": [\"agent-support\", \"model-gpt-4-1\", \"model-bge-large\", \"vs-policy-index\", \"data-policies\", \"data-emails\", \"prompt-support\", \"fw-langchain-core\", \"fw-openai-python\", \"mcp-crm\"], \"autonomy\": 2, \"channel\": \"web\", \"classification\": \"restricted\", \"description\": \"Answers customers on web chat and drafts replies to support email; can look up accounts, start refunds and send emails.\", \"id\": \"app-support\", \"inputs\": [{\"id\": \"in-chat\", \"kind\": \"user\", \"label\": \"Customer chat messages\", \"trusted\": false}, {\"id\": \"in-email\", \"kind\": \"email\", \"label\": \"Inbound support email\", \"trusted\": false}, {\"id\": \"in-retrieval\", \"kind\": \"retrieval\", \"label\": \"Policy passages from the index\", \"trusted\": false}, {\"id\": \"in-crm\", \"kind\": \"tool_output\", \"label\": \"CRM case notes (MCP)\", \"trusted\": false}], \"name\": \"Customer support assistant\", \"owner\": \"Head of Digital Service\", \"tier\": 1, \"users\": \"customers\"}"
+    }
+   ]
+  },
+  {
+   "type": "application",
+   "bom-ref": "app-fraud",
+   "name": "Card fraud scoring",
+   "description": "Scores every card authorisation and holds high-risk transactions.",
+   "properties": [
+    {
+     "name": "socharness:application",
+     "value": "{\"actions\": [{\"approval\": false, \"effect\": \"money\", \"id\": \"act-hold\", \"label\": \"Hold card transaction\", \"tool\": \"tool-hold-txn\"}], \"archetype\": \"predictive_model\", \"assets\": [\"model-fraud-v7\", \"data-transactions\", \"fw-xgboost\"], \"autonomy\": 3, \"channel\": \"api\", \"classification\": \"restricted\", \"description\": \"Scores every card authorisation and holds high-risk transactions.\", \"id\": \"app-fraud\", \"inputs\": [{\"id\": \"in-auth\", \"kind\": \"data_feed\", \"label\": \"Card authorisation stream\", \"trusted\": false}], \"name\": \"Card fraud scoring\", \"owner\": \"Fraud Analytics\", \"tier\": 1, \"users\": \"internal_staff\"}"
+    }
+   ]
+  },
+  {
+   "type": "application",
+   "bom-ref": "app-code",
+   "name": "Developer coding assistant",
+   "description": "Suggests code changes in the IDE and can run the test suite.",
+   "properties": [
+    {
+     "name": "socharness:application",
+     "value": "{\"actions\": [{\"approval\": true, \"effect\": \"write\", \"id\": \"act-change\", \"label\": \"Apply suggested change\", \"tool\": null}, {\"approval\": false, \"effect\": \"code_exec\", \"id\": \"act-tests\", \"label\": \"Run tests in CI sandbox\", \"tool\": \"tool-run-tests\"}], \"archetype\": \"coding_assistant\", \"assets\": [\"model-code-assist\", \"data-repos\"], \"autonomy\": 2, \"channel\": \"internal_ui\", \"classification\": \"confidential\", \"description\": \"Suggests code changes in the IDE and can run the test suite.\", \"id\": \"app-code\", \"inputs\": [{\"id\": \"in-dev\", \"kind\": \"user\", \"label\": \"Developer requests\", \"trusted\": true}, {\"id\": \"in-code\", \"kind\": \"document\", \"label\": \"Repository files and dependencies\", \"trusted\": false}], \"name\": \"Developer coding assistant\", \"owner\": \"Engineering Productivity\", \"tier\": 2, \"users\": \"internal_staff\"}"
+    }
+   ]
+  }
+ ],
+ "services": [
+  {
+   "bom-ref": "tool-lookup-account",
+   "name": "Look up account",
+   "description": "Reads balance, recent transactions and contact details for the authenticated customer.",
+   "properties": [
+    {
+     "name": "socharness:type",
+     "value": "tool"
+    }
+   ]
+  },
+  {
+   "bom-ref": "tool-create-refund",
+   "name": "Create refund request",
+   "description": "Creates a refund up to $250; a support lead approves it.",
+   "properties": [
+    {
+     "name": "socharness:type",
+     "value": "tool"
+    }
+   ]
+  },
+  {
+   "bom-ref": "tool-send-email",
+   "name": "Send customer email",
+   "description": "Sends an email to the address on file.",
+   "properties": [
+    {
+     "name": "socharness:type",
+     "value": "tool"
+    }
+   ]
+  },
+  {
+   "bom-ref": "mcp-crm",
+   "name": "Brightline CRM MCP server",
+   "provider": {
+    "name": "Brightline CRM (fictional)"
+   },
+   "description": "Third-party MCP server exposing case notes and customer history.",
+   "properties": [
+    {
+     "name": "socharness:type",
+     "value": "mcp_server"
+    }
+   ]
+  },
+  {
+   "bom-ref": "tool-hold-txn",
+   "name": "Hold card transaction",
+   "description": "Places a hold on a scored transaction pending customer confirmation.",
+   "properties": [
+    {
+     "name": "socharness:type",
+     "value": "tool"
+    }
+   ]
+  },
+  {
+   "bom-ref": "tool-run-tests",
+   "name": "Run tests in CI sandbox",
+   "description": "Runs the repository test suite in an isolated CI job.",
+   "properties": [
+    {
+     "name": "socharness:type",
+     "value": "tool"
+    }
+   ]
+  }
+ ],
+ "dependencies": [
+  {
+   "ref": "agent-support",
+   "dependsOn": [
+    "model-gpt-4-1",
+    "vs-policy-index",
+    "prompt-support",
+    "fw-langchain-core",
+    "tool-lookup-account",
+    "tool-create-refund",
+    "tool-send-email",
+    "mcp-crm"
+   ]
+  },
+  {
+   "ref": "vs-policy-index",
+   "dependsOn": [
+    "model-bge-large",
+    "data-policies"
+   ]
+  },
+  {
+   "ref": "model-fraud-v7",
+   "dependsOn": [
+    "data-transactions",
+    "fw-xgboost"
+   ]
+  },
+  {
+   "ref": "fw-langchain-core",
+   "dependsOn": []
+  }
+ ]
+}

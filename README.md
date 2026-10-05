@@ -110,13 +110,74 @@ the Architecture Atlas. Five views (`#anatomy`, `#run`, `#frameworks`, `#compare
      read as a bypass, a dead sensor read as safety, and record IDs no tool returned). Live
      run shows it as an animated claim check after each answer; `/api/grounding?session=`.
 
+6. **AI security** (`#aisec`), the AI Security Lab, phases 0 to 2 of 8 (roadmap: the
+   "AI Security Research Lab roadmap" doc). Eight workbenches: Inventory, Threats and
+   Intelligence are live; Attack range, Defences, Assessments, Vendors and Reports say what
+   each phase will add and its gate.
+   - **Intelligence** (`services/aisec/intel.py`, `#aisec/intel`): 19 threat cards
+     (`taxonomy/cards.json`) scored for each workspace. Exposure comes from the threat-model
+     rules on each application (tier, doubled when an untrusted input or an unapproved risky
+     action reaches it, dropped where an analyst rejected every match); likelihood from ATLAS
+     maturity plus active exploitation (3+ case studies in 24 months); risk appetite moves
+     the high threshold and sector priorities add 2. Every score lists its reasons. An
+     animated heat map shows threats by application. The feed merges curated regulator,
+     standards and research items, every ATLAS release and case study, analyst items, and
+     OSV advisories for the PyPI and npm packages in the AI-BOM (needs outbound HTTPS to
+     api.osv.dev). AI-enabled threats against the company (deepfake payments, synthetic
+     identities, voice cloning, AI phishing, AI-accelerated vulnerability discovery,
+     unreviewed AI code) are assessed as likelihood x impact with controls, never simulated.
+     Sector packs (`taxonomy/sectors.json`) link regulator guidance. Each card links to a
+     test that exists today (TG-10, AgentDojo, test-ground grounding) or an open gap; the
+     monthly snapshot (`POST /api/aisec/intel/snapshot`, Markdown and JSON) reports whether
+     every high threat is covered.
+   - **Inventory** (`services/aisec/bom.py`, `#aisec/inventory`): per workspace, an AI bill
+     of materials (models, agents, frameworks, tools, MCP servers, vector stores, prompts,
+     data sources, vendors), a company profile (sector, regulators, risk appetite, tier
+     definitions, retest deadlines) and application profiles from an intake questionnaire
+     (owner, data classification, users, channel, autonomy, tier, inputs with trust, actions
+     with effect and approval). Import SoCHarness itself (41 assets and its investigation
+     agent), CycloneDX JSON or SPDX 2.3 JSON (`POST /api/aisec/import`, up to 1 MB), or the
+     fictional Ridgeway Savings Bank sample (`services/aisec/samples/`). Export is a
+     CycloneDX 1.6 ML-BOM (`GET /api/aisec/export`); application profiles travel as
+     `socharness:application` properties, so an export re-imports losslessly.
+   - **Threat models** (`services/aisec/threatmodel.py`): each application page shows its
+     attack surface (untrusted and trusted inputs flowing into the trust boundary, risky
+     actions with and without approval flowing out) and proposals from explicit rules, each
+     naming an ATLAS technique or OWASP risk, the surface and why. Accept or reject each
+     with a note; accept the model once all are decided. A later change to the application
+     or its assets marks the model stale; regenerating keeps earlier decisions. Accepted
+     techniques show on their threat-map page.
+   - **Pinned taxonomies** (`services/aisec/taxonomy/`): MITRE ATLAS release 2026.09
+     (16 tactics, 120 techniques, 88 sub-techniques, 40 mitigations, 73 case studies;
+     Apache-2.0), converted from `mitre-atlas/atlas-data` by `services/aisec/pin_atlas.py`,
+     plus the OWASP Top 10 for LLM Applications (2025) and for Agentic Applications (2026):
+     OWASP's ids, names and links, SoCHarness one-line summaries, and a curated ATLAS
+     crosswalk (not an official mapping). Every technique, from any source, uses one
+     record shape.
+   - **Threat map**: the ATLAS matrix animates in by tactic, with search, platform and
+     tracked filters, OWASP badges on each tile, and "highlight an OWASP risk" dimming
+     everything else. The two OWASP lists show as cards with the tactics each risk
+     reaches. Every tile opens a detail page (`#aisec/threats/<id>`) with the ATLAS text,
+     tactic strip, sub-techniques, mitigations, case studies, references and sources.
+   - **Workspaces** (`aisec_workspaces`, `aisec_members`, `aisec_records`): every lab
+     record belongs to one; SoCHarness is workspace one. Techniques can be tracked per
+     workspace with a note. Roles (lead researcher, application owner, vendor guest,
+     executive) are recorded per workspace and can be previewed with "View as"; while
+     Relay has a single signed-in operator, that operator is lead researcher everywhere.
+   - API: `GET /api/aisec`, `/api/aisec/technique?id=`, `/api/aisec/workspaces`,
+     `/api/aisec/tracked?workspace=`; `POST /api/aisec/workspaces`, `/api/aisec/members`,
+     `/api/aisec/track`.
+
 **Keeping the content honest.** `python services/docs_drift.py` extracts every import and
 `ImportedName.attribute` from the chapter and comparison snippets and resolves them
 against the installed, pinned SDKs (Python with the main and extended interpreters,
 TypeScript through `workers/agent-bridge`). It reports `missing` (real drift: the package
 is installed but the name is gone), `not_installed` (skipped) and `type_only`. CI runs it
 report-only in each SDK job. On October 4, 2026 the Python snippets were also checked
-statically against the source of each pinned release tag.
+statically against the source of each pinned release tag. The same script reports the
+AI Security Lab's taxonomy versions: ATLAS against the newest release in atlas-data
+(re-pin with `pin_atlas.py`), and the OWASP lists by the date they were last checked by
+hand, flagged stale after 180 days (`--offline` skips the lookup).
 
 Browsing, history and export make no model calls. The shared $5 October OpenAI
 allowance and identity controls remain unchanged; Anthropic-key frameworks use their own
